@@ -1,8 +1,7 @@
 # Compiled class files
 *.class
 
-# Environment variables
-.env
+# Environment variables (excluding .env for template)
 .env.local
 .env.development.local
 .env.test.local
