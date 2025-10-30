@@ -1,0 +1,78 @@
+# Task Manager Application - CloudFront SSL Version
+# .env file must be in the same directory as this file
+
+services:
+  # MariaDB Database
+  taskmanager-db:
+    image: mariadb:10.11
+    container_name: taskmanager-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-taskmanager}
+      MYSQL_USER: ${DB_USER:-taskuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-taskpassword}
+    volumes:
+      - taskmanager_db_data:/var/lib/mysql
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Spring Boot Backend
+  taskmanager-backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: taskmanager-backend
+    ports:
+      - "8080:8080"    
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://taskmanager-db:3306/${DB_NAME:-taskmanager}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-taskuser}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-taskpassword}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-min-256-bits-change-in-production}
+      SERVER_PORT: 8080
+      FRONTEND_URL: ${TASKMANAGER_FRONTEND_URL:-http://taskmanager.gcp.sriinfosoft.com}
+    depends_on:
+      taskmanager-db:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend with Nginx (HTTP only, CloudFront handles HTTPS)
+  taskmanager-frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: taskmanager-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - taskmanager-backend
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  taskmanager_db_data:

@@ -1,0 +1,7 @@
+
+# local secrets
+.env
+
+# backups
+*.bak
+*.bak.*
