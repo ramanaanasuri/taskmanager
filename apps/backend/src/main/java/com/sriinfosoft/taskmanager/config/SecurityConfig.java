@@ -48,7 +48,7 @@ public class SecurityConfig {
     private String frontendUrl; // e.g. https://taskmanager.sriinfosoft.com
 
     @Value("${cors.allowed-origins}")
-    private String corsAllowedOrigins; // comma-separated list
+    private String corsAllowedOrigins; // comma separated list
 
     public SecurityConfig(OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler, JwtAuthenticationFilter jwtAuthenticationFilter,
                           JwtTokenProvider jwtTokenProvider) {

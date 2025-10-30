@@ -189,6 +189,175 @@ action_find_grep_ci() {
   echo; read -rp "Press Enter to continue…"
 }
 
+action_find_literal_lines() {
+  print_header
+  read -rp "Enter the exact string to search for (spaces OK): " needle
+  [[ -z "${needle:-}" ]] && { echo "No search string provided."; read -rp "Press Enter to continue…"; return; }
+
+  echo
+  read -rp "Case-insensitive? [y/N]: " ci
+  if [[ "${ci,,}" == "y" ]]; then
+    CI_FLAG="-i"
+  else
+    CI_FLAG=""
+  fi
+
+  echo
+  echo "→ Searching for literal string:"
+  printf '   "%s"\n\n' "$needle"
+
+  # Print filename:line:content for matches; treat pattern as fixed string (-F)
+  # Use -n to always print line numbers; -H to force filenames.
+  # Use -Z pipeline with xargs -0 to handle weird filenames safely.
+  find_pruned -type f -print0 \
+    | xargs -0 grep -nH ${CI_FLAG} -F -- "$needle" || true
+
+  echo
+  read -rp "Press Enter to continue…"
+}
+
+action_replace_literal() {
+  print_header
+  read -rp "Enter the EXACT string to replace (spaces OK): " from
+  [[ -z "${from:-}" ]] && { echo "No source string provided."; read -rp "Press Enter to continue…"; return; }
+
+  read -rp "Enter the replacement string: " to
+  echo
+  read -rp "Case-insensitive replace? [y/N]: " ci
+  if [[ "${ci,,}" == "y" ]]; then
+    CI_FLAG="I"     # GNU sed: I = case-insensitive for s///
+    GREP_CI="-i"
+  else
+    CI_FLAG=""
+    GREP_CI=""
+  fi
+
+  echo
+  echo "→ Preview: files that contain the source string:"
+  find_pruned -type f -print0 | xargs -0 grep -lH ${GREP_CI} -F -- "$from" || true
+
+  echo
+  read -rp "Would you like to perform a DRY RUN first? [y/N]: " dry
+  if [[ "${dry,,}" == "y" ]]; then
+    echo
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "   🔍 DRY RUN — showing differences (no changes)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo
+    find_pruned -type f -print0 | while IFS= read -r -d '' f; do
+      if grep -q ${GREP_CI} -F -- "$from" "$f"; then
+        echo "--- $f ---"
+        # Show surrounding lines with differences (like git diff)
+        sed -n "/${from}/I{
+          s|${from}|${to}|I
+          p
+        }" "$f" | awk '{print "    " $0}'
+        echo
+      fi
+    done
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "   End of DRY RUN preview"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo
+    read -rp "Press Enter to continue…"
+    return
+  fi
+
+  echo
+  read -rp "Proceed with in-place replacement and create backups? [y/N]: " ok
+  [[ "${ok,,}" != "y" ]] && { echo "Cancelled."; read -rp "Press Enter to continue…"; return; }
+
+  ts="$(date +%F-%H%M%S)"
+
+  # Escape slashes, pipes, ampersands, and backslashes so sed doesn't break
+  esc() { printf '%s' "$1" | sed -e 's/[\/&|\\]/\\&/g'; }
+  from_esc="$(esc "$from")"
+  to_esc="$(esc "$to")"
+
+  changed=0
+  while IFS= read -r -d '' f; do
+    # Skip binaries
+    if command -v file >/dev/null 2>&1 && file -b --mime "$f" | grep -qi binary; then
+      continue
+    fi
+    # Process only files containing the pattern
+    if grep -q ${GREP_CI} -F -- "$from" "$f"; then
+      cp -p -- "$f" "$f.bak.$ts"
+      sed "s|${from_esc}|${to_esc}|g${CI_FLAG}" "$f" > "$f.__tmp__.$ts" && mv "$f.__tmp__.$ts" "$f"
+      printf 'Rewrote: %s (backup: %s)\n' "$f" "$f.bak.$ts"
+      changed=$((changed+1))
+    fi
+  done < <(find_pruned -type f -print0)
+
+  echo
+  echo "Done. Files changed: $changed"
+  echo "Backups created with suffix: .bak.$ts"
+  echo
+  read -rp "Press Enter to continue…"
+}
+
+action_delete_by_extension() {
+  print_header
+  echo "Delete files mode:"
+  echo "  1) Filename CONTAINS substring (e.g., .bak anywhere)"
+  echo "  2) Filename ENDS WITH extension (e.g., *.bak)"
+  read -rp "Choose 1 or 2: " mode
+
+  if [[ "$mode" == "1" ]]; then
+    read -rp "Enter substring to match anywhere (e.g., .bak): " needle
+    [[ -z "${needle:-}" ]] && { echo "No substring entered."; read -rp "Press Enter to continue…"; return; }
+    # case-insensitive “contains” match
+    FIND_EXPR=(-type f -iname "*${needle}*")
+  elif [[ "$mode" == "2" ]]; then
+    read -rp "Enter extension (e.g., .bak): " ext
+    [[ -z "${ext:-}" ]] && { echo "No extension entered."; read -rp "Press Enter to continue…"; return; }
+    # case-insensitive “ends-with” match
+    FIND_EXPR=(-type f -iname "*${ext}")
+  else
+    echo "Invalid choice."
+    read -rp "Press Enter to continue…"
+    return
+  fi
+
+  echo
+  echo "→ Searching for matches…"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  mapfile -d '' matches < <(
+    find . \
+      \( -path '*/.git/*' -o -path '*/node_modules/*' -o -path '*/target/*' -o -path '*/dist/*' \) -prune -o \
+      "${FIND_EXPR[@]}" -print0
+  )
+
+  if (( ${#matches[@]} == 0 )); then
+    echo "No matching files found."
+    echo
+    read -rp "Press Enter to continue…"
+    return
+  fi
+
+  # Preview list
+  for f in "${matches[@]}"; do
+    printf '%s\n' "$f"
+  done
+
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo
+  read -rp "Are you sure you want to delete ALL of the above? [y/N]: " confirm
+  [[ "${confirm,,}" != "y" ]] && { echo "Cancelled."; read -rp "Press Enter to continue…"; return; }
+
+  echo
+  echo "Deleting files…"
+  for f in "${matches[@]}"; do
+    rm -f -- "$f" && echo "Deleted: $f"
+  done
+
+  echo
+  echo "✅ Cleanup complete."
+  echo
+  read -rp "Press Enter to continue…"
+}
+
 
 # ---- Menu loop ------------------------------------------------------------
 while true; do
@@ -210,6 +379,9 @@ Choose an option:
   10) Find files whose name contains a substring (e.g., ".bak")
   11) Find files whose contents contain a string (case-insensitive)
   12) Switch cloud profile (current: $CLOUD)
+  13) Search literal string (print matching lines)
+  14) Replace literal string across files (with backups)
+  15) Delete files whose NAME contains a substring (or ends with an extension)
   q) Quit
 MENU
   read -rp "Select: " ans
@@ -229,6 +401,9 @@ MENU
         read -rp "Enter cloud profile (gcp|aws): " newc
         [[ "$newc" == "gcp" || "$newc" == "aws" ]] && CLOUD="$newc" || echo "Invalid; staying on $CLOUD"
         ;;
+    13) action_find_literal_lines ;;
+    14) action_replace_literal ;;
+    15) action_delete_by_extension ;;
     q|Q) echo "Bye!"; exit 0 ;;
     *) echo "Invalid choice"; sleep 1 ;;
   esac
