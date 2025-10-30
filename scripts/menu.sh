@@ -63,7 +63,7 @@ action_down() {
   print_header
   status_block
   echo "⏹  Stopping/removing stack…"
-  compose down -v
+  compose down --remove-orphans || true
   echo "✅ Done."
   read -rp "Press Enter to continue…"
 }

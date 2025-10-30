@@ -88,7 +88,7 @@ case "$CMD" in
 
 
   *)
-    echo "Usage: scripts/stack.sh <gcp|aws> <up|down|ps|logs> [--rebuild]" >&2
+    echo "Usage: scripts/stack.sh <gcp|aws> <up|down|start|stop|ps|logs> [--rebuild]" >&2
     exit 2;;
 esac
 
