@@ -5,3 +5,4 @@
 # backups
 *.bak
 *.bak.*
+scripts/docker-setup.sh
