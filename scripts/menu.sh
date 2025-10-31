@@ -68,6 +68,24 @@ action_down() {
   read -rp "Press Enter to continue…"
 }
 
+action_stop() {
+  print_header
+  status_block
+  echo "⏹  Stopping stack…"
+  compose stop || true
+  echo "✅ Done."
+  read -rp "Press Enter to continue…"
+}
+
+action_start() {
+  print_header
+  status_block
+  echo "⏹  Starting stack…"
+  compose start || true
+  echo "✅ Done."
+  read -rp "Press Enter to continue…"
+}
+
 action_build_up() {
   print_header
   status_block
@@ -368,42 +386,46 @@ while true; do
   cat <<MENU
 Choose an option:
   1) Check container status (again)
-  2) Bring DOWN the stack (all services)
-  3) BUILD & start ALL services
-  4) Show recent logs for DB/Backend/Frontend
-  5) Tail backend logs (Ctrl+C to stop)
-  6) Start backend ONLY
-  7) DB details (show databases/tables + latest tasks)
-  8) Search files for DB_PASS (or a value)
-  9) Find a file by exact name
-  10) Find files whose name contains a substring (e.g., ".bak")
-  11) Find files whose contents contain a string (case-insensitive)
-  12) Switch cloud profile (current: $CLOUD)
-  13) Search literal string (print matching lines)
-  14) Replace literal string across files (with backups)
-  15) Delete files whose NAME contains a substring (or ends with an extension)
+  2) Start the stack (all services)
+  3) Stop the stack (all services)
+  4) Bring DOWN the stack (all services)
+  5) BUILD & start ALL services
+  6) Show recent logs for DB/Backend/Frontend
+  7) Tail backend logs (Ctrl+C to stop)
+  8) Start backend ONLY
+  9) DB details (show databases/tables + latest tasks)
+  10) Search files for DB_PASS (or a value)
+  11) Find a file by exact name
+  12) Find files whose name contains a substring (e.g., ".bak")
+  13) Find files whose contents contain a string (case-insensitive)
+  14) Switch cloud profile (current: $CLOUD)
+  15) Search literal string (print matching lines)
+  16) Replace literal string across files (with backups)
+  17) Delete files whose NAME contains a substring (or ends with an extension)
   q) Quit
 MENU
   read -rp "Select: " ans
   case "$ans" in
     1)  action_status ;;
-    2)  action_down ;;
-    3)  action_build_up ;;
-    4)  action_logs_status ;;
-    5)  action_tail_backend ;;
-    6)  action_start_backend_only ;;
-    7)  action_db_details ;;
-    8)  action_search_dbpass ;;
-    9)  action_find_exact_file ;;
-    10) action_find_name_contains ;;
-    11) action_find_grep_ci ;;
-    12)
+    2)  action_start ;;
+    3)  action_stop ;;
+    4)  action_down ;;
+    5)  action_build_up ;;
+    6)  action_logs_status ;;
+    7)  action_tail_backend ;;
+    8)  action_start_backend_only ;;
+    9)  action_db_details ;;
+    10) action_search_dbpass ;;
+    11) action_find_exact_file ;;
+    12) action_find_name_contains ;;
+    13) action_find_grep_ci ;;
+    14)
         read -rp "Enter cloud profile (gcp|aws): " newc
         [[ "$newc" == "gcp" || "$newc" == "aws" ]] && CLOUD="$newc" || echo "Invalid; staying on $CLOUD"
         ;;
-    13) action_find_literal_lines ;;
-    14) action_replace_literal ;;
-    15) action_delete_by_extension ;;
+    15) action_find_literal_lines ;;
+    16) action_replace_literal ;;
+    17) action_delete_by_extension ;;
     q|Q) echo "Bye!"; exit 0 ;;
     *) echo "Invalid choice"; sleep 1 ;;
   esac
