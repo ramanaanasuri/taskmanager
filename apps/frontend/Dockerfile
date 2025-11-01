@@ -18,6 +18,9 @@ COPY --from=build /app/build /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy policy pages for Facebook OAuth                          # ADDED
+COPY --from=build /app/public/policies/*.html /usr/share/nginx/html/policies/
+
 # Expose port 80 only (CloudFront handles HTTPS)
 EXPOSE 80
 
