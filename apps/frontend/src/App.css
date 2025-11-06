@@ -58,6 +58,25 @@ body {
   border-radius: 5px;
   cursor: pointer;
   transition: background 0.3s;
+  width: 100%;              /* MODIFIED - ADDED */
+  margin-bottom: 12px;      /* MODIFIED - ADDED */ 
+}
+
+.facebook-btn {
+  background: #1877f2;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.facebook-btn:hover {
+  background: #166fe5;
 }
 
 .google-btn:hover {

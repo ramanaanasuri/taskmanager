@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
 
 @Component
 public class JwtTokenProvider {
@@ -29,28 +30,36 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(Authentication authentication) {
-        OAuth2User principal = (OAuth2User) authentication.getPrincipal();
+    OAuth2User principal = (OAuth2User) authentication.getPrincipal();
 
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+    Date now = new Date();
+    Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
-        String email = principal.getAttribute("email");
-        String name = principal.getAttribute("name");
-        String picture = principal.getAttribute("picture");
+    String email = principal.getAttribute("email");
+    String name = principal.getAttribute("name");
 
-        return Jwts.builder()
-                // 0.12+ fluent names (old setSubject/etc. also work but are deprecated)
-                .subject(email)              // keep the subject explicitly
-                .issuedAt(now)
-                .expiration(expiryDate)
-                // add custom claims individually so we don't wipe out the subject
-                .claim("email", email)
-                .claim("name", name)
-                .claim("picture", picture)
-                // 0.12+ signing style
-                .signWith(getSigningKey(), Jwts.SIG.HS256)
-                .compact();
+    // Facebook returns picture as a nested map
+    Object pictureObj = principal.getAttribute("picture");
+    String pictureUrl = null;
+    if (pictureObj instanceof Map<?, ?> map) {
+        Object data = map.get("data");
+        if (data instanceof Map<?, ?> dataMap) {
+            Object url = dataMap.get("url");
+            if (url != null) pictureUrl = url.toString();
+        }
     }
+
+    return Jwts.builder()
+            .subject(email != null ? email : name) // fallback if email missing
+            .issuedAt(now)
+            .expiration(expiryDate)
+            .claim("email", email)
+            .claim("name", name)
+            .claim("picture", pictureUrl)
+            .signWith(getSigningKey(), Jwts.SIG.HS256)
+            .compact();
+    }
+
 
     public String getEmailFromToken(String token) {
         Claims claims = getClaimsFromToken(token);

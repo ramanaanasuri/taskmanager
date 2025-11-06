@@ -218,6 +218,15 @@ function App() {
     window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   };
 
+  const handleFacebookLogin = () => {
+    console.log('\n🔐 === Facebook Login Button Clicked ===');
+    console.log('🌐 Redirecting to:', `${API_BASE_URL}/oauth2/authorization/facebook`);
+    console.log('🔧 Full API_BASE_URL:', API_BASE_URL);
+
+    // IMPORTANT: navigation (not XHR) so the browser follows 302 → Facebook
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/facebook`;
+  };
+
   const handleLogout = () => {
     console.log('\n👋 === Logout Initiated ===');
     console.log('🧹 Clearing localStorage...');
@@ -262,6 +271,9 @@ function App() {
           )}
           <button onClick={handleLogin} className="google-btn">
             Sign in with Google
+          </button>
+          <button onClick={handleFacebookLogin} className="facebook-btn">
+            Sign in with Facebook
           </button>
         </div>
       </div>
