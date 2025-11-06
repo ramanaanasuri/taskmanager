@@ -6,7 +6,7 @@ CLOUD="${CLOUD:-aws}"
 
 BASE="docker-compose.yml"
 OVERLAY_GCP="deployments/gcp/compose/docker-compose.gcp.yml"
-OVERLAY_AWS="deployments/aws/compose/docker-compose.yml"
+OVERLAY_AWS="deployments/aws/compose/docker-compose.aws.yml"
 
 DB_CONT="taskmanager-db"
 BE_CONT="taskmanager-backend"
