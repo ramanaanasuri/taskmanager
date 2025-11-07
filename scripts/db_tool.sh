@@ -48,8 +48,8 @@ if [[ $SHOW_HELP -eq 1 ]]; then
 Usage: CONTAINER=name ./scripts/db_tool.sh [options]
 
 Options:
-  -d, --db <name>          Override DB name (default: ${DB_NAME})
-  -c, --container <name>   DB container name (default: ${CONTAINER})
+  -d, --db <n>          Override DB name (default: ${DB_NAME})
+  -c, --container <n>   DB container name (default: ${CONTAINER})
   -p, --root-pw <value>    MariaDB root password (otherwise prompted)
 
 Environment (from .env if present):
@@ -135,6 +135,126 @@ action_list_tasks() {
     LIMIT 50;"
 }
 
+# NEW: List tasks with priority and scheduled date
+action_list_tasks_with_priority() {
+  local TBL; TBL="$(detect_tasks_table)"
+  echo "Tasks with Priority and Scheduled Date:"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT
+      id,
+      CASE WHEN completed=1 THEN '✔' ELSE '' END AS done,
+      title,
+      priority,
+      CASE 
+        WHEN due_date IS NULL THEN 'Not scheduled'
+        ELSE DATE_FORMAT(due_date, '%Y-%m-%d %H:%i')
+      END AS scheduled,
+      user_email
+    FROM \`$TBL\`
+    ORDER BY 
+      CASE priority 
+        WHEN 'HIGH' THEN 1 
+        WHEN 'MEDIUM' THEN 2 
+        WHEN 'LOW' THEN 3 
+      END,
+      due_date ASC
+    LIMIT 50;"
+}
+
+# NEW: Show task statistics by priority
+action_task_stats() {
+  local TBL; TBL="$(detect_tasks_table)"
+  echo "Task Statistics by Priority:"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT 
+      priority,
+      COUNT(*) AS total,
+      SUM(CASE WHEN completed=1 THEN 1 ELSE 0 END) AS completed,
+      SUM(CASE WHEN completed=0 THEN 1 ELSE 0 END) AS pending,
+      SUM(CASE WHEN due_date IS NOT NULL THEN 1 ELSE 0 END) AS with_schedule,
+      SUM(CASE WHEN due_date IS NULL THEN 1 ELSE 0 END) AS no_schedule
+    FROM \`$TBL\`
+    GROUP BY priority
+    ORDER BY 
+      CASE priority 
+        WHEN 'HIGH' THEN 1 
+        WHEN 'MEDIUM' THEN 2 
+        WHEN 'LOW' THEN 3 
+      END;"
+}
+
+# NEW: Show overdue tasks
+action_overdue_tasks() {
+  local TBL; TBL="$(detect_tasks_table)"
+  echo "Overdue Tasks (not completed, past due date):"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT
+      id,
+      title,
+      priority,
+      DATE_FORMAT(due_date, '%Y-%m-%d %H:%i') AS was_due,
+      TIMESTAMPDIFF(DAY, due_date, NOW()) AS days_overdue,
+      user_email
+    FROM \`$TBL\`
+    WHERE completed = 0 
+      AND due_date IS NOT NULL 
+      AND due_date < NOW()
+    ORDER BY due_date ASC;"
+}
+
+# NEW: Show upcoming tasks (due in next 7 days)
+action_upcoming_tasks() {
+  local TBL; TBL="$(detect_tasks_table)"
+  echo "Upcoming Tasks (next 7 days):"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT
+      id,
+      title,
+      priority,
+      DATE_FORMAT(due_date, '%Y-%m-%d %H:%i') AS scheduled,
+      TIMESTAMPDIFF(DAY, NOW(), due_date) AS days_until,
+      user_email
+    FROM \`$TBL\`
+    WHERE completed = 0 
+      AND due_date IS NOT NULL 
+      AND due_date >= NOW()
+      AND due_date <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+    ORDER BY due_date ASC;"
+}
+
+# NEW: Show tasks by priority
+action_tasks_by_priority() {
+  local priority TBL
+  echo "Choose priority:"
+  echo "1) HIGH"
+  echo "2) MEDIUM"
+  echo "3) LOW"
+  read -rp "Enter choice: " choice
+  
+  case "$choice" in
+    1) priority="HIGH";;
+    2) priority="MEDIUM";;
+    3) priority="LOW";;
+    *) echo "Invalid choice"; return 1;;
+  esac
+  
+  TBL="$(detect_tasks_table)"
+  echo "Tasks with $priority priority:"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT
+      id,
+      CASE WHEN completed=1 THEN '✔' ELSE '' END AS done,
+      title,
+      CASE 
+        WHEN due_date IS NULL THEN 'Not scheduled'
+        ELSE DATE_FORMAT(due_date, '%Y-%m-%d %H:%i')
+      END AS scheduled,
+      user_email
+    FROM \`$TBL\`
+    WHERE priority = '$priority'
+    ORDER BY due_date ASC;"
+}
+
 action_insert_task() {
   local title email TBL
   read -rp "Title: " title
@@ -194,16 +314,25 @@ action_seed_app_user() {
 }
 
 action_raw_sql() {
-  echo "Enter SQL to run against \`$DB_NAME\`. End with EOF (Ctrl+D):"
-  db -e "USE \`$DB_NAME\`;"
-  db -t <<'SQL'
--- You can paste multi-line SQL here; end with Ctrl+D
-SQL
-  echo "Tip: For multi-line against your DB, do:"
-  echo "db <<SQL"
-  echo "USE \`$DB_NAME\`;"
-  echo "-- your statements"
-  echo "SQL"
+  echo "=== Interactive SQL Shell ==="
+  echo "Opening MariaDB shell for database: $DB_NAME"
+  echo ""
+  echo "Commands you can use:"
+  echo "  - Type any SQL commands and press Enter"
+  echo "  - Use 'SHOW TABLES;' to see all tables"
+  echo "  - Use 'SELECT * FROM tasks LIMIT 10;' to query tasks"
+  echo "  - Type 'exit' or 'quit' to return to menu"
+  echo "  - Press Ctrl+C to abort a query"
+  echo ""
+  read -rp "Press Enter to open SQL shell..."
+  
+  # Open interactive MariaDB shell
+  docker exec -it "$CONTAINER" mariadb \
+    --protocol=TCP -h127.0.0.1 -P3306 \
+    -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME"
+  
+  echo ""
+  echo "✅ SQL shell closed."
 }
 
 action_mark_complete() {
@@ -227,16 +356,26 @@ while true; do
   cat <<EOF
 TaskManager DB Tool  (container: $CONTAINER, db: $DB_NAME)
 
+=== Basic Operations ===
 1) Show databases
 2) Show tables in $DB_NAME
 3) Describe tasks table
-4) List latest 50 tasks (pretty)
+4) List latest 50 tasks (basic)
 5) Insert test task
 6) Mark task complete by id
 7) Delete task by id
 8) Seed DB & app user  (create DB, user, grant)
+
+=== Priority & Schedule Views (NEW) ===
+p) List tasks with Priority & Scheduled Date
+s) Task statistics by priority
+o) Show overdue tasks
+u) Show upcoming tasks (next 7 days)
+f) Filter tasks by priority
+
+=== Other ===
 9) Count tasks by user email
-r) Raw SQL prompt
+r) Interactive SQL Shell (MariaDB prompt)
 q) Quit
 EOF
   read -rp "Choose an option: " choice
@@ -250,9 +389,13 @@ EOF
     7) action_delete_task; pause;;
     8) action_seed_app_user; pause;;
     9) action_count_by_email; pause;;
+    p|P) action_list_tasks_with_priority; pause;;
+    s|S) action_task_stats; pause;;
+    o|O) action_overdue_tasks; pause;;
+    u|U) action_upcoming_tasks; pause;;
+    f|F) action_tasks_by_priority; pause;;
     r|R) action_raw_sql; pause;;
     q|Q) exit 0;;
     *) echo "Invalid option"; sleep 1;;
   esac
 done
-

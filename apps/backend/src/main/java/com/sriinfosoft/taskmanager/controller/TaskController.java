@@ -183,7 +183,13 @@ public class TaskController {
                 System.out.println("Updating completed to: " + taskDetails.getCompleted());
                 task.setCompleted(taskDetails.getCompleted());
             }
+            // Update priority
+            if (taskDetails.getPriority() != null) {
+                task.setPriority(taskDetails.getPriority());
+            }
 
+            // Update due date
+            task.setDueDate(taskDetails.getDueDate());
             task.setUpdatedAt(LocalDateTime.now());
             Task saved = taskRepository.save(task);
             System.out.println("✅ Task updated: id=" + saved.getId());

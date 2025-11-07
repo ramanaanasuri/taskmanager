@@ -3,6 +3,8 @@ package com.sriinfosoft.taskmanager.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 @Entity
 @Table(name = "tasks")
 public class Task {
@@ -24,6 +26,14 @@ public class Task {
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TaskPriority priority = TaskPriority.MEDIUM;    
     
     // Constructors
     public Task() {}
@@ -81,4 +91,20 @@ public class Task {
     public void setUpdatedAt(LocalDateTime updatedAt) { 
         this.updatedAt = updatedAt; 
     }
+
+    public LocalDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDateTime dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public TaskPriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(TaskPriority priority) {
+        this.priority = priority;
+    }    
 }
