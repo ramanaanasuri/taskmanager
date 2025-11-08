@@ -288,7 +288,7 @@ function App() {
             Sign in with Google
           </button>
           <button onClick={handleFacebookLogin} className="facebook-btn">
-            Sign in with Facebook
+            Sign in with Facebook (Coming Soon)
           </button>
         </div>
       </div>
