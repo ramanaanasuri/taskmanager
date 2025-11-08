@@ -573,7 +573,6 @@ function App() {
                   <option value="LOW">Low</option>
                   <option value="MEDIUM">Medium</option>
                   <option value="HIGH">High</option>
-                  <option value="HIGH">High</option>
                 </select>
               </div>
 
