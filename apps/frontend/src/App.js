@@ -302,19 +302,28 @@ function App() {
           <div className="header-content">
             <div className="header-branding">
               {/* OPTION 1: Use your uploaded clipboard image */}
+              {/* Briefcase icon */}
               <div className="header-logo">
-                <svg viewBox="0 0 48 48" className="logo-svg">
-                  <rect x="8" y="4" width="32" height="40" rx="3" fill="white"/>
-                  <rect x="12" y="8" width="24" height="32" rx="2" fill="#667eea"/>
-                  <line x1="16" y1="14" x2="32" y2="14" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="16" y1="20" x2="28" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="16" y1="26" x2="30" y2="26" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="16" cy="32" r="1.5" fill="white"/>
-                  <circle cx="16" cy="36" r="1.5" fill="white"/>
-                  <line x1="20" y1="32" x2="32" y2="32" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="20" y1="36" x2="28" y2="36" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                <svg viewBox="0 0 48 48" fill="none" className="logo-svg" xmlns="http://www.w3.org/2000/svg">
+                  {/* Briefcase body */}
+                  <rect x="8" y="18" width="32" height="22" rx="2" fill="white"/>
+                  {/* Inner clipboard/paper */}
+                  <rect x="12" y="22" width="24" height="14" rx="1" fill="#e0e7ff"/>
+                  {/* Handle */}
+                  <path d="M18,18 L18,14 C18,12.8954 18.8954,12 20,12 L28,12 C29.1046,12 30,12.8954 30,14 L30,18" stroke="white" strokeWidth="2.5" fill="none"/>
+                  {/* Task lines */}
+                  <line x1="16" y1="26" x2="24" y2="26" stroke="#667eea" strokeWidth="2"/>
+                  <rect x="14" y="24" width="3" height="3" rx="0.5" fill="#10b981"/>
+                  <line x1="16" y1="30" x2="24" y2="30" stroke="#667eea" strokeWidth="2"/>
+                  <rect x="14" y="28" width="3" height="3" rx="0.5" fill="#10b981"/>
+                  <line x1="16" y1="34" x2="24" y2="34" stroke="#667eea" strokeWidth="2"/>
+                  <rect x="14" y="32" width="3" height="3" rx="0.5" fill="#10b981"/>
+                  {/* Clock badge */}
+                  <circle cx="38" cy="38" r="7" fill="white" stroke="#667eea" strokeWidth="2"/>
+                  <path d="M38,34 L38,38 L41,38" stroke="#667eea" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
                 </svg>
               </div>
+              
               
               {/* OPTION 2: Simple icon alternative - uncomment to use
               <div className="header-logo">
@@ -336,7 +345,7 @@ function App() {
               */}
               
               <div className="header-text">
-                <h1>TASK MANAGER</h1>
+                <h1>TASK MANAGER PRO</h1>
               </div>
             </div>
             <div className="user-info">
@@ -352,8 +361,8 @@ function App() {
       {/* Hero Section */}
       <div className="app-hero">
         <div className="hero-content">
-          <h2 className="hero-title">Accomplish Your Goals</h2>
-          <p className="hero-subtitle">Stay organized and productive with our powerful task management system</p>
+          <h2 className="hero-title">Your Day, Organized.</h2>
+          <p className="hero-subtitle">A smarter way to plan and complete what matters most.</p>
         </div>
       </div>
 
@@ -618,21 +627,9 @@ function App() {
           </div>
         </div>
       )}
-
       {/* Footer */}
       <footer className="app-footer">
         <div className="footer-content">
-          <div className="footer-logo">
-            <div className="footer-icon">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="logo-svg">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-              </svg>
-            </div>
-            <span className="footer-brand">TASK MANAGER</span>
-          </div>
-          
-          <div className="footer-divider"></div>
-          
           <div className="footer-powered">
             <div>
               Powered by <span className="footer-company">SriInfosoft Inc<sup className="footer-trademark">®</sup></span>
