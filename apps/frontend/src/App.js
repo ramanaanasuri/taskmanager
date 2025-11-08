@@ -457,7 +457,7 @@ function App() {
               <div className="task-table-body">
                 {tasks.map(task => (
                   <div key={task.id} className={`task-row ${task.completed ? 'completed-task' : ''}`}>
-                    {/* LINE 1: Checkbox + Task Name + Priority + Scheduled Date - ALL ON ONE LINE! */}
+                    {/* Main Info Row: Checkbox + Task Name */}
                     <div className="task-main-info">
                       <div className="td-status">
                         <input
@@ -474,28 +474,29 @@ function App() {
                           {task.title}
                         </span>
                       </div>
+                    </div>
 
-                      <div className="task-metadata">
-                        <div className="td-priority">
-                          <span className={`priority-badge priority-${task.priority.toLowerCase()}`}>
-                            {task.priority}
-                          </span>
-                        </div>
+                    {/* Metadata Row: Priority + Scheduled (compact on one line) */}
+                    <div className="task-metadata">
+                      <div className="td-priority">
+                        <span className={`priority-badge priority-${task.priority.toLowerCase()}`}>
+                          {task.priority}
+                        </span>
+                      </div>
 
-                        <div className="td-scheduled">
-                          {task.dueDate ? (
-                            <div className="scheduled-info">
-                              <span className="scheduled-icon">📅</span>
-                              <span className="scheduled-date">{formatDisplayDate(task.dueDate)}</span>
-                            </div>
-                          ) : (
-                            <span className="no-date">Not scheduled</span>
-                          )}
-                        </div>
+                      <div className="td-scheduled">
+                        {task.dueDate ? (
+                          <div className="scheduled-info">
+                            <span className="scheduled-icon">📅</span>
+                            <span className="scheduled-date">{formatDisplayDate(task.dueDate)}</span>
+                          </div>
+                        ) : (
+                          <span className="no-date">Not scheduled</span>
+                        )}
                       </div>
                     </div>
 
-                    {/* LINE 2: Action Buttons */}
+                    {/* Actions Row */}
                     <div className="td-actions">
                       <button
                         onClick={() => {
