@@ -167,6 +167,71 @@ body {
   letter-spacing: 0.3px;
 }
 
+/* NEW: Date Input Group with Buttons */
+.date-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.date-input-group .due-date-input,
+.date-input-group .modal-input {
+  flex: 1;
+}
+
+/* NEW: Confirm Button */
+.date-confirm-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 45px;
+}
+
+.date-confirm-btn:hover:not(:disabled) {
+  background: #45a049;
+  transform: scale(1.05);
+}
+
+.date-confirm-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* NEW: Clear Button */
+.date-clear-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 45px;
+}
+
+.date-clear-btn:hover {
+  background: #d32f2f;
+  transform: scale(1.05);
+}
+
+/* NEW: Date Preview */
+.date-preview {
+  display: block;
+  color: #4caf50;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+  font-weight: 500;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -647,5 +712,16 @@ body {
 
   .modal-actions {
     flex-direction: column;
+  }
+
+  /* Date input group on mobile */
+  .date-input-group {
+    flex-wrap: wrap;
+  }
+
+  .date-confirm-btn,
+  .date-clear-btn {
+    min-width: 40px;
+    padding: 0 12px;
   }
 }

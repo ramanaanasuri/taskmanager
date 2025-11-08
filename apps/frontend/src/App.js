@@ -5,8 +5,6 @@ import './App.css';
 
 const formatDateForBackend = (dateString) => {
   if (!dateString) return null;
-  // Input: "2025-11-10T21:52" (from datetime-local)
-  // Output: "2025-11-10T21:52:00" (what backend expects)
   return dateString.includes('T') ? dateString + ':00' : dateString;
 };
 
@@ -18,7 +16,9 @@ function App() {
   const [authToken, setAuthToken] = useState(null);
   const [newTaskPriority, setNewTaskPriority] = useState('MEDIUM');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [tempDueDate, setTempDueDate] = useState(''); // NEW: Temporary storage for date selection
   const [editingTask, setEditingTask] = useState(null);
+  const [tempEditDate, setTempEditDate] = useState(''); // NEW: Temporary storage for edit modal
 
   // ============ DEBUG: Component Mount ============
   useEffect(() => {
@@ -70,31 +70,17 @@ function App() {
     }
 
     try {
-      console.log('🔍 Attempting to fetch user with token');
-      console.log('🌐 API URL:', `${API_BASE_URL}/api/auth/me`);
-
       const { data, status } = await axios.get(`${API_BASE_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       console.log('✅ Auth Success!');
-      console.log('📊 Response Status:', status);
-      console.log('📦 Response Data:', data);
-      console.log('👤 User Info:', data);
-
       setUser(data);
       fetchTasks(token);
     } catch (error) {
       console.error('\n❌ === Auth Failed ===');
       console.error('💥 Error Message:', error.message);
-      console.error('📡 Error Response:', error.response?.data);
-      console.error('🔢 Status Code:', error.response?.status);
-      console.error('🌐 Request URL:', error.config?.url);
-      try {
-        console.error('📋 Full Error Object:', JSON.stringify(error, null, 2));
-      } catch (_) {}
 
-      console.log('🧹 Cleaning up localStorage...');
       try {
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('user');
@@ -108,8 +94,6 @@ function App() {
   const fetchTasks = async (tokenParam) => {
     console.log('\n📋 === Fetching Tasks ===');
     const token = tokenParam || localStorage.getItem('jwt_token');
-    console.log('🔑 Using token for tasks request');
-    console.log('🌐 Tasks Endpoint:', `${API_BASE_URL}/api/tasks`);
 
     try {
       const response = await axios.get(`${API_BASE_URL}/api/tasks`, {
@@ -117,13 +101,9 @@ function App() {
       });
 
       console.log('✅ Tasks fetched successfully');
-      console.log('📊 Number of tasks:', response.data.length);
-      console.log('📦 Tasks data:', response.data);
-
       setTasks(response.data);
     } catch (error) {
       console.error('❌ Error fetching tasks:', error.message);
-      console.error('Response:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -132,9 +112,6 @@ function App() {
   const addTask = async (e) => {
     e.preventDefault();
     console.log('\n➕ === Adding New Task ===');
-    console.log('📝 Task title:', newTask);
-    console.log('📝 Priority:', newTaskPriority);
-    console.log('📝 Due Date:', newTaskDueDate);
   
     if (!newTask.trim()) {
       console.log('⚠️ Task title is empty - aborting');
@@ -142,8 +119,6 @@ function App() {
     }
   
     const token = authToken || localStorage.getItem('jwt_token');
-    console.log('🌐 POST to:', `${API_BASE_URL}/api/tasks`);
-  
     const formattedDueDate = newTaskDueDate ? newTaskDueDate + ':00' : null;
   
     try {
@@ -159,22 +134,18 @@ function App() {
       );
   
       console.log('✅ Task added successfully');
-      console.log('📦 New task:', response.data);
-  
       setTasks([...tasks, response.data]);
       setNewTask('');
       setNewTaskPriority('MEDIUM');
       setNewTaskDueDate('');
+      setTempDueDate('');
     } catch (error) {
       console.error('❌ Error adding task:', error.message);
-      console.error('Response:', error.response?.data);
     }
   };
 
   const updateTask = async (id, updates) => {
     console.log('\n✏️ === Updating Task ===');
-    console.log('🆔 Task ID:', id);
-    console.log('📝 Updates:', updates);
 
     const token = authToken || localStorage.getItem('jwt_token');
 
@@ -197,27 +168,21 @@ function App() {
       );
 
       console.log('✅ Task updated successfully');
-      console.log('📦 Updated task:', response.data);
-      
       setTasks(tasks.map(t => (t.id === id ? response.data : t)));
       setEditingTask(null);
+      setTempEditDate('');
     } catch (error) {
       console.error('❌ Error updating task:', error.message);
-      console.error('Response:', error.response?.data);
     }
   };
 
   const toggleTask = async (id) => {
     console.log('\n🔄 === Toggling Task ===');
-    console.log('🆔 Task ID:', id);
 
     const token = authToken || localStorage.getItem('jwt_token');
 
     try {
       const task = tasks.find(t => t.id === id);
-      console.log('📝 Current task status:', task.completed ? 'Completed' : 'Pending');
-      console.log('🌐 PUT to:', `${API_BASE_URL}/api/tasks/${id}`);
-
       const response = await axios.put(
         `${API_BASE_URL}/api/tasks/${id}`,
         { ...task, completed: !task.completed },
@@ -225,21 +190,16 @@ function App() {
       );
 
       console.log('✅ Task toggled successfully');
-      console.log('📦 Updated task:', response.data);
-
       setTasks(tasks.map(t => (t.id === id ? response.data : t)));
     } catch (error) {
       console.error('❌ Error updating task:', error.message);
-      console.error('Response:', error.response?.data);
     }
   };
 
   const deleteTask = async (id) => {
     console.log('\n🗑️ === Deleting Task ===');
-    console.log('🆔 Task ID:', id);
 
     const token = authToken || localStorage.getItem('jwt_token');
-    console.log('🌐 DELETE to:', `${API_BASE_URL}/api/tasks/${id}`);
 
     try {
       await axios.delete(`${API_BASE_URL}/api/tasks/${id}`, {
@@ -247,32 +207,21 @@ function App() {
       });
 
       console.log('✅ Task deleted successfully');
-
       setTasks(tasks.filter(t => t.id !== id));
     } catch (error) {
       console.error('❌ Error deleting task:', error.message);
-      console.error('Response:', error.response?.data);
     }
   };
 
   const handleLogin = () => {
-    console.log('\n🔐 === Login Button Clicked ===');
-    console.log('🌐 Redirecting to:', `${API_BASE_URL}/oauth2/authorization/google`);
-    console.log('🔧 Full API_BASE_URL:', API_BASE_URL);
     window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   };
 
   const handleFacebookLogin = () => {
-    console.log('\n🔐 === Facebook Login Button Clicked ===');
-    console.log('🌐 Redirecting to:', `${API_BASE_URL}/oauth2/authorization/facebook`);
-    console.log('🔧 Full API_BASE_URL:', API_BASE_URL);
     window.location.href = `${API_BASE_URL}/oauth2/authorization/facebook`;
   };
 
   const handleLogout = () => {
-    console.log('\n👋 === Logout Initiated ===');
-    console.log('🧹 Clearing localStorage...');
-
     try {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user');
@@ -280,8 +229,32 @@ function App() {
     setUser(null);
     setTasks([]);
     setAuthToken(null);
+  };
 
-    console.log('✅ Logged out successfully');
+  // NEW: Handler for confirming date selection
+  const handleConfirmDate = () => {
+    if (tempDueDate) {
+      setNewTaskDueDate(tempDueDate);
+    }
+  };
+
+  // NEW: Handler for clearing date
+  const handleClearDate = () => {
+    setTempDueDate('');
+    setNewTaskDueDate('');
+  };
+
+  // NEW: Handler for confirming edit date
+  const handleConfirmEditDate = () => {
+    if (tempEditDate) {
+      setEditingTask({...editingTask, dueDate: tempEditDate});
+    }
+  };
+
+  // NEW: Handler for clearing edit date
+  const handleClearEditDate = () => {
+    setTempEditDate('');
+    setEditingTask({...editingTask, dueDate: null});
   };
 
   // Helper function to format dates nicely
@@ -299,20 +272,12 @@ function App() {
   };
 
   if (loading) {
-    console.log('⏳ App is in loading state...');
     return <div className="loading">Loading...</div>;
   }
 
   if (!user) {
     const params = new URLSearchParams(window.location.search);
     const loginError = params.get('loginError');
-
-    console.log('\n🔓 === Showing Login Screen ===');
-    console.log('📍 Current URL:', window.location.href);
-    console.log('🔗 URL Search Params:', window.location.search);
-    console.log('❌ Login Error Parameter:', loginError);
-    console.log('🎫 Token in localStorage:', localStorage.getItem('jwt_token') || 'NONE');
-    console.log('👤 User in localStorage:', localStorage.getItem('user') || 'NONE');
 
     return (
       <div className="login-container">
@@ -334,10 +299,6 @@ function App() {
       </div>
     );
   }
-
-  console.log('\n✅ === Rendering Main App ===');
-  console.log('👤 Logged in user:', user.name || user.email);
-  console.log('📋 Total tasks:', tasks.length);
 
   return (
     <div className="app">
@@ -386,13 +347,37 @@ function App() {
 
               <div className="form-group">
                 <label htmlFor="task-due-date" className="form-label">Scheduled Date</label>
-                <input
-                  id="task-due-date"
-                  type="datetime-local"
-                  value={newTaskDueDate}
-                  onChange={(e) => setNewTaskDueDate(e.target.value)}
-                  className="due-date-input"
-                />
+                <div className="date-input-group">
+                  <input
+                    id="task-due-date"
+                    type="datetime-local"
+                    value={tempDueDate}
+                    onChange={(e) => setTempDueDate(e.target.value)}
+                    className="due-date-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleConfirmDate}
+                    className="date-confirm-btn"
+                    disabled={!tempDueDate}
+                    title="Apply selected date"
+                  >
+                    ✓
+                  </button>
+                  {newTaskDueDate && (
+                    <button
+                      type="button"
+                      onClick={handleClearDate}
+                      className="date-clear-btn"
+                      title="Clear date"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                {newTaskDueDate && (
+                  <small className="date-preview">Selected: {formatDisplayDate(newTaskDueDate)}</small>
+                )}
               </div>
             </div>
 
@@ -463,7 +448,10 @@ function App() {
 
                     <div className="td-actions">
                       <button
-                        onClick={() => setEditingTask(task)}
+                        onClick={() => {
+                          setEditingTask(task);
+                          setTempEditDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : '');
+                        }}
                         className="edit-btn"
                         title="Edit task"
                       >
@@ -487,7 +475,10 @@ function App() {
 
       {/* Professional Edit Modal */}
       {editingTask && (
-        <div className="modal-overlay" onClick={() => setEditingTask(null)}>
+        <div className="modal-overlay" onClick={() => {
+          setEditingTask(null);
+          setTempEditDate('');
+        }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title">Edit Task</h2>
             <form onSubmit={(e) => {
@@ -527,20 +518,47 @@ function App() {
 
               <div className="modal-form-group">
                 <label htmlFor="edit-task-due-date" className="modal-label">Scheduled Date</label>
-                <input
-                  id="edit-task-due-date"
-                  type="datetime-local"
-                  value={editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().slice(0, 16) : ''}
-                  onChange={(e) => setEditingTask({...editingTask, dueDate: e.target.value})}
-                  className="modal-input"
-                />
+                <div className="date-input-group">
+                  <input
+                    id="edit-task-due-date"
+                    type="datetime-local"
+                    value={tempEditDate}
+                    onChange={(e) => setTempEditDate(e.target.value)}
+                    className="modal-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleConfirmEditDate}
+                    className="date-confirm-btn"
+                    disabled={!tempEditDate}
+                    title="Apply selected date"
+                  >
+                    ✓
+                  </button>
+                  {editingTask.dueDate && (
+                    <button
+                      type="button"
+                      onClick={handleClearEditDate}
+                      className="date-clear-btn"
+                      title="Clear date"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                {editingTask.dueDate && (
+                  <small className="date-preview">Selected: {formatDisplayDate(editingTask.dueDate)}</small>
+                )}
               </div>
 
               <div className="modal-actions">
                 <button type="submit" className="modal-btn-save">
                   💾 Save Changes
                 </button>
-                <button type="button" onClick={() => setEditingTask(null)} className="modal-btn-cancel">
+                <button type="button" onClick={() => {
+                  setEditingTask(null);
+                  setTempEditDate('');
+                }} className="modal-btn-cancel">
                   ✖ Cancel
                 </button>
               </div>
