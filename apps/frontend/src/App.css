@@ -28,20 +28,23 @@ body {
   align-items: center;
   height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
 }
 
 .login-box {
   background: white;
-  padding: 3rem;
+  padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.1);
   text-align: center;
   max-width: 400px;
+  width: 100%;
 }
 
 .login-box h1 {
   color: #333;
   margin-bottom: 1rem;
+  font-size: 1.75rem;
 }
 
 .login-box p {
@@ -88,70 +91,176 @@ body {
   background: #f5f5f5;
 }
 
+/* Professional Header Banner */
 .app-header {
-  background: white;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-banner {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header-content {
+  max-width: 1400px;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.app-header h1 {
-  color: #333;
-  font-size: 1.8rem;
+.header-branding {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-logo {
+  width: 42px;
+  height: 42px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  color: #667eea;
+  font-weight: bold;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+.logo-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.header-text h1 {
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .user-info span {
-  color: #666;
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: none; /* Hidden on mobile by default */
 }
 
 .logout-btn {
-  background: #f44336;
-  color: white;
+  background: white;
+  color: #667eea;
   border: none;
-  padding: 8px 20px;
-  border-radius: 5px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s;
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  white-space: nowrap;
 }
 
 .logout-btn:hover {
-  background: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  background: #f8f8f8;
 }
 
+/* Hero Section */
+.app-hero {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%),
+              url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 400"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23e3f2fd;stop-opacity:1"/><stop offset="100%" style="stop-color:%23f3e5f5;stop-opacity:1"/></linearGradient></defs><rect fill="url(%23bg)" width="1920" height="400"/><circle cx="150" cy="80" r="120" fill="rgba(102,126,234,0.08)"/><circle cx="1750" cy="320" r="200" fill="rgba(118,75,162,0.08)"/><path d="M0,200 Q480,150 960,200 T1920,200" stroke="rgba(102,126,234,0.15)" stroke-width="3" fill="none"/><path d="M0,250 Q480,200 960,250 T1920,250" stroke="rgba(118,75,162,0.15)" stroke-width="2" fill="none"/></svg>');
+  background-size: cover;
+  background-position: center;
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.hero-content {
+  max-width: 1400px;
+  width: 100%;
+  text-align: center;
+}
+
+.hero-title {
+  color: #333;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.hero-subtitle {
+  color: #666;
+  font-size: 0.95rem;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+/* Main Content Area */
 .app-main {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  max-width: 1400px;
+  margin: -2.5rem auto 1.5rem auto;
+  padding: 0 1rem 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 10;
 }
 
-/* Professional Task Form Container */
+/* Card-Based Task Form */
 .task-form-container {
   background: white;
   border-radius: 10px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+  border: 1px solid #e0e0e0;
 }
 
 .form-title {
   color: #333;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+
+.form-subtitle {
+  color: #666;
+  font-size: 0.9rem;
   margin-bottom: 1.5rem;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .task-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .form-group {
@@ -161,13 +270,13 @@ body {
 }
 
 .form-label {
-  color: #555;
-  font-size: 0.9rem;
-  font-weight: 500;
+  color: #333;
+  font-size: 0.85rem;
+  font-weight: 600;
   letter-spacing: 0.3px;
 }
 
-/* NEW: Date Input Group with Buttons */
+/* Date Input Group */
 .date-input-group {
   display: flex;
   gap: 0.5rem;
@@ -177,20 +286,22 @@ body {
 .date-input-group .due-date-input,
 .date-input-group .modal-input {
   flex: 1;
+  min-width: 0; /* Important for mobile */
 }
 
-/* NEW: Confirm Button */
+/* Confirm Button */
 .date-confirm-btn {
   background: #4caf50;
   color: white;
   border: none;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: 6px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
-  min-width: 45px;
+  min-width: 42px;
+  flex-shrink: 0;
 }
 
 .date-confirm-btn:hover:not(:disabled) {
@@ -204,18 +315,19 @@ body {
   opacity: 0.5;
 }
 
-/* NEW: Clear Button */
+/* Clear Button */
 .date-clear-btn {
   background: #f44336;
   color: white;
   border: none;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: 6px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
-  min-width: 45px;
+  min-width: 42px;
+  flex-shrink: 0;
 }
 
 .date-clear-btn:hover {
@@ -223,30 +335,32 @@ body {
   transform: scale(1.05);
 }
 
-/* NEW: Date Preview */
+/* Date Preview */
 .date-preview {
   display: block;
   color: #4caf50;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   margin-top: 0.35rem;
   font-weight: 500;
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
 }
 
 .task-input,
 .priority-select,
 .due-date-input {
-  padding: 12px 15px;
-  border: 2px solid #e0e0e0;
+  padding: 12px 14px;
+  border: 2px solid #d0d0d0;
   border-radius: 6px;
   font-size: 1rem;
   transition: all 0.3s;
   font-family: inherit;
+  background: white;
+  width: 100%;
 }
 
 .task-input:focus,
@@ -259,7 +373,6 @@ body {
 
 .priority-select,
 .due-date-input {
-  background: white;
   cursor: pointer;
 }
 
@@ -267,10 +380,10 @@ body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 14px 30px;
+  padding: 14px 24px;
   border-radius: 6px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   display: flex;
@@ -278,11 +391,17 @@ body {
   justify-content: center;
   gap: 0.5rem;
   margin-top: 0.5rem;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  width: 100%;
 }
 
 .add-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.add-btn:active {
+  transform: translateY(0);
 }
 
 .btn-icon {
@@ -290,92 +409,87 @@ body {
   font-weight: bold;
 }
 
-/* Professional Tasks Container */
+/* Tasks Container */
 .tasks-container {
   background: white;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
   overflow: hidden;
+  width: 100%;
+  max-width: 900px;
+  border: 1px solid #e0e0e0;
 }
 
 .tasks-header {
-  padding: 1.5rem 2rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 2px solid #f0f0f0;
-  background: #fafafa;
+  background: linear-gradient(to bottom, #fafafa, #ffffff);
 }
 
 .tasks-title {
   color: #333;
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
 .no-tasks {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 1.5rem;
 }
 
 .no-tasks p {
   color: #999;
-  font-size: 1.1rem;
+  font-size: 1rem;
   margin-bottom: 0.5rem;
 }
 
 .no-tasks-subtitle {
   color: #bbb;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
-/* Professional Table Layout */
+/* Mobile-First Table Layout */
 .task-table {
   width: 100%;
 }
 
 .task-table-header {
-  display: grid;
-  grid-template-columns: 60px 1fr 120px 200px 120px;
-  gap: 1rem;
-  padding: 1rem 2rem;
-  background: #f8f9fa;
-  border-bottom: 2px solid #e9ecef;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  display: none; /* Hidden on mobile */
 }
 
 .task-table-body {
   background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
 }
 
 .task-row {
-  display: grid;
-  grid-template-columns: 60px 1fr 120px 200px 120px;
-  gap: 1rem;
-  padding: 1.2rem 2rem;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.2s;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s;
 }
 
 .task-row:hover {
-  background: #f9fafb;
-}
-
-.task-row:last-child {
-  border-bottom: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-color: #667eea;
 }
 
 .completed-task {
   opacity: 0.6;
 }
 
-/* Table Columns */
+/* Mobile Task Layout */
 .td-status {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.75rem;
 }
 
 .task-checkbox {
@@ -383,17 +497,20 @@ body {
   height: 20px;
   cursor: pointer;
   accent-color: #667eea;
+  flex-shrink: 0;
 }
 
 .td-name {
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 .task-title {
   font-size: 1rem;
   color: #333;
   font-weight: 500;
+  word-break: break-word;
 }
 
 .task-title.completed {
@@ -404,15 +521,23 @@ body {
 .td-priority {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.td-priority::before {
+  content: 'Priority:';
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
 }
 
 /* Priority Badges */
 .priority-badge {
   display: inline-block;
-  padding: 6px 14px;
-  border-radius: 16px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -439,48 +564,61 @@ body {
 .td-scheduled {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.td-scheduled::before {
+  content: 'Scheduled:';
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
 }
 
 .scheduled-info {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   color: #555;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .scheduled-icon {
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .scheduled-date {
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .no-date {
   color: #aaa;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-style: italic;
 }
 
 .td-actions {
   display: flex;
   gap: 0.5rem;
-  justify-content: flex-end;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f0f0f0;
 }
 
 /* Action Buttons */
 .edit-btn,
 .delete-btn {
+  flex: 1;
   border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
+  padding: 10px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
+  font-weight: 500;
 }
 
 .edit-btn {
@@ -491,7 +629,10 @@ body {
 .edit-btn:hover {
   background: #1976d2;
   color: white;
-  transform: scale(1.1);
+}
+
+.edit-btn:active {
+  transform: scale(0.95);
 }
 
 .delete-btn {
@@ -502,10 +643,13 @@ body {
 .delete-btn:hover {
   background: #c62828;
   color: white;
-  transform: scale(1.1);
 }
 
-/* Professional Modal */
+.delete-btn:active {
+  transform: scale(0.95);
+}
+
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -519,6 +663,7 @@ body {
   z-index: 1000;
   animation: fadeIn 0.2s ease;
   backdrop-filter: blur(4px);
+  padding: 1rem;
 }
 
 @keyframes fadeIn {
@@ -528,12 +673,15 @@ body {
 
 .modal-content {
   background: white;
-  padding: 2rem;
-  border-radius: 12px;
+  padding: 1.5rem;
+  border-radius: 10px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   max-width: 500px;
-  width: 90%;
+  width: 100%;
   animation: slideUp 0.3s ease;
+  border: 1px solid #e0e0e0;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 @keyframes slideUp {
@@ -549,28 +697,28 @@ body {
 
 .modal-title {
   color: #333;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
+  margin-bottom: 1.25rem;
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 .modal-form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.1rem;
 }
 
 .modal-label {
   display: block;
-  color: #555;
-  font-size: 0.9rem;
-  font-weight: 500;
+  color: #333;
+  font-size: 0.85rem;
+  font-weight: 600;
   margin-bottom: 0.5rem;
   letter-spacing: 0.3px;
 }
 
 .modal-input {
   width: 100%;
-  padding: 12px 15px;
-  border: 2px solid #e0e0e0;
+  padding: 12px 14px;
+  border: 2px solid #d0d0d0;
   border-radius: 6px;
   font-size: 1rem;
   font-family: inherit;
@@ -586,18 +734,19 @@ body {
 
 .modal-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 2rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 
 .modal-btn-save,
 .modal-btn-cancel {
-  flex: 1;
-  padding: 12px 20px;
+  width: 100%;
+  padding: 13px 20px;
   border: none;
   border-radius: 6px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   display: flex;
@@ -609,11 +758,16 @@ body {
 .modal-btn-save {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .modal-btn-save:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.modal-btn-save:active {
+  transform: translateY(0);
 }
 
 .modal-btn-cancel {
@@ -625,103 +779,243 @@ body {
   background: #d0d0d0;
 }
 
-/* Mobile Responsive */
-@media (max-width: 968px) {
-  .task-table-header,
-  .task-row {
-    grid-template-columns: 50px 1fr 100px 150px 100px;
-    gap: 0.75rem;
-    padding: 1rem;
-    font-size: 0.85rem;
+/* Tablet and Up (768px+) */
+@media (min-width: 768px) {
+  .header-banner {
+    padding: 1.25rem 2rem;
   }
-
-  .scheduled-date {
-    font-size: 0.8rem;
+  
+  .header-logo {
+    width: 48px;
+    height: 48px;
+    padding: 8px;
+  }
+  
+  .header-text h1 {
+    font-size: 1.6rem;
+  }
+  
+  .user-info span {
+    display: block; /* Show welcome message on tablet+ */
+    font-size: 0.95rem;
+  }
+  
+  .logout-btn {
+    padding: 10px 24px;
+    font-size: 0.95rem;
+  }
+  
+  .app-hero {
+    padding: 2.5rem 2rem;
+  }
+  
+  .hero-title {
+    font-size: 2.25rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.05rem;
+  }
+  
+  .app-main {
+    margin: -3rem auto 2rem auto;
+    padding: 0 2rem 2rem 2rem;
+  }
+  
+  .task-form-container {
+    padding: 2rem;
+  }
+  
+  .form-title {
+    font-size: 1.4rem;
+  }
+  
+  .form-subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  .add-btn {
+    width: auto;
+    padding: 14px 32px;
+  }
+  
+  .tasks-header {
+    padding: 1.5rem 2rem;
+  }
+  
+  .tasks-title {
+    font-size: 1.35rem;
+  }
+  
+  /* Desktop Table Layout */
+  .task-table-header {
+    display: grid;
+    grid-template-columns: 60px 1fr 130px 210px 130px;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  
+  .task-table-body {
+    padding: 0;
+    gap: 0;
+  }
+  
+  .task-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 130px 210px 130px;
+    gap: 1rem;
+    padding: 1.1rem 1.5rem;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    border-radius: 0;
+    align-items: center;
+  }
+  
+  .task-row:hover {
+    background: #fafbfc;
+    border-left: 3px solid #667eea;
+    padding-left: calc(1.5rem - 3px);
+    box-shadow: none;
+  }
+  
+  .task-row:last-child {
+    border-bottom: none;
+  }
+  
+  .td-status {
+    justify-content: center;
+  }
+  
+  .td-priority::before,
+  .td-scheduled::before {
+    display: none;
+  }
+  
+  .td-actions {
+    justify-content: flex-end;
+    border-top: none;
+    padding-top: 0;
+  }
+  
+  .edit-btn,
+  .delete-btn {
+    flex: 0;
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
+  
+  .modal-content {
+    padding: 2rem;
+    width: 90%;
+  }
+  
+  .modal-actions {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+  
+  .modal-btn-save,
+  .modal-btn-cancel {
+    flex: 1;
   }
 }
 
-@media (max-width: 768px) {
-  .app-main {
-    padding: 0 0.5rem;
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+  .hero-title {
+    font-size: 2.5rem;
   }
-
-  .form-row {
-    grid-template-columns: 1fr;
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
   }
-
-  .task-form-container,
-  .tasks-container {
-    border-radius: 8px;
-    padding: 1.5rem;
+  
+  .task-form-container {
+    padding: 2.5rem;
   }
-
-  .tasks-header {
-    padding: 1rem;
-  }
-
-  /* Stack table on mobile */
+  
   .task-table-header {
+    padding: 1rem 2rem;
+    font-size: 0.8rem;
+  }
+  
+  .task-row {
+    padding: 1.2rem 2rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .task-input,
+  .priority-select,
+  .due-date-input,
+  .modal-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .add-btn,
+  .edit-btn,
+  .delete-btn,
+  .modal-btn-save,
+  .modal-btn-cancel {
+    min-height: 44px; /* Apple's recommended touch target size */
+  }
+  
+  .task-checkbox {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  .app-hero {
+    padding: 1.5rem 1rem;
+  }
+  
+  .hero-title {
+    font-size: 1.5rem;
+  }
+  
+  .hero-subtitle {
     display: none;
   }
-
-  .task-table-body {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
+  
+  .app-main {
+    margin-top: -1.5rem;
   }
+}
 
-  .task-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background: white;
-  }
-
-  .task-row:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-
-  .td-status,
-  .td-name,
-  .td-priority,
-  .td-scheduled,
-  .td-actions {
-    width: 100%;
-  }
-
-  .td-status {
-    justify-content: flex-start;
-  }
-
-  .td-actions {
-    justify-content: flex-start;
-  }
-
-  .scheduled-info {
-    font-size: 0.85rem;
-  }
-
-  .modal-content {
-    width: 95%;
-    padding: 1.5rem;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-  }
-
-  /* Date input group on mobile */
-  .date-input-group {
-    flex-wrap: wrap;
-  }
-
+/* Print styles */
+@media print {
+  .header-banner,
+  .app-hero,
+  .logout-btn,
+  .add-btn,
+  .edit-btn,
+  .delete-btn,
   .date-confirm-btn,
   .date-clear-btn {
-    min-width: 40px;
-    padding: 0 12px;
+    display: none;
+  }
+  
+  .task-form-container {
+    display: none;
+  }
+  
+  .task-row {
+    break-inside: avoid;
   }
 }

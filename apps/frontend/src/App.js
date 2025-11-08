@@ -16,9 +16,9 @@ function App() {
   const [authToken, setAuthToken] = useState(null);
   const [newTaskPriority, setNewTaskPriority] = useState('MEDIUM');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
-  const [tempDueDate, setTempDueDate] = useState(''); // NEW: Temporary storage for date selection
+  const [tempDueDate, setTempDueDate] = useState('');
   const [editingTask, setEditingTask] = useState(null);
-  const [tempEditDate, setTempEditDate] = useState(''); // NEW: Temporary storage for edit modal
+  const [tempEditDate, setTempEditDate] = useState('');
 
   // ============ DEBUG: Component Mount ============
   useEffect(() => {
@@ -231,33 +231,28 @@ function App() {
     setAuthToken(null);
   };
 
-  // NEW: Handler for confirming date selection
   const handleConfirmDate = () => {
     if (tempDueDate) {
       setNewTaskDueDate(tempDueDate);
     }
   };
 
-  // NEW: Handler for clearing date
   const handleClearDate = () => {
     setTempDueDate('');
     setNewTaskDueDate('');
   };
 
-  // NEW: Handler for confirming edit date
   const handleConfirmEditDate = () => {
     if (tempEditDate) {
       setEditingTask({...editingTask, dueDate: tempEditDate});
     }
   };
 
-  // NEW: Handler for clearing edit date
   const handleClearEditDate = () => {
     setTempEditDate('');
     setEditingTask({...editingTask, dueDate: null});
   };
 
-  // Helper function to format dates nicely
   const formatDisplayDate = (dateString) => {
     if (!dateString) return 'Not set';
     const date = new Date(dateString);
@@ -303,19 +298,70 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Task Manager</h1>
-        <div className="user-info">
-          <span>Welcome, {user.name}</span>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
-          </button>
+        <div className="header-banner">
+          <div className="header-content">
+            <div className="header-branding">
+              {/* OPTION 1: Use your uploaded clipboard image */}
+              <div className="header-logo">
+                <svg viewBox="0 0 48 48" className="logo-svg">
+                  <rect x="8" y="4" width="32" height="40" rx="3" fill="white"/>
+                  <rect x="12" y="8" width="24" height="32" rx="2" fill="#667eea"/>
+                  <line x1="16" y1="14" x2="32" y2="14" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="16" y1="20" x2="28" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="16" y1="26" x2="30" y2="26" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="16" cy="32" r="1.5" fill="white"/>
+                  <circle cx="16" cy="36" r="1.5" fill="white"/>
+                  <line x1="20" y1="32" x2="32" y2="32" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="20" y1="36" x2="28" y2="36" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              
+              {/* OPTION 2: Simple icon alternative - uncomment to use
+              <div className="header-logo">
+                📋
+              </div>
+              */}
+              
+              {/* OPTION 3: Checkboxes icon - uncomment to use
+              <div className="header-logo">
+                <svg viewBox="0 0 48 48" className="logo-svg">
+                  <rect x="6" y="10" width="12" height="12" rx="2" fill="none" stroke="white" strokeWidth="2"/>
+                  <polyline points="9,16 11,18 15,14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="6" y="26" width="12" height="12" rx="2" fill="none" stroke="white" strokeWidth="2"/>
+                  <polyline points="9,32 11,34 15,30" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="22" y1="16" x2="42" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="22" y1="32" x2="42" y2="32" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              */}
+              
+              <div className="header-text">
+                <h1>TASK MANAGER</h1>
+              </div>
+            </div>
+            <div className="user-info">
+              <span>Welcome, {user.name}</span>
+              <button onClick={handleLogout} className="logout-btn">
+                Sign Out
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
+      {/* Hero Section */}
+      <div className="app-hero">
+        <div className="hero-content">
+          <h2 className="hero-title">Accomplish Your Goals</h2>
+          <p className="hero-subtitle">Stay organized and productive with our powerful task management system</p>
+        </div>
+      </div>
+
       <main className="app-main">
-        {/* Professional Task Creation Form with Labels */}
+        {/* Professional Task Creation Form */}
         <div className="task-form-container">
           <h2 className="form-title">Create New Task</h2>
+          <p className="form-subtitle">Add a task to get started</p>
           <form onSubmit={addTask} className="task-form">
             <div className="form-group">
               <label htmlFor="task-name" className="form-label">Task Name *</label>
@@ -387,7 +433,7 @@ function App() {
           </form>
         </div>
 
-        {/* Task List with Professional Layout */}
+        {/* Task List */}
         <div className="tasks-container">
           <div className="tasks-header">
             <h2 className="tasks-title">My Tasks ({tasks.length})</h2>
@@ -400,7 +446,6 @@ function App() {
             </div>
           ) : (
             <div className="task-table">
-              {/* Table Header */}
               <div className="task-table-header">
                 <div className="th-status">Status</div>
                 <div className="th-name">Task Name</div>
@@ -409,7 +454,6 @@ function App() {
                 <div className="th-actions">Actions</div>
               </div>
 
-              {/* Table Body */}
               <div className="task-table-body">
                 {tasks.map(task => (
                   <div key={task.id} className={`task-row ${task.completed ? 'completed-task' : ''}`}>
@@ -473,7 +517,7 @@ function App() {
         </div>
       </main>
 
-      {/* Professional Edit Modal */}
+      {/* Edit Modal */}
       {editingTask && (
         <div className="modal-overlay" onClick={() => {
           setEditingTask(null);
@@ -512,6 +556,7 @@ function App() {
                 >
                   <option value="LOW">Low</option>
                   <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
                   <option value="HIGH">High</option>
                 </select>
               </div>
