@@ -91,18 +91,21 @@ body {
   background: #f5f5f5;
 }
 
-/* Professional Header Banner */
+/* Professional Header Banner - ALWAYS VISIBLE */
 .app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  position: sticky !important;
+  position: -webkit-sticky !important;
+  top: 0 !important;
+  z-index: 9999 !important;
+  display: block !important;
+  width: 100% !important;
 }
 
 .header-banner {
-  padding: 1rem 1.5rem;
-  display: flex;
+  padding: 1rem 1rem;
+  display: flex !important;
   justify-content: center;
   align-items: center;
 }
@@ -110,26 +113,26 @@ body {
 .header-content {
   max-width: 1400px;
   width: 100%;
-  display: flex;
+  display: flex !important;
   justify-content: space-between;
   align-items: center;
 }
 
 .header-branding {
-  display: flex;
+  display: flex !important;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .header-logo {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   background: white;
   border-radius: 8px;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   color: #667eea;
   font-weight: bold;
@@ -144,7 +147,7 @@ body {
 
 .header-text h1 {
   color: white;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
   margin: 0;
   text-shadow: 0 2px 4px rgba(0,0,0,0.15);
@@ -153,15 +156,15 @@ body {
 }
 
 .user-info {
-  display: flex;
+  display: flex !important;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .user-info span {
   color: white;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   display: none; /* Hidden on mobile by default */
 }
 
@@ -185,14 +188,14 @@ body {
   background: #f8f8f8;
 }
 
-/* Hero Section */
+/* Hero Section - Hidden on Mobile */
 .app-hero {
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%),
               url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 400"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23e3f2fd;stop-opacity:1"/><stop offset="100%" style="stop-color:%23f3e5f5;stop-opacity:1"/></linearGradient></defs><rect fill="url(%23bg)" width="1920" height="400"/><circle cx="150" cy="80" r="120" fill="rgba(102,126,234,0.08)"/><circle cx="1750" cy="320" r="200" fill="rgba(118,75,162,0.08)"/><path d="M0,200 Q480,150 960,200 T1920,200" stroke="rgba(102,126,234,0.15)" stroke-width="3" fill="none"/><path d="M0,250 Q480,200 960,250 T1920,250" stroke="rgba(118,75,162,0.15)" stroke-width="2" fill="none"/></svg>');
   background-size: cover;
   background-position: center;
-  padding: 2rem 1rem;
-  display: flex;
+  padding: 0;
+  display: none; /* Hidden on mobile */
   justify-content: center;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -222,8 +225,8 @@ body {
 /* Main Content Area */
 .app-main {
   max-width: 1400px;
-  margin: -2.5rem auto 1.5rem auto;
-  padding: 0 1rem 1.5rem 1rem;
+  margin: 0 auto 1rem auto;
+  padding: 1rem 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -235,9 +238,9 @@ body {
 .task-form-container {
   background: white;
   border-radius: 10px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   width: 100%;
   max-width: 900px;
   border: 1px solid #e0e0e0;
@@ -245,33 +248,33 @@ body {
 
 .form-title {
   color: #333;
-  font-size: 1.3rem;
-  margin-bottom: 0.35rem;
+  font-size: 1.2rem;
+  margin-bottom: 0.25rem;
   font-weight: 700;
 }
 
 .form-subtitle {
   color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
   font-weight: 400;
 }
 
 .task-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .form-label {
   color: #333;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.3px;
 }
@@ -279,14 +282,14 @@ body {
 /* Date Input Group */
 .date-input-group {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   align-items: stretch;
 }
 
 .date-input-group .due-date-input,
 .date-input-group .modal-input {
   flex: 1;
-  min-width: 0; /* Important for mobile */
+  min-width: 0;
 }
 
 /* Confirm Button */
@@ -294,13 +297,13 @@ body {
   background: #4caf50;
   color: white;
   border: none;
-  padding: 0 14px;
+  padding: 0 12px;
   border-radius: 6px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
-  min-width: 42px;
+  min-width: 40px;
   flex-shrink: 0;
 }
 
@@ -320,13 +323,13 @@ body {
   background: #f44336;
   color: white;
   border: none;
-  padding: 0 14px;
+  padding: 0 12px;
   border-radius: 6px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
-  min-width: 42px;
+  min-width: 40px;
   flex-shrink: 0;
 }
 
@@ -339,21 +342,21 @@ body {
 .date-preview {
   display: block;
   color: #4caf50;
-  font-size: 0.8rem;
-  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
   font-weight: 500;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .task-input,
 .priority-select,
 .due-date-input {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 2px solid #d0d0d0;
   border-radius: 6px;
   font-size: 1rem;
@@ -380,17 +383,17 @@ body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 14px 24px;
+  padding: 12px 20px;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   width: 100%;
 }
@@ -405,7 +408,7 @@ body {
 }
 
 .btn-icon {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 
@@ -421,34 +424,34 @@ body {
 }
 
 .tasks-header {
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.25rem;
   border-bottom: 2px solid #f0f0f0;
   background: linear-gradient(to bottom, #fafafa, #ffffff);
 }
 
 .tasks-title {
   color: #333;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
 }
 
 .no-tasks {
   text-align: center;
-  padding: 3rem 1.5rem;
+  padding: 2.5rem 1.25rem;
 }
 
 .no-tasks p {
   color: #999;
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
 }
 
 .no-tasks-subtitle {
   color: #bbb;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
-/* Mobile-First Table Layout */
+/* ULTRA-COMPACT Mobile Task Layout - TWO LINES ONLY! */
 .task-table {
   width: 100%;
 }
@@ -461,15 +464,15 @@ body {
   background: white;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 0.6rem;
+  padding: 0.75rem;
 }
 
 .task-row {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 0.5rem;
+  padding: 0.75rem;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
   background: white;
@@ -485,11 +488,18 @@ body {
   opacity: 0.6;
 }
 
-/* Mobile Task Layout */
+/* LINE 1: Checkbox + Task Name + Priority + Date - ALL IN ONE LINE! */
+.task-main-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .td-status {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .task-checkbox {
@@ -504,13 +514,18 @@ body {
   display: flex;
   align-items: center;
   flex: 1;
+  min-width: 0;
+  margin-right: 0.5rem;
 }
 
 .task-title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #333;
-  font-weight: 500;
-  word-break: break-word;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 .task-title.completed {
@@ -518,28 +533,29 @@ body {
   color: #999;
 }
 
-.td-priority {
+/* Priority and Scheduled - inline on same line */
+.task-metadata {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
-.td-priority::before {
-  content: 'Priority:';
-  font-size: 0.8rem;
-  color: #666;
-  font-weight: 600;
+.td-priority {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-/* Priority Badges */
+/* Ultra-compact priority badges */
 .priority-badge {
   display: inline-block;
-  padding: 5px 12px;
-  border-radius: 14px;
-  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 8px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
@@ -564,60 +580,57 @@ body {
 .td-scheduled {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.td-scheduled::before {
-  content: 'Scheduled:';
-  font-size: 0.8rem;
-  color: #666;
-  font-weight: 600;
+  gap: 0.3rem;
+  flex-shrink: 0;
 }
 
 .scheduled-info {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  color: #555;
-  font-size: 0.85rem;
+  gap: 0.3rem;
+  color: #666;
+  font-size: 0.7rem;
+  white-space: nowrap;
 }
 
 .scheduled-icon {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 .scheduled-date {
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
+  font-size: 0.7rem;
 }
 
 .no-date {
   color: #aaa;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-style: italic;
+  white-space: nowrap;
 }
 
+/* LINE 2: Action Buttons */
 .td-actions {
   display: flex;
   gap: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #f0f0f0;
+  padding-left: 26px; /* Align with task name */
 }
 
-/* Action Buttons */
+/* Action Buttons - Compact */
 .edit-btn,
 .delete-btn {
   flex: 1;
   border: none;
-  padding: 10px;
+  padding: 8px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   font-weight: 500;
 }
 
@@ -698,26 +711,26 @@ body {
 .modal-title {
   color: #333;
   margin-bottom: 1.25rem;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
 }
 
 .modal-form-group {
-  margin-bottom: 1.1rem;
+  margin-bottom: 1rem;
 }
 
 .modal-label {
   display: block;
   color: #333;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   letter-spacing: 0.3px;
 }
 
 .modal-input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 2px solid #d0d0d0;
   border-radius: 6px;
   font-size: 1rem;
@@ -735,24 +748,24 @@ body {
 .modal-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
 }
 
 .modal-btn-save,
 .modal-btn-cancel {
   width: 100%;
-  padding: 13px 20px;
+  padding: 12px 18px;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .modal-btn-save {
@@ -796,7 +809,7 @@ body {
   }
   
   .user-info span {
-    display: block; /* Show welcome message on tablet+ */
+    display: block;
     font-size: 0.95rem;
   }
   
@@ -806,6 +819,7 @@ body {
   }
   
   .app-hero {
+    display: flex;
     padding: 2.5rem 2rem;
   }
   
@@ -883,6 +897,19 @@ body {
     align-items: center;
   }
   
+  .task-main-info {
+    display: contents; /* Break flex on desktop */
+  }
+  
+  .task-metadata {
+    display: contents; /* Break flex on desktop */
+  }
+  
+  .task-title {
+    white-space: normal;
+    max-width: none;
+  }
+  
   .task-row:hover {
     background: #fafbfc;
     border-left: 3px solid #667eea;
@@ -898,15 +925,9 @@ body {
     justify-content: center;
   }
   
-  .td-priority::before,
-  .td-scheduled::before {
-    display: none;
-  }
-  
   .td-actions {
     justify-content: flex-end;
-    border-top: none;
-    padding-top: 0;
+    padding-left: 0;
   }
   
   .edit-btn,
@@ -974,27 +995,20 @@ body {
   }
   
   .task-checkbox {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
   }
 }
 
 /* Landscape mobile orientation */
 @media (max-height: 500px) and (orientation: landscape) {
   .app-hero {
-    padding: 1.5rem 1rem;
-  }
-  
-  .hero-title {
-    font-size: 1.5rem;
-  }
-  
-  .hero-subtitle {
     display: none;
   }
   
   .app-main {
-    margin-top: -1.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
   }
 }
 

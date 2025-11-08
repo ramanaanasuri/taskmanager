@@ -457,39 +457,45 @@ function App() {
               <div className="task-table-body">
                 {tasks.map(task => (
                   <div key={task.id} className={`task-row ${task.completed ? 'completed-task' : ''}`}>
-                    <div className="td-status">
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={() => toggleTask(task.id)}
-                        className="task-checkbox"
-                        title={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
-                      />
-                    </div>
+                    {/* LINE 1: Checkbox + Task Name + Priority + Scheduled Date - ALL ON ONE LINE! */}
+                    <div className="task-main-info">
+                      <div className="td-status">
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => toggleTask(task.id)}
+                          className="task-checkbox"
+                          title={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
+                        />
+                      </div>
 
-                    <div className="td-name">
-                      <span className={`task-title ${task.completed ? 'completed' : ''}`}>
-                        {task.title}
-                      </span>
-                    </div>
+                      <div className="td-name">
+                        <span className={`task-title ${task.completed ? 'completed' : ''}`}>
+                          {task.title}
+                        </span>
+                      </div>
 
-                    <div className="td-priority">
-                      <span className={`priority-badge priority-${task.priority.toLowerCase()}`}>
-                        {task.priority}
-                      </span>
-                    </div>
-
-                    <div className="td-scheduled">
-                      {task.dueDate ? (
-                        <div className="scheduled-info">
-                          <span className="scheduled-icon">📅</span>
-                          <span className="scheduled-date">{formatDisplayDate(task.dueDate)}</span>
+                      <div className="task-metadata">
+                        <div className="td-priority">
+                          <span className={`priority-badge priority-${task.priority.toLowerCase()}`}>
+                            {task.priority}
+                          </span>
                         </div>
-                      ) : (
-                        <span className="no-date">Not scheduled</span>
-                      )}
+
+                        <div className="td-scheduled">
+                          {task.dueDate ? (
+                            <div className="scheduled-info">
+                              <span className="scheduled-icon">📅</span>
+                              <span className="scheduled-date">{formatDisplayDate(task.dueDate)}</span>
+                            </div>
+                          ) : (
+                            <span className="no-date">Not scheduled</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
+                    {/* LINE 2: Action Buttons */}
                     <div className="td-actions">
                       <button
                         onClick={() => {
