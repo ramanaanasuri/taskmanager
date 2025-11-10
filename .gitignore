@@ -17,3 +17,6 @@ scripts/docker-setup.sh
 backup_*
 backups/
 *~
+apps/frontend/.env
+.env.vapid
+*.env.vapid

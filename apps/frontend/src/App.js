@@ -3,6 +3,16 @@ import axios from 'axios';
 import API_BASE_URL from './config';
 import './App.css';
 
+// ============ WEB PUSH: VAPID Key & Helper ============
+const VAPID_PUBLIC_KEY = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+
+const urlBase64ToUint8Array = (base64String) => {
+  const pad = '='.repeat((4 - base64String.length % 4) % 4);
+  const b64 = (base64String + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(b64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+};
+
 const formatDateForBackend = (dateString) => {
   if (!dateString) return null;
   return dateString.includes('T') ? dateString + ':00' : dateString;
@@ -19,6 +29,10 @@ function App() {
   const [tempDueDate, setTempDueDate] = useState('');
   const [editingTask, setEditingTask] = useState(null);
   const [tempEditDate, setTempEditDate] = useState('');
+  
+  // ============ WEB PUSH: New State Variables ============
+  const [enableNotifications, setEnableNotifications] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState('default');
 
   // ============ DEBUG: Component Mount ============
   useEffect(() => {
@@ -58,6 +72,26 @@ function App() {
     checkAuth(authToken);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken]);
+
+  // ============ WEB PUSH: Register Service Worker ============
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('✅ Service Worker registered:', reg))
+        .catch(err => console.error('❌ SW registration failed:', err));
+      
+      setNotificationPermission(Notification.permission);
+    } else {
+      console.warn('⚠️ Push notifications not supported on this browser');
+    }
+  }, []);
+
+  // ============ WEB PUSH: Auto-enable after first task ============
+  useEffect(() => {
+    if (tasks.length >= 1 && notificationPermission === 'granted') {
+      setEnableNotifications(true);
+    }
+  }, [tasks.length, notificationPermission]);
 
   const checkAuth = async (token) => {
     console.log('\n🔐 === Starting Authentication Check ===');
@@ -109,6 +143,55 @@ function App() {
     }
   };
 
+  // ============ WEB PUSH: Subscribe to Push Notifications ============
+  const subscribeToPush = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications not supported on this browser');
+      return false;
+    }
+
+    if (!VAPID_PUBLIC_KEY) {
+      console.error('❌ VAPID public key not configured');
+      alert('Push notifications not configured. Please contact support.');
+      return false;
+    }
+
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const permission = await Notification.requestPermission();
+      
+      if (permission !== 'granted') {
+        console.log('⚠️ Notification permission denied');
+        alert('Notification permission denied. You can enable it later in browser settings.');
+        return false;
+      }
+
+      setNotificationPermission('granted');
+
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+
+      console.log('📱 Push subscription created:', subscription);
+
+      // Send subscription to backend
+      const token = authToken || localStorage.getItem('jwt_token');
+      await axios.post(
+        `${API_BASE_URL}/api/push/subscribe`,
+        subscription,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log('✅ Push notifications enabled successfully');
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to subscribe to push notifications:', error);
+      alert('Failed to enable notifications. Please try again.');
+      return false;
+    }
+  };
+
   const addTask = async (e) => {
     e.preventDefault();
     console.log('\n➕ === Adding New Task ===');
@@ -121,6 +204,14 @@ function App() {
     const token = authToken || localStorage.getItem('jwt_token');
     const formattedDueDate = newTaskDueDate ? newTaskDueDate + ':00' : null;
   
+    // ============ WEB PUSH: Subscribe if notifications enabled ============
+    if (enableNotifications && notificationPermission !== 'granted') {
+      const subscribed = await subscribeToPush();
+      if (!subscribed) {
+        console.log('⚠️ Notifications not enabled, continuing without them');
+      }
+    }
+
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/tasks`,
@@ -128,7 +219,8 @@ function App() {
           title: newTask, 
           completed: false,
           priority: newTaskPriority,
-          dueDate: formattedDueDate
+          dueDate: formattedDueDate,
+          notificationsEnabled: enableNotifications  // ✅ WEB PUSH: Send checkbox state
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -139,8 +231,10 @@ function App() {
       setNewTaskPriority('MEDIUM');
       setNewTaskDueDate('');
       setTempDueDate('');
+      // Keep enableNotifications checked for next task
     } catch (error) {
       console.error('❌ Error adding task:', error.message);
+      alert('Failed to add task. Please try again.');
     }
   };
 
@@ -255,144 +349,117 @@ function App() {
 
   const formatDisplayDate = (dateString) => {
     if (!dateString) return 'Not set';
-    const date = new Date(dateString);
-    const options = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    };
-    return date.toLocaleDateString('en-US', options);
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (e) {
+      return dateString;
+    }
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading Task Manager...</p>
+      </div>
+    );
   }
 
   if (!user) {
-    const params = new URLSearchParams(window.location.search);
-    const loginError = params.get('loginError');
-
     return (
       <div className="login-container">
-        <div className="login-box">
-          <h1>Task Manager</h1>
-          <p>Manage your tasks efficiently</p>
-          {loginError && (
-            <div style={{ color: '#ffebee', background: '#c62828', padding: '8px 12px', borderRadius: 6, marginBottom: 12 }}>
-              Login failed. Please try again.
+        <div className="login-card">
+          <div className="login-header">
+            <div className="logo-container">
+              <span className="logo-icon">📋</span>
+              <h1 className="app-title">TASK MANAGER PRO</h1>
             </div>
-          )}
-          <button onClick={handleLogin} className="google-btn">
-            Sign in with Google
-          </button>
-          <button onClick={handleFacebookLogin} className="facebook-btn">
-            Sign in with Facebook (Coming Soon)
-          </button>
+            <p className="tagline">Your Day, Organized.</p>
+            <p className="subtitle">A smarter way to plan and complete what matters most.</p>
+          </div>
+
+          <div className="login-buttons">
+            <button onClick={handleLogin} className="google-login-btn">
+              <span className="google-icon">G</span>
+              <span>Continue with Google</span>
+            </button>
+            <button onClick={handleFacebookLogin} className="facebook-login-btn">
+              <span className="facebook-icon">f</span>
+              <span>Continue with Facebook</span>
+            </button>
+          </div>
+
+          <p className="login-footer">
+            Secure sign-in with OAuth 2.0
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="app">
+    <div className="app-container">
+      {/* Header */}
       <header className="app-header">
-        <div className="header-banner">
-          <div className="header-content">
-            <div className="header-branding">
-              {/* OPTION 1: Use your uploaded clipboard image */}
-              {/* Briefcase icon */}
-              <div className="header-logo">
-                <svg viewBox="0 0 48 48" fill="none" className="logo-svg" xmlns="http://www.w3.org/2000/svg">
-                  {/* Briefcase body */}
-                  <rect x="8" y="18" width="32" height="22" rx="2" fill="white"/>
-                  {/* Inner clipboard/paper */}
-                  <rect x="12" y="22" width="24" height="14" rx="1" fill="#e0e7ff"/>
-                  {/* Handle */}
-                  <path d="M18,18 L18,14 C18,12.8954 18.8954,12 20,12 L28,12 C29.1046,12 30,12.8954 30,14 L30,18" stroke="white" strokeWidth="2.5" fill="none"/>
-                  {/* Task lines */}
-                  <line x1="16" y1="26" x2="24" y2="26" stroke="#667eea" strokeWidth="2"/>
-                  <rect x="14" y="24" width="3" height="3" rx="0.5" fill="#10b981"/>
-                  <line x1="16" y1="30" x2="24" y2="30" stroke="#667eea" strokeWidth="2"/>
-                  <rect x="14" y="28" width="3" height="3" rx="0.5" fill="#10b981"/>
-                  <line x1="16" y1="34" x2="24" y2="34" stroke="#667eea" strokeWidth="2"/>
-                  <rect x="14" y="32" width="3" height="3" rx="0.5" fill="#10b981"/>
-                  {/* Clock badge */}
-                  <circle cx="38" cy="38" r="7" fill="white" stroke="#667eea" strokeWidth="2"/>
-                  <path d="M38,34 L38,38 L41,38" stroke="#667eea" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                </svg>
-              </div>
-              
-              
-              {/* OPTION 2: Simple icon alternative - uncomment to use
-              <div className="header-logo">
-                📋
-              </div>
-              */}
-              
-              {/* OPTION 3: Checkboxes icon - uncomment to use
-              <div className="header-logo">
-                <svg viewBox="0 0 48 48" className="logo-svg">
-                  <rect x="6" y="10" width="12" height="12" rx="2" fill="none" stroke="white" strokeWidth="2"/>
-                  <polyline points="9,16 11,18 15,14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <rect x="6" y="26" width="12" height="12" rx="2" fill="none" stroke="white" strokeWidth="2"/>
-                  <polyline points="9,32 11,34 15,30" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="22" y1="16" x2="42" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="22" y1="32" x2="42" y2="32" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
-              */}
-              
-              <div className="header-text">
-                <h1>TASK MANAGER PRO</h1>
-              </div>
-            </div>
-            <div className="user-info">
-              <span>Welcome, {user.name}</span>
-              <button onClick={handleLogout} className="logout-btn">
-                Sign Out
-              </button>
-            </div>
+        <div className="header-content">
+          <div className="header-left">
+            <span className="header-logo">📋</span>
+            <h1 className="header-title">TASK MANAGER PRO</h1>
+          </div>
+          <div className="header-right">
+            <span className="user-greeting">Welcome, {user.name || user.email}</span>
+            <button onClick={handleLogout} className="logout-btn">
+              Sign Out
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="app-hero">
-        <div className="hero-content">
-          <h2 className="hero-title">Your Day, Organized.</h2>
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Hero Section */}
+        <div className="hero-section">
+          <h1 className="hero-title">Your Day, Organized.</h1>
           <p className="hero-subtitle">A smarter way to plan and complete what matters most.</p>
         </div>
-      </div>
 
-      <main className="app-main">
-        {/* Professional Task Creation Form */}
-        <div className="task-form-container">
+        {/* Task Creation Form */}
+        <div className="form-container">
           <h2 className="form-title">Create New Task</h2>
           <p className="form-subtitle">Add a task to get started</p>
+
           <form onSubmit={addTask} className="task-form">
             <div className="form-group">
-              <label htmlFor="task-name" className="form-label">Task Name *</label>
+              <label htmlFor="task-name" className="form-label">
+                Task Name <span className="required">*</span>
+              </label>
               <input
                 id="task-name"
                 type="text"
+                className="form-input"
+                placeholder="Enter task name..."
                 value={newTask}
                 onChange={(e) => setNewTask(e.target.value)}
-                placeholder="Enter task name..."
-                className="task-input"
                 required
               />
             </div>
 
             <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="task-priority" className="form-label">Priority</label>
+              <div className="form-group half">
+                <label htmlFor="priority" className="form-label">Priority</label>
                 <select
-                  id="task-priority"
+                  id="priority"
+                  className="form-select"
                   value={newTaskPriority}
                   onChange={(e) => setNewTaskPriority(e.target.value)}
-                  className="priority-select"
                 >
                   <option value="LOW">Low</option>
                   <option value="MEDIUM">Medium</option>
@@ -400,25 +467,26 @@ function App() {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="task-due-date" className="form-label">Scheduled Date</label>
-                <div className="date-input-group">
+              <div className="form-group half">
+                <label htmlFor="scheduled-date" className="form-label">Scheduled Date</label>
+                <div className="date-input-container">
                   <input
-                    id="task-due-date"
+                    id="scheduled-date"
                     type="datetime-local"
+                    className="form-input date-input"
                     value={tempDueDate}
                     onChange={(e) => setTempDueDate(e.target.value)}
-                    className="due-date-input"
                   />
-                  <button
-                    type="button"
-                    onClick={handleConfirmDate}
-                    className="date-confirm-btn"
-                    disabled={!tempDueDate}
-                    title="Apply selected date"
-                  >
-                    ✓
-                  </button>
+                  {tempDueDate && !newTaskDueDate && (
+                    <button
+                      type="button"
+                      onClick={handleConfirmDate}
+                      className="date-confirm-btn"
+                      title="Confirm date"
+                    >
+                      ✓
+                    </button>
+                  )}
                   {newTaskDueDate && (
                     <button
                       type="button"
@@ -435,6 +503,31 @@ function App() {
                 )}
               </div>
             </div>
+
+            {/* ============ WEB PUSH: Notification Checkbox ============ */}
+            {tasks.length >= 0 && (
+              <div className="notification-option">
+                <label className="notification-label">
+                  <input
+                    type="checkbox"
+                    checked={enableNotifications}
+                    onChange={(e) => setEnableNotifications(e.target.checked)}
+                    className="notification-checkbox"
+                  />
+                  <span className="notification-text">🔔 Text me reminders for this task</span>
+                </label>
+                {enableNotifications && notificationPermission === 'default' && (
+                  <small className="notification-hint">
+                    📱 You'll be asked for notification permission when you add the task
+                  </small>
+                )}
+                {enableNotifications && notificationPermission === 'denied' && (
+                  <small className="notification-warning">
+                    ⚠️ Notifications are blocked. Please enable them in your browser settings.
+                  </small>
+                )}
+              </div>
+            )}
 
             <button type="submit" className="add-btn">
               <span className="btn-icon">+</span> Add Task
@@ -481,6 +574,9 @@ function App() {
                       <div className="td-name">
                         <span className={`task-title ${task.completed ? 'completed' : ''}`}>
                           {task.title}
+                          {task.notificationsEnabled && (
+                            <span className="notification-badge" title="Notifications enabled">🔔</span>
+                          )}
                         </span>
                       </div>
                     </div>

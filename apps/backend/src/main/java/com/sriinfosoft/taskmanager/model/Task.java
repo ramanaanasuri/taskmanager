@@ -33,7 +33,17 @@ public class Task {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TaskPriority priority = TaskPriority.MEDIUM;    
+    private TaskPriority priority = TaskPriority.MEDIUM;
+    
+    // ============ WEB PUSH: New Fields ============
+    @Column(name = "notifications_enabled")
+    private Boolean notificationsEnabled = false;
+    
+    @Column(name = "reminder_sent")
+    private Boolean reminderSent = false;
+    
+    @Column(name = "push_endpoint", length = 500)
+    private String pushEndpoint;
     
     // Constructors
     public Task() {}
@@ -106,5 +116,30 @@ public class Task {
 
     public void setPriority(TaskPriority priority) {
         this.priority = priority;
-    }    
+    }
+    
+    // ============ WEB PUSH: New Getters and Setters ============
+    public Boolean getNotificationsEnabled() {
+        return notificationsEnabled;
+    }
+
+    public void setNotificationsEnabled(Boolean notificationsEnabled) {
+        this.notificationsEnabled = notificationsEnabled;
+    }
+
+    public Boolean getReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(Boolean reminderSent) {
+        this.reminderSent = reminderSent;
+    }
+
+    public String getPushEndpoint() {
+        return pushEndpoint;
+    }
+
+    public void setPushEndpoint(String pushEndpoint) {
+        this.pushEndpoint = pushEndpoint;
+    }
 }

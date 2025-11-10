@@ -76,9 +76,9 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             // ADDED: make API stateless after OAuth – prevents 302 to login for APIs
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ADDED
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // ADDED: return 401 JSON for unauthenticated API calls (not 302)
-            .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))) // ADDED
+            .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/",
@@ -92,6 +92,8 @@ public class SecurityConfig {
                     "/login/oauth2/**",        // ADDED (explicit Spring OAuth2 callback pattern)
                     "/error"
                 ).permitAll()
+                // ✅ ADDED: Explicitly require authentication for push endpoints
+                .requestMatchers("/api/push/**").authenticated()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth -> oauth
@@ -103,10 +105,10 @@ public class SecurityConfig {
                 .successHandler(oAuth2AuthenticationSuccessHandler)
                 .failureHandler(this::oauth2FailureHandler)
             );
-
+    
         // Your API uses JWT after login: keep the JWT filter in the chain.
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+    
         return http.build();
     }
 
