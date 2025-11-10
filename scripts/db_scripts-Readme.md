@@ -42,3 +42,43 @@ tasks   1       idx_due_date    1       due_date        A       15      NULL    
 tasks   1       idx_priority    1       priority        A       7       NULL    NULL            BTREE                   NO
 tasks   1       idx_notifications_enabled       1       notifications_enabled   A       2       NULL    NULL    YES     BTREE                   NO
 ranasuri@gce-for-fullstack-apps-learning:~/sriinfo/taskmanager$ 
+
+//Describe Push subscriptions
+docker exec taskmanager-db mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" -e "DESCRIBE push_subscriptions;"
+
+ranasuri@gce-for-fullstack-apps-learning:~/sriinfo/taskmanager$ docker exec taskmanager-db mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" -e "
+DESCRIBE push_subscriptions;
+"
+Field   Type    Null    Key     Default Extra
+id      bigint(20)      NO      PRI     NULL    auto_increment
+user_email      varchar(255)    NO      MUL     NULL
+endpoint        text    NO      UNI     NULL
+p256dh  text    NO              NULL
+auth    text    NO              NULL
+created_at      timestamp       YES             current_timestamp()
+updated_at      timestamp       YES             current_timestamp()     on update current_timestamp()
+
+//verification ot tasks table
+
+docker exec taskmanager-db mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" -e "
+SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = '$DB_NAME' 
+  AND TABLE_NAME = 'tasks' 
+  AND COLUMN_NAME IN ('notifications_enabled', 'push_endpoint')
+ORDER BY ORDINAL_POSITION;
+"
+
+
+ranasuri@gce-for-fullstack-apps-learning:~/sriinfo/taskmanager$ docker exec taskmanager-db mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" -e "
+SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = '$DB_NAME' 
+  AND TABLE_NAME = 'tasks' 
+  AND COLUMN_NAME IN ('notifications_enabled', 'push_endpoint')
+ORDER BY ORDINAL_POSITION;
+"
+COLUMN_NAME     COLUMN_TYPE     IS_NULLABLE     COLUMN_DEFAULT
+notifications_enabled   tinyint(1)      YES     0
+push_endpoint   text    YES     NULL
+ranasuri@gce-for-fullstack-apps-learning:~/sriinfo/taskmanager$
