@@ -19,6 +19,8 @@ function App() {
   const [tempDueDate, setTempDueDate] = useState('');
   const [editingTask, setEditingTask] = useState(null);
   const [tempEditDate, setTempEditDate] = useState('');
+  const [enableNotifications, setEnableNotifications] = useState(false);
+  const [newTaskPhone, setNewTaskPhone] = useState('');  
 
   // ============ DEBUG: Component Mount ============
   useEffect(() => {
@@ -124,13 +126,18 @@ function App() {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/tasks`,
-        { 
-          title: newTask, 
-          completed: false,
+        {
+          title: newTask,
           priority: newTaskPriority,
-          dueDate: formattedDueDate
+          dueDate: formattedDueDate,
+          completed: false,
+          notificationsEnabled: enableNotifications,
+          phoneNumber: newTaskPhone || null,
+          smsEnabled: false
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
   
       console.log('✅ Task added successfully');
@@ -139,6 +146,8 @@ function App() {
       setNewTaskPriority('MEDIUM');
       setNewTaskDueDate('');
       setTempDueDate('');
+      setEnableNotifications(false);  // ADD THIS
+      setNewTaskPhone('');             // ADD THIS      
     } catch (error) {
       console.error('❌ Error adding task:', error.message);
     }
@@ -435,7 +444,65 @@ function App() {
                 )}
               </div>
             </div>
+            {/* Notification Option */}
+            <div className="form-group">
+              <label className="notification-label" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.95rem'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={enableNotifications}
+                  onChange={(e) => setEnableNotifications(e.target.checked)}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <span>🔔 Enable push notifications for this task</span>
+              </label>
+              <small style={{
+                display: 'block',
+                color: '#666',
+                fontSize: '0.85rem',
+                marginTop: '0.25rem',
+                marginLeft: '1.5rem'
+              }}>
+                You'll be asked for browser notification permission when you add the task
+              </small>
+            </div>
 
+            {/* Phone Number Input - Only shown when notifications enabled */}
+            {enableNotifications && (
+            <div className="form-group">
+              <label htmlFor="task-phone" className="form-label">
+                Phone Number <span style={{color: '#999', fontWeight: 'normal'}}>(Optional - for future SMS)</span>
+              </label>
+              <div className="phone-input-wrapper">
+                <input
+                  id="task-phone"
+                  type="tel"
+                  className="form-input"
+                  placeholder="+1 (555) 123-4567"
+                  value={newTaskPhone}
+                  onChange={(e) => setNewTaskPhone(e.target.value)}
+                  pattern="[+]?[0-9\s\-\(\)]+"
+                />
+              </div>
+              <small style={{
+                display: 'block',
+                color: '#64748b',
+                fontSize: '0.85rem',
+                marginTop: '0.35rem'
+              }}>
+                💡 We'll use this for SMS notifications in the future (Web Push works without it)
+              </small>
+            </div>
+          )}
             <button type="submit" className="add-btn">
               <span className="btn-icon">+</span> Add Task
             </button>
@@ -481,6 +548,11 @@ function App() {
                       <div className="td-name">
                         <span className={`task-title ${task.completed ? 'completed' : ''}`}>
                           {task.title}
+                          {task.notificationsEnabled && (
+                            <span className="notification-badge" title="Notifications enabled">
+                              🔔
+                            </span>
+                          )}
                         </span>
                       </div>
                     </div>

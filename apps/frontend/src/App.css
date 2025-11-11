@@ -1135,3 +1135,58 @@ body {
     background: white;
   }
 }
+
+/* Phone Number Field Styling */
+.phone-input-wrapper {
+  max-width: 400px; /* Narrower than task name */
+}
+
+.phone-input-wrapper input[type="tel"] {
+  font-family: 'Courier New', Consolas, monospace;
+  letter-spacing: 0.5px;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.phone-input-wrapper input[type="tel"]::placeholder {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  letter-spacing: normal;
+}
+
+/* Make phone field look consistent with other inputs */
+input[type="tel"].form-input {
+  border: 2px solid #d0d0d0;
+  border-radius: 6px;
+  padding: 12px 14px;
+  transition: all 0.3s;
+}
+
+input[type="tel"].form-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+/* Responsive: make it even narrower on larger screens */
+@media (min-width: 768px) {
+  .phone-input-wrapper {
+    max-width: 350px;
+  }
+}
+
+/* Notification Badge in Task List */
+.notification-badge {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.task-title:hover .notification-badge {
+  opacity: 1;
+}
+
+.completed .notification-badge {
+  opacity: 0.4;
+}

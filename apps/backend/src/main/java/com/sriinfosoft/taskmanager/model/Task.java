@@ -34,6 +34,19 @@ public class Task {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskPriority priority = TaskPriority.MEDIUM;    
+
+    @Column(name = "notifications_enabled")
+    private Boolean notificationsEnabled = false;
+    
+    @Column(name = "push_endpoint", columnDefinition = "TEXT")
+    private String pushEndpoint;
+    
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+    
+    @Column(name = "sms_enabled")
+    private Boolean smsEnabled = false;
+
     
     // Constructors
     public Task() {}
@@ -106,5 +119,36 @@ public class Task {
 
     public void setPriority(TaskPriority priority) {
         this.priority = priority;
-    }    
+    }  
+    public Boolean getNotificationsEnabled() {
+        return notificationsEnabled;
+    }
+    
+    public void setNotificationsEnabled(Boolean notificationsEnabled) {
+        this.notificationsEnabled = notificationsEnabled;
+    }
+    
+    public String getPushEndpoint() {
+        return pushEndpoint;
+    }
+    
+    public void setPushEndpoint(String pushEndpoint) {
+        this.pushEndpoint = pushEndpoint;
+    }
+    
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+    
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+    
+    public Boolean getSmsEnabled() {
+        return smsEnabled;
+    }
+    
+    public void setSmsEnabled(Boolean smsEnabled) {
+        this.smsEnabled = smsEnabled;
+    }      
 }
