@@ -6,7 +6,13 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
-@Table(name = "tasks")
+@Table(name = "tasks", indexes = {
+    @Index(name = "idx_due_date", columnList = "due_date"),
+    @Index(name = "idx_priority", columnList = "priority"),
+    @Index(name = "idx_notifications_enabled", columnList = "notifications_enabled"),
+    @Index(name = "idx_reminder_sent", columnList = "reminder_sent"), //ADDED - for better query performance
+    @Index(name = "idx_created_from_device", columnList = "created_from_device") //ADDED - for device filtering
+})
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +33,7 @@ public class Task {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     @Column(name = "due_date")
     private LocalDateTime dueDate;
     
@@ -47,6 +53,20 @@ public class Task {
     @Column(name = "sms_enabled")
     private Boolean smsEnabled = false;
 
+    // NEW: Tracks if notification was already sent to prevent duplicates
+    @Column(name = "reminder_sent")
+    private Boolean reminderSent = false;
+    //ADDED - Track which device created the task (mobile/web/tablet)
+    @Column(name = "created_from_device", length = 50)
+    private String createdFromDevice = "web";
+
+    //ADDED - Track client IP address for security/debugging
+    @Column(name = "created_from_ip", length = 45)
+    private String createdFromIp;
+
+    //ADDED - Store full User-Agent string for detailed device info
+    @Column(name = "user_agent", columnDefinition = "TEXT")
+    private String userAgent;    
     
     // Constructors
     public Task() {}
@@ -111,6 +131,10 @@ public class Task {
 
     public void setDueDate(LocalDateTime dueDate) {
         this.dueDate = dueDate;
+        // Reset notification sent flag when due date changes
+        if (dueDate != null) {
+            this.reminderSent = false;
+        }
     }
 
     public TaskPriority getPriority() {
@@ -150,5 +174,98 @@ public class Task {
     
     public void setSmsEnabled(Boolean smsEnabled) {
         this.smsEnabled = smsEnabled;
-    }      
+    }   
+    public Boolean getReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(Boolean reminderSent) {
+        this.reminderSent = reminderSent;
+    }   
+    //ADDED - Getter for device tracking
+    public String getCreatedFromDevice() {
+        return createdFromDevice;
+    }
+
+    //ADDED - Setter for device tracking
+    public void setCreatedFromDevice(String createdFromDevice) {
+        this.createdFromDevice = createdFromDevice;
+    }
+
+    //ADDED - Getter for IP tracking
+    public String getCreatedFromIp() {
+        return createdFromIp;
+    }
+
+    //ADDED - Setter for IP tracking
+    public void setCreatedFromIp(String createdFromIp) {
+        this.createdFromIp = createdFromIp;
+    }
+
+    //ADDED - Getter for User-Agent tracking
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    //ADDED - Setter for User-Agent tracking
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
+    }  
+    
+    /**
+     * Called before persisting a new entity
+     * Ensures all Boolean fields have non-null default values
+     */
+    @PrePersist
+    public void prePersist() {
+        // Ensure completed is never null
+        if (completed == null) {
+            completed = false;
+        }
+        
+        // Ensure reminderSent is never null
+        if (reminderSent == null) {
+            reminderSent = false;
+        }
+        
+        // Ensure notificationsEnabled is never null
+        if (notificationsEnabled == null) {
+            notificationsEnabled = false;
+        }
+        
+        // Ensure smsEnabled is never null
+        if (smsEnabled == null) {
+            smsEnabled = false;
+        }
+        
+        // Set timestamps if not already set
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
+        }
+    }
+    /**
+     * Called before updating an existing entity
+     * Updates the updatedAt timestamp
+     */
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+        
+        // Also ensure boolean fields are not null during updates
+        if (completed == null) {
+            completed = false;
+        }
+        if (reminderSent == null) {
+            reminderSent = false;
+        }
+        if (notificationsEnabled == null) {
+            notificationsEnabled = false;
+        }
+        if (smsEnabled == null) {
+            smsEnabled = false;
+        }
+    }       
 }

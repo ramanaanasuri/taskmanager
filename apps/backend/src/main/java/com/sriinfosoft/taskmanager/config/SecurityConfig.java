@@ -79,19 +79,27 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // ADDED
             // ADDED: return 401 JSON for unauthenticated API calls (not 302)
             .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))) // ADDED
+            // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/",
-                    "/index.html",
-                    "/favicon.ico",
-                    "/static/**",
-                    "/assets/**",
-                    "/actuator/**",
-                    "/oauth2/**",              // authorization endpoints
-                    "/login/**",               // callback endpoints (existing)
-                    "/login/oauth2/**",        // ADDED (explicit Spring OAuth2 callback pattern)
-                    "/error"
-                ).permitAll()
+            // Public endpoints - no authentication required
+            .requestMatchers(
+                "/",
+                "/index.html",
+                "/favicon.ico",
+                "/static/**",
+                "/assets/**",
+                "/manifest.json",
+                "/logo192.png",
+                "/logo512.png",
+                "/sw.js",                  // Service worker
+                "/actuator/**",            // Health check endpoints
+                "/oauth2/**",              // OAuth2 authorization endpoints
+                "/login/**",               // OAuth2 callback endpoints
+                "/login/oauth2/**",        // Explicit Spring OAuth2 callback pattern
+                "/error"
+            ).permitAll()
+                // ✅ ADDED: Explicitly require authentication for push endpoints
+                .requestMatchers("/api/push/**").authenticated()                
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth -> oauth

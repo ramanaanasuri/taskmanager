@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API_BASE_URL from './config';
 import './App.css';
-
-const formatDateForBackend = (dateString) => {
-  if (!dateString) return null;
-  return dateString.includes('T') ? dateString + ':00' : dateString;
-};
+import { subscribeToPushNotifications } from './utils/pushNotifications';
+import { convertLocalToUTC } from './utils/dateUtils';  //ADDED - for timezone conversion
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -111,100 +108,261 @@ function App() {
     }
   };
 
-  const addTask = async (e) => {
-    e.preventDefault();
-    console.log('\n➕ === Adding New Task ===');
+// REPLACE YOUR addTask FUNCTION WITH THIS DEBUG VERSION
+
+const addTask = async (e) => {
+  e.preventDefault();
+  console.log('\n🎯 ═══════════════════════════════════════');
+  console.log('🎯 addTask FUNCTION CALLED');
+  console.log('🎯 ═══════════════════════════════════════');
+
+  if (!newTask.trim()) {
+    console.log('⚠️ Task title is empty - aborting');
+    return;
+  }
+
+  const token = authToken || localStorage.getItem('jwt_token');
   
-    if (!newTask.trim()) {
-      console.log('⚠️ Task title is empty - aborting');
+  console.log('📝 newTaskDueDate STATE:', newTaskDueDate);
+  console.log('📝 Type:', typeof newTaskDueDate);
+  
+  // Call the conversion function
+  console.log('🔄 Calling convertLocalToUTC...');
+  const formattedDueDate = convertLocalToUTC(newTaskDueDate);
+  
+  console.log('✅ Conversion complete!');
+  console.log('📤 formattedDueDate:', formattedDueDate);
+  console.log('📤 Type:', typeof formattedDueDate);
+
+  // ADD: Subscribe to push notifications if enabled
+  if (enableNotifications) {
+    console.log('📞 Notifications enabled - subscribing to push...');
+    try {
+      await subscribeToPushNotifications(API_BASE_URL, token);
+      console.log('✅ Push subscription created successfully');
+    } catch (error) {
+      console.error('❌ Failed to subscribe to push notifications:', error);
+      alert('Failed to enable notifications. Please check browser permissions and try again.');
+      return; // Don't create task if subscription fails
+    }
+  }  
+
+  // Build the request payload
+  const payload = {
+    title: newTask,
+    priority: newTaskPriority,
+    dueDate: formattedDueDate,
+    completed: false,
+    notificationsEnabled: enableNotifications,
+    phoneNumber: newTaskPhone || null,
+    smsEnabled: false
+  };
+
+  console.log('📦 ═══════════════════════════════════════');
+  console.log('📦 REQUEST PAYLOAD TO BACKEND:');
+  console.log(JSON.stringify(payload, null, 2));
+  console.log('📦 ═══════════════════════════════════════');
+
+  try {
+    console.log('🚀 Sending POST request to:', `${API_BASE_URL}/api/tasks`);
+    
+    const response = await axios.post(
+      `${API_BASE_URL}/api/tasks`,
+      payload,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    console.log('✅ ═══════════════════════════════════════');
+    console.log('✅ SUCCESS! Task added!');
+    console.log('✅ Response:', response.data);
+    console.log('✅ ═══════════════════════════════════════');
+    
+    setTasks([...tasks, response.data]);
+    setNewTask('');
+    setNewTaskPriority('MEDIUM');
+    setNewTaskDueDate('');
+    setTempDueDate('');
+    setEnableNotifications(false);
+    setNewTaskPhone('');
+  } catch (error) {
+    console.error('❌ ═══════════════════════════════════════');
+    console.error('❌ ERROR adding task!');
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Full error:', error);
+    if (error.response) {
+      console.error('❌ Response status:', error.response.status);
+      console.error('❌ Response data:', error.response.data);
+    }
+    console.error('❌ ═══════════════════════════════════════');
+  }
+};
+
+const updateTask = async (id, updates) => {
+  console.log('\n' + '='.repeat(60));
+  console.log('✏️ === UPDATING TASK ===');
+  console.log('='.repeat(60));
+  console.log('🆔 Task ID:', id);
+  console.log('📝 Updates received:', JSON.stringify(updates, null, 2));
+
+  const token = authToken || localStorage.getItem('jwt_token');
+
+  try {
+    const task = tasks.find(t => t.id === id);
+    
+    if (!task) {
+      console.error('❌ Task not found in state!');
       return;
     }
-  
-    const token = authToken || localStorage.getItem('jwt_token');
-    const formattedDueDate = newTaskDueDate ? newTaskDueDate + ':00' : null;
-  
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/tasks`,
-        {
-          title: newTask,
-          priority: newTaskPriority,
-          dueDate: formattedDueDate,
-          completed: false,
-          notificationsEnabled: enableNotifications,
-          phoneNumber: newTaskPhone || null,
-          smsEnabled: false
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-  
-      console.log('✅ Task added successfully');
-      setTasks([...tasks, response.data]);
-      setNewTask('');
-      setNewTaskPriority('MEDIUM');
-      setNewTaskDueDate('');
-      setTempDueDate('');
-      setEnableNotifications(false);  // ADD THIS
-      setNewTaskPhone('');             // ADD THIS      
-    } catch (error) {
-      console.error('❌ Error adding task:', error.message);
+
+    console.log('\n📋 === ORIGINAL TASK FROM STATE ===');
+    console.log('Full task object:', JSON.stringify(task, null, 2));
+    console.log('Task completed value:', task.completed);
+    console.log('Task completed type:', typeof task.completed);
+    console.log('Task completed === true:', task.completed === true);
+    console.log('Task completed === false:', task.completed === false);
+    console.log('Task completed === null:', task.completed === null);
+    console.log('Task completed === undefined:', task.completed === undefined);
+    
+    // Convert date to UTC if provided
+    let formattedDueDate = updates.dueDate;
+    if (formattedDueDate && typeof formattedDueDate === 'string') {
+      console.log('\n📅 === DATE CONVERSION ===');
+      console.log('Input dueDate:', formattedDueDate);
+      formattedDueDate = convertLocalToUTC(formattedDueDate);
+      console.log('Converted to UTC:', formattedDueDate);
     }
-  };
 
-  const updateTask = async (id, updates) => {
-    console.log('\n✏️ === Updating Task ===');
+    // Build payload EXPLICITLY
+    const payload = {
+      title: updates.title !== undefined ? updates.title : task.title,
+      priority: updates.priority !== undefined ? updates.priority : task.priority,
+      dueDate: formattedDueDate !== undefined ? formattedDueDate : task.dueDate,
+      completed: task.completed === true,  // Explicit boolean conversion
+      notificationsEnabled: task.notificationsEnabled === true,
+      phoneNumber: task.phoneNumber || null,
+      smsEnabled: task.smsEnabled === true
+    };
 
-    const token = authToken || localStorage.getItem('jwt_token');
+    console.log('\n📤 === PAYLOAD TO BACKEND ===');
+    console.log('Full payload:', JSON.stringify(payload, null, 2));
+    console.log('Payload completed value:', payload.completed);
+    console.log('Payload completed type:', typeof payload.completed);
 
-    try {
-      const task = tasks.find(t => t.id === id);
-      
-      let formattedDueDate = updates.dueDate;
-      if (formattedDueDate && typeof formattedDueDate === 'string' && formattedDueDate.length === 16) {
-        formattedDueDate = formattedDueDate + ':00';
-      }
+    console.log('\n🚀 Sending PUT request to:', `${API_BASE_URL}/api/tasks/${id}`);
 
-      const response = await axios.put(
-        `${API_BASE_URL}/api/tasks/${id}`,
-        { 
-          ...task, 
-          ...updates,
-          dueDate: formattedDueDate
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    const response = await axios.put(
+      `${API_BASE_URL}/api/tasks/${id}`,
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      console.log('✅ Task updated successfully');
-      setTasks(tasks.map(t => (t.id === id ? response.data : t)));
-      setEditingTask(null);
-      setTempEditDate('');
-    } catch (error) {
-      console.error('❌ Error updating task:', error.message);
+    console.log('\n✅ === SUCCESS ===');
+    console.log('Response status:', response.status);
+    console.log('Response data:', JSON.stringify(response.data, null, 2));
+    console.log('Response completed value:', response.data.completed);
+    
+    setTasks(tasks.map(t => (t.id === id ? response.data : t)));
+    setEditingTask(null);
+    setTempEditDate('');
+    
+    console.log('✅ State updated successfully');
+    console.log('='.repeat(60));
+  } catch (error) {
+    console.error('\n❌ === ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+      console.error('Response headers:', error.response.headers);
     }
-  };
+    console.error('='.repeat(60));
+  }
+};
 
-  const toggleTask = async (id) => {
-    console.log('\n🔄 === Toggling Task ===');
+const toggleTask = async (id) => {
+  console.log('\n' + '='.repeat(60));
+  console.log('🔄 === TOGGLING TASK (CHECKBOX) ===');
+  console.log('='.repeat(60));
+  console.log('🆔 Task ID:', id);
 
-    const token = authToken || localStorage.getItem('jwt_token');
+  const token = authToken || localStorage.getItem('jwt_token');
 
-    try {
-      const task = tasks.find(t => t.id === id);
-      const response = await axios.put(
-        `${API_BASE_URL}/api/tasks/${id}`,
-        { ...task, completed: !task.completed },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      console.log('✅ Task toggled successfully');
-      setTasks(tasks.map(t => (t.id === id ? response.data : t)));
-    } catch (error) {
-      console.error('❌ Error updating task:', error.message);
+  try {
+    const task = tasks.find(t => t.id === id);
+    
+    if (!task) {
+      console.error('❌ Task not found in state!');
+      return;
     }
-  };
 
+    console.log('\n📋 === ORIGINAL TASK FROM STATE ===');
+    console.log('Full task object:', JSON.stringify(task, null, 2));
+    console.log('Task title:', task.title);
+    console.log('Task completed value (BEFORE toggle):', task.completed);
+    console.log('Task completed type:', typeof task.completed);
+    console.log('Task completed === true:', task.completed === true);
+    console.log('Task completed === false:', task.completed === false);
+    console.log('Task completed === null:', task.completed === null);
+    console.log('Task completed === undefined:', task.completed === undefined);
+
+    // Build payload EXPLICITLY
+    const payload = {
+      title: task.title,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      completed: !task.completed,  // FLIP the completed status
+      notificationsEnabled: task.notificationsEnabled === true,
+      phoneNumber: task.phoneNumber || null,
+      smsEnabled: task.smsEnabled === true
+    };
+
+    console.log('\n🔄 === TOGGLE LOGIC ===');
+    console.log('Original completed:', task.completed);
+    console.log('Flipped to (!task.completed):', !task.completed);
+    console.log('Final payload completed:', payload.completed);
+    console.log('Expected result:', task.completed ? 'TRUE → FALSE (uncheck)' : 'FALSE → TRUE (check)');
+
+    console.log('\n📤 === PAYLOAD TO BACKEND ===');
+    console.log('Full payload:', JSON.stringify(payload, null, 2));
+    console.log('Payload completed value:', payload.completed);
+    console.log('Payload completed type:', typeof payload.completed);
+
+    console.log('\n🚀 Sending PUT request to:', `${API_BASE_URL}/api/tasks/${id}`);
+
+    const response = await axios.put(
+      `${API_BASE_URL}/api/tasks/${id}`,
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log('\n✅ === SUCCESS ===');
+    console.log('Response status:', response.status);
+    console.log('Response data:', JSON.stringify(response.data, null, 2));
+    console.log('Response completed value (AFTER toggle):', response.data.completed);
+    console.log('Toggle worked correctly:', 
+                task.completed === true && response.data.completed === false ? '✅ YES (checked → unchecked)' :
+                task.completed === false && response.data.completed === true ? '✅ YES (unchecked → checked)' :
+                '❌ NO - Something went wrong!');
+    
+    setTasks(tasks.map(t => (t.id === id ? response.data : t)));
+    
+    console.log('✅ State updated successfully');
+    console.log('='.repeat(60));
+  } catch (error) {
+    console.error('\n❌ === ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+      console.error('Response headers:', error.response.headers);
+    }
+    console.error('='.repeat(60));
+  }
+};
   const deleteTask = async (id) => {
     console.log('\n🗑️ === Deleting Task ===');
 

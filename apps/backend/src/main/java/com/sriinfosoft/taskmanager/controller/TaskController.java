@@ -2,6 +2,8 @@ package com.sriinfosoft.taskmanager.controller;
 
 import com.sriinfosoft.taskmanager.model.Task;
 import com.sriinfosoft.taskmanager.repository.TaskRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,46 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", "Unauthenticated or invalid token"));
     }
+
+    //ADDED - Helper method to detect device type from User-Agent
+    /**
+     * Determines device type (mobile/tablet/web) from User-Agent string
+     */
+    private String getDeviceType(String userAgent) {
+        if (userAgent == null || userAgent.isEmpty()) {
+            return "unknown";
+        }
+        
+        userAgent = userAgent.toLowerCase();
+        
+        if (userAgent.contains("mobile") || userAgent.contains("android") || 
+            userAgent.contains("iphone") || userAgent.contains("ipod")) {
+            return "mobile";
+        } else if (userAgent.contains("tablet") || userAgent.contains("ipad")) {
+            return "tablet";
+        } else {
+            return "web";
+        }
+    }
+
+    //ADDED - Helper method to get real client IP address
+    /**
+     * Extracts the real client IP address, handling proxies and load balancers
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // If X-Forwarded-For contains multiple IPs, take the first one
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
+    }    
 
     /**
      * Extract the signed-in user's email from Spring Security.
@@ -118,8 +160,12 @@ public class TaskController {
         }
     }
 
+    //MODIFIED - Added HttpServletRequest parameter and device tracking logic
     @PostMapping
-    public ResponseEntity<?> createTask(@Valid @RequestBody Task task) {
+    public ResponseEntity<?> createTask(
+            @Valid @RequestBody Task task,
+            HttpServletRequest request) { //ADDED - for capturing device info
+        
         System.out.println("\n➕ === POST /api/tasks called ===");
         System.out.println("Incoming title: " + task.getTitle());
 
@@ -134,6 +180,24 @@ public class TaskController {
             task.setUserEmail(email);
             task.setCreatedAt(LocalDateTime.now());
             task.setUpdatedAt(LocalDateTime.now());
+
+            //ADDED - Capture device information
+            String userAgent = request.getHeader("User-Agent");
+            String clientIp = getClientIp(request);
+            String deviceType = getDeviceType(userAgent);
+            
+            task.setCreatedFromDevice(deviceType);
+            task.setCreatedFromIp(clientIp);
+            task.setUserAgent(userAgent);
+            
+            System.out.println("📱 Device info - Type: " + deviceType + ", IP: " + clientIp);
+            System.out.println("🌐 User-Agent: " + userAgent);
+            //END ADDED
+
+            //ADDED - Ensure reminder_sent is false by default
+            if (task.getReminderSent() == null) {
+                task.setReminderSent(false);
+            }
 
             Task saved = taskRepository.save(task);
             System.out.println("✅ Task created: id=" + saved.getId());

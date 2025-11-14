@@ -1,0 +1,1 @@
+find . -type f ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/target/*" ! -path "*/build/*" ! -name "*.jar" ! -name "*.class" ! -name "*.png" ! -name "*.jpg" ! -name "*.gif" -exec sed -i 's/\r$//' {} \; 2>/dev/null

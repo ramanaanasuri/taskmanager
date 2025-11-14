@@ -22,6 +22,22 @@ public class PushSubscription {
     
     @Column(name = "auth", nullable = false, columnDefinition = "TEXT")
     private String auth;
+
+    @Column(name = "device_type")
+    private String deviceType;  // "web", "mobile", "tablet"
+    
+    @Column(name = "browser")
+    private String browser;  // "Chrome", "Firefox", "Safari", etc.
+    
+    @Column(name = "os")
+    private String os;  // "Windows", "Android", "iOS", "macOS", "Linux"
+    
+    @Column(name = "device_name")
+    private String deviceName;  // "Windows PC", "iPhone", "Samsung Galaxy", etc.
+    
+    @Column(name = "last_used_at")
+    private LocalDateTime lastUsedAt;
+
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -106,4 +122,44 @@ public class PushSubscription {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public String getDeviceType() {
+        return deviceType;
+    }
+    
+    public void setDeviceType(String deviceType) {
+        this.deviceType = deviceType;
+    }
+    
+    public String getBrowser() {
+        return browser;
+    }
+    
+    public void setBrowser(String browser) {
+        this.browser = browser;
+    }
+    
+    public String getOs() {
+        return os;
+    }
+    
+    public void setOs(String os) {
+        this.os = os;
+    }
+    
+    public String getDeviceName() {
+        return deviceName;
+    }
+    
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+    }
+    
+    public LocalDateTime getLastUsedAt() {
+        return lastUsedAt;
+    }
+    
+    public void setLastUsedAt(LocalDateTime lastUsedAt) {
+        this.lastUsedAt = lastUsedAt;
+    }    
 }
