@@ -13,7 +13,6 @@ scripts/docker-setup.sh
 .*.swp
 .*.swo
 .*.swn
-*.sql
 *.dump
 backup_*
 backups/
