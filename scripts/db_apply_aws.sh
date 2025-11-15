@@ -1,97 +1,112 @@
 #!/usr/bin/env bash
-# scripts/db_apply.sh
-# Apply a .sql file to the running MariaDB container using credentials from .env
+# scripts/db_apply_aws.sh
+# Apply a .sql file to the running MariaDB DB (AWS + GCP compatible)
 
 set -euo pipefail
 
 # -------------------------
-# 1) Load .env automatically
+# 0) Project root & .env
 # -------------------------
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$PROJECT_ROOT" || exit 1
+
 ENV_FILE="$PROJECT_ROOT/.env"
 
 if [[ -f "$ENV_FILE" ]]; then
-  echo "🔧 Loading environment variables from .env ..."
+  echo "🔧 Loading environment from .env ..."
   set -a
   . "$ENV_FILE"
   set +a
 else
-  echo "⚠️  .env file not found at: $ENV_FILE"
-  echo "   Relying on already-exported environment variables."
+  echo "⚠️  .env not found at $ENV_FILE — relying on environment variables only."
 fi
 
 # -------------------------
-# 2) Validate env variables
+# 1) Config
 # -------------------------
 DB_NAME="${DB_NAME:-taskmanager}"
 DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-}"
+DB_SERVICE="${DB_CID:-taskmanager-db}"
 
 if [[ -z "$DB_ROOT_PASSWORD" ]]; then
-  echo "❌ ERROR: DB_ROOT_PASSWORD missing (in .env or environment)."
-  exit 2
+  echo "❌ DB_ROOT_PASSWORD is not set (check .env)."
+  exit 1
 fi
 
 # -------------------------
-# 3) Input validation
+# 2) SQL file arg
 # -------------------------
 SQL_FILE="${1:-}"
 
 if [[ -z "$SQL_FILE" ]]; then
-  echo "❌ Usage: $0 path/to/file.sql"
-  exit 2
+  echo "❌ Usage: $0 path/to/migration.sql"
+  exit 1
 fi
 
-if [[ ! -r "$SQL_FILE" ]]; then
-  echo "❌ Cannot read SQL file: $SQL_FILE"
-  exit 2
-fi
-
-# Make SQL_FILE absolute so redirection works no matter where we run from
+# Normalize to absolute path
 if [[ "$SQL_FILE" != /* ]]; then
   SQL_FILE="$PROJECT_ROOT/$SQL_FILE"
 fi
 
-# -------------------------
-# 4) Detect DB container/service (AWS & GCP safe)
-# -------------------------
-DB_CID="${DB_CID:-taskmanager-db}"
-
-# Sanity check: ensure it exists as a running container or compose service
-if ! docker ps --format '{{.Names}}' | grep -qx "$DB_CID"; then
-  echo "❌ No running container/service named '$DB_CID'."
-  echo "   Running containers are:"
-  docker ps --format '  {{.Names}}'
+if [[ ! -r "$SQL_FILE" ]]; then
+  echo "❌ Cannot read SQL file: $SQL_FILE"
   exit 1
 fi
 
-echo "🐳 Using DB container/service: $DB_CID"
-echo "🗄   Database name:            $DB_NAME"
-echo "📄 SQL file:                  $SQL_FILE"
+# -------------------------
+# 3) Detect docker compose vs docker
+# -------------------------
+COMPOSE_CMD=""
+if command -v docker &>/dev/null && docker compose version &>/dev/null; then
+  COMPOSE_CMD="docker compose"
+elif command -v docker-compose &>/dev/null; then
+  COMPOSE_CMD="docker-compose"
+fi
 
-# -------------------------
-# 5) Confirm (unless NO_CONFIRM)
-# -------------------------
-if [[ "${NO_CONFIRM:-}" != "1" ]]; then
-  read -rp "⚠️  Type APPLY to execute SQL: " ACK
-  if [[ "$ACK" != "APPLY" ]]; then
-    echo "❎ Cancelled."
-    exit 0
+# Verify DB service/container exists
+if [[ -n "$COMPOSE_CMD" ]]; then
+  if ! $COMPOSE_CMD ps --services | grep -qx "$DB_SERVICE"; then
+    echo "❌ No compose service named '$DB_SERVICE'."
+    echo "   Services:"
+    $COMPOSE_CMD ps --services
+    exit 1
+  fi
+else
+  if ! docker ps --format '{{.Names}}' | grep -qx "$DB_SERVICE"; then
+    echo "❌ No running container named '$DB_SERVICE'."
+    echo "   Running containers:"
+    docker ps --format '  {{.Names}}'
+    exit 1
   fi
 fi
 
 # -------------------------
-# 6) Choose DB client
+# 4) Confirm
 # -------------------------
-DB_CLIENT="mariadb"
-if ! docker exec "$DB_CID" sh -lc "command -v mariadb >/dev/null 2>&1"; then
-  DB_CLIENT="mysql"
+echo "🗄  Database:        $DB_NAME"
+echo "🐳 DB service:       $DB_SERVICE"
+echo "📄 SQL file:         $SQL_FILE"
+read -rp "Type 'APPLY' to run this migration: " CONFIRM
+if [[ "$CONFIRM" != "APPLY" ]]; then
+  echo "❎ Cancelled."
+  exit 0
 fi
 
 # -------------------------
-# 7) Run SQL
+# 5) Apply SQL (no TTY)
 # -------------------------
-echo "▶️  Applying SQL using $DB_CLIENT ..."
-docker exec -i "$DB_CID" $DB_CLIENT -u root "-p$DB_ROOT_PASSWORD" "$DB_NAME" < "$SQL_FILE"
+echo "▶️  Applying SQL ..."
+
+if [[ -n "$COMPOSE_CMD" ]]; then
+  # Use -T to avoid “input device is not a TTY”
+  $COMPOSE_CMD exec -T "$DB_SERVICE" \
+    mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" \
+    < "$SQL_FILE"
+else
+  docker exec -i "$DB_SERVICE" \
+    mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" \
+    < "$SQL_FILE"
+fi
 
 echo "✅ SQL applied successfully."
 
