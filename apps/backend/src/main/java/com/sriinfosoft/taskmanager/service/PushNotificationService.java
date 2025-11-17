@@ -164,28 +164,6 @@ public class PushNotificationService {
         }
     }
 
-    /**
-     * Send push notification to a specific subscription
-     */
-/*     private void sendNotification(PushSubscription subscription, String title, String body) 
-            throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
-        
-        String payload = String.format(
-            "{\"title\":\"%s\",\"body\":\"%s\"}",
-            escapeJson(title),
-            escapeJson(body)
-        );
-
-        Notification notification = new Notification(
-            subscription.getEndpoint(),
-            subscription.getP256dh(),
-            subscription.getAuth(),
-            payload
-        );
-
-        pushService.send(notification);
-        logger.info("✅ Notification sent successfully to subscription: {}", subscription.getId());
-    } */
 
     /**
      * Send push notification to a specific subscription
@@ -194,7 +172,23 @@ public class PushNotificationService {
      */
     private void sendNotification(PushSubscription subscription, String title, String body) 
             throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
-        
+
+        logger.info("Sending notification to subscription: {}", subscription.getId());
+        logger.info("Subscription: {}", subscription);
+        logger.info("Title: {}", title);
+        logger.info("Body: {}", body);
+        logger.info("Endpoint: {}", subscription.getEndpoint());
+        logger.info("P256dh: {}", subscription.getP256dh());
+        logger.info("Auth: {}", subscription.getAuth());
+        logger.info("Device Type: {}", subscription.getDeviceType());
+        logger.info("Browser: {}", subscription.getBrowser());
+        logger.info("OS: {}", subscription.getOs());
+        logger.info("Device Name: {}", subscription.getDeviceName());
+        logger.info("Last Used At: {}", subscription.getLastUsedAt());
+        logger.info("Created At: {}", subscription.getCreatedAt());
+        logger.info("Updated At: {}", subscription.getUpdatedAt());
+        logger.info("User Email: {}", subscription.getUserEmail());
+
         String payload = String.format(
             "{\"title\":\"%s\",\"body\":\"%s\"}",
             escapeJson(title),
