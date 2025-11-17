@@ -104,7 +104,7 @@ detect_tasks_table() {
 pause() { read -rp "Press Enter to continue…"; }
 
 # ------------------------------
-# Actions
+# Actions: core tables
 # ------------------------------
 action_show_databases() {
   pretty -e "SHOW DATABASES;"
@@ -135,7 +135,62 @@ action_list_tasks() {
     LIMIT 50;"
 }
 
-# NEW: List tasks with priority and scheduled date
+# ------------------------------
+# Actions: push_subscriptions
+# ------------------------------
+action_describe_push_subscriptions() {
+  echo "Describing table: push_subscriptions"
+  pretty -e "USE \`$DB_NAME\`; DESCRIBE \`push_subscriptions\`;"
+}
+
+action_list_push_subscriptions() {
+  echo "Latest push_subscriptions:"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT
+      id,
+      user_email,
+      device_type,
+      device_name,
+      browser,
+      os,
+      DATE_FORMAT(last_used_at, '%Y-%m-%d %H:%i:%s') AS last_used_at,
+      LEFT(endpoint, 80) AS endpoint_preview,
+      DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at,
+      DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') AS updated_at
+    FROM \`push_subscriptions\`
+    ORDER BY id DESC
+    LIMIT 50;"
+}
+
+# ------------------------------
+# Actions: notification_logs
+# ------------------------------
+action_describe_notification_logs() {
+  echo "Describing table: notification_logs"
+  pretty -e "USE \`$DB_NAME\`; DESCRIBE \`notification_logs\`;"
+}
+
+action_list_notification_logs() {
+  echo "Latest notification_logs:"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT
+      id,
+      task_id,
+      user_email,
+      notification_type,
+      status,
+      LEFT(error_message, 120) AS error_message_preview,
+      device_type,
+      LEFT(sent_to_endpoint, 80) AS endpoint_preview,
+      DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at
+    FROM \`notification_logs\`
+    ORDER BY id DESC
+    LIMIT 50;"
+}
+
+# ------------------------------
+# Actions: tasks – extra views
+# ------------------------------
 action_list_tasks_with_priority() {
   local TBL; TBL="$(detect_tasks_table)"
   echo "Tasks with Priority and Scheduled Date:"
@@ -161,7 +216,6 @@ action_list_tasks_with_priority() {
     LIMIT 50;"
 }
 
-# NEW: Show task statistics by priority
 action_task_stats() {
   local TBL; TBL="$(detect_tasks_table)"
   echo "Task Statistics by Priority:"
@@ -183,7 +237,6 @@ action_task_stats() {
       END;"
 }
 
-# NEW: Show overdue tasks
 action_overdue_tasks() {
   local TBL; TBL="$(detect_tasks_table)"
   echo "Overdue Tasks (not completed, past due date):"
@@ -202,7 +255,6 @@ action_overdue_tasks() {
     ORDER BY due_date ASC;"
 }
 
-# NEW: Show upcoming tasks (due in next 7 days)
 action_upcoming_tasks() {
   local TBL; TBL="$(detect_tasks_table)"
   echo "Upcoming Tasks (next 7 days):"
@@ -222,7 +274,6 @@ action_upcoming_tasks() {
     ORDER BY due_date ASC;"
 }
 
-# NEW: Show tasks by priority
 action_tasks_by_priority() {
   local priority TBL
   echo "Choose priority:"
@@ -267,7 +318,6 @@ action_insert_task() {
 
   TBL="$(detect_tasks_table)"
 
-  # Insert using only schema columns: id (auto), completed, created_at, title, updated_at, user_email
   db -t -e "
     USE \`${DB_NAME}\`;
     INSERT INTO \`${TBL}\`
@@ -326,7 +376,6 @@ action_raw_sql() {
   echo ""
   read -rp "Press Enter to open SQL shell..."
   
-  # Open interactive MariaDB shell
   docker exec -it "$CONTAINER" mariadb \
     --protocol=TCP -h127.0.0.1 -P3306 \
     -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME"
@@ -347,7 +396,6 @@ action_mark_complete() {
     SELECT ROW_COUNT() AS rows_changed;"
 }
 
-
 # ------------------------------
 # Menu
 # ------------------------------
@@ -361,12 +409,20 @@ TaskManager DB Tool  (container: $CONTAINER, db: $DB_NAME)
 2) Show tables in $DB_NAME
 3) Describe tasks table
 4) List latest 50 tasks (basic)
+
+=== Push Subscription / Notification Logs ===
+10) Describe push_subscriptions table
+11) List latest 50 push_subscriptions
+12) Describe notification_logs table
+13) List latest 50 notification_logs
+
+=== Task Mutations ===
 5) Insert test task
 6) Mark task complete by id
 7) Delete task by id
 8) Seed DB & app user  (create DB, user, grant)
 
-=== Priority & Schedule Views (NEW) ===
+=== Priority & Schedule Views ===
 p) List tasks with Priority & Scheduled Date
 s) Task statistics by priority
 o) Show overdue tasks
@@ -384,6 +440,12 @@ EOF
     2) action_show_tables; pause;;
     3) action_describe_tasks; pause;;
     4) action_list_tasks; pause;;
+
+    10) action_describe_push_subscriptions; pause;;
+    11) action_list_push_subscriptions; pause;;
+    12) action_describe_notification_logs; pause;;
+    13) action_list_notification_logs; pause;;
+
     5) action_insert_task; pause;;
     6) action_update_complete; pause;;
     7) action_delete_task; pause;;
@@ -399,3 +461,4 @@ EOF
     *) echo "Invalid option"; sleep 1;;
   esac
 done
+
