@@ -2,7 +2,9 @@
 
 # -----------------------------------------------------------------------------
 # Replace GCP subdomain with AWS subdomain across all files in taskmanager/
-# Skips the .git directory and prints only a final summary.
+# - Skips the .git directory
+# - Prints each updated file
+# - Shows a final summary and git status (if in a git repo)
 # -----------------------------------------------------------------------------
 
 set -e
@@ -31,7 +33,15 @@ fi
 # Replace in each matched file
 for file in "${files[@]}"; do
   sed -i "s/$OLD_DOMAIN/$NEW_DOMAIN/g" "$file"
+  echo "Updated: $file"
 done
 
 echo "✔ Done. Updated $count file(s)."
+
+# If this is a git repo, show a concise status
+if [ -d "$TARGET_DIR/.git" ]; then
+  echo
+  echo "Git status (short):"
+  (cd "$TARGET_DIR" && git status --short)
+fi
 
