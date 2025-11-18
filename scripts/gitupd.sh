@@ -1,2 +1,2 @@
 git fetch origin
-git push origin feature/notifications-clean
+git pull origin feature/notifications-clean
