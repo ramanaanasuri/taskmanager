@@ -24,28 +24,24 @@ echo "Updating domains in $TARGET_DIR ..."
 echo "Replacing: $OLD_DOMAIN  -->  $NEW_DOMAIN"
 echo "Skipping .git directory and $SCRIPT_PATH"
 
-# Find all files that contain OLD_DOMAIN, excluding .git and this script
-mapfile -t files < <(grep -rlI \
-  --exclude-dir=".git" \
-  --exclude="$SCRIPT_NAME" \
-  "$OLD_DOMAIN" "$TARGET_DIR" || true)
+count=0
 
-count=${#files[@]}
-
-if [ "$count" -eq 0 ]; then
-  echo "✔ Done. Updated 0 file(s). No occurrences of '$OLD_DOMAIN' found (outside excluded paths)."
-  exit 0
-fi
-
-# Replace in each matched file (extra safety: skip this script if it ever appears)
-for file in "${files[@]}"; do
+# Walk all files under TARGET_DIR (excluding .git), check and replace
+while IFS= read -r -d '' file; do
+  # Extra safety: never touch this script itself
   if [[ "$file" == "$SCRIPT_PATH" ]]; then
     continue
   fi
 
-  sed -i "s/$OLD_DOMAIN/$NEW_DOMAIN/g" "$file"
-  echo "Updated: $file"
-done
+  if grep -q "$OLD_DOMAIN" "$file"; then
+    sed -i "s/$OLD_DOMAIN/$NEW_DOMAIN/g" "$file"
+    echo "Updated: $file"
+    count=$((count + 1))
+  fi
+done < <(find "$TARGET_DIR" \
+           -type f \
+           ! -path "$TARGET_DIR/.git/*" \
+           -print0)
 
 echo "✔ Done. Updated $count file(s)."
 
