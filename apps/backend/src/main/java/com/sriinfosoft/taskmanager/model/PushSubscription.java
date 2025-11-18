@@ -34,6 +34,9 @@ public class PushSubscription {
     
     @Column(name = "device_name")
     private String deviceName;  // "Windows PC", "iPhone", "Samsung Galaxy", etc.
+
+    @Column(name = "created_from_ip")
+    private String createdFromIp;  // IP address where subscription was created    
     
     @Column(name = "last_used_at")
     private LocalDateTime lastUsedAt;
@@ -161,5 +164,13 @@ public class PushSubscription {
     
     public void setLastUsedAt(LocalDateTime lastUsedAt) {
         this.lastUsedAt = lastUsedAt;
+    }    
+
+    public String getCreatedFromIp() {
+        return createdFromIp;
+    }
+    
+    public void setCreatedFromIp(String createdFromIp) {
+        this.createdFromIp = createdFromIp;
     }    
 }

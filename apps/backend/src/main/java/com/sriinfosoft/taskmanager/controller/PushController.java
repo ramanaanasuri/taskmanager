@@ -3,6 +3,7 @@ package com.sriinfosoft.taskmanager.controller;
 import com.sriinfosoft.taskmanager.model.PushSubscription;
 import com.sriinfosoft.taskmanager.repository.PushSubscriptionRepository;
 import com.sriinfosoft.taskmanager.security.JwtTokenProvider;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -10,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/push")
@@ -24,7 +27,8 @@ public class PushController {
     
     @Autowired
     private PushSubscriptionRepository subscriptionRepository;
-    
+    private static final Logger logger = LoggerFactory.getLogger(PushController.class);
+
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
     
@@ -32,7 +36,7 @@ public class PushController {
     public ResponseEntity<?> subscribe(
             @RequestHeader("Authorization") String authHeader,
             @RequestHeader(value = "User-Agent", required = false) String userAgent,  // ADD THIS
-            @RequestBody Map<String, Object> subscriptionData
+            @RequestBody Map<String, Object> subscriptionData,jakarta.servlet.http.HttpServletRequest request
     ) {
         try {
             // Get user email from authentication context
@@ -51,6 +55,8 @@ public class PushController {
             Map<String, String> keys = (Map<String, String>) subscriptionData.get("keys");
             String p256dh = keys.get("p256dh");
             String auth = keys.get("auth");
+            // === CAPTURE IP ADDRESS ===
+            String clientIp = getClientIp(request);            
 
             // === ADD DEVICE DETECTION ===
             String deviceType = detectDeviceType(userAgent);
@@ -59,11 +65,12 @@ public class PushController {
             String deviceName = detectDeviceName(userAgent);
             
             // Log device info
-            System.out.println("📱 Device Detection:");
+            logger.info("📱 Device Detection:");
             System.out.println("   Type: " + deviceType);
             System.out.println("   Browser: " + browser);
             System.out.println("   OS: " + os);
             System.out.println("   Device: " + deviceName);
+            logger.info("   IP Address: " + clientIp);
             System.out.println("   User-Agent: " + userAgent);            
             
             // Check if subscription already exists
@@ -81,6 +88,7 @@ public class PushController {
                 subscription.setBrowser(browser);
                 subscription.setOs(os);
                 subscription.setDeviceName(deviceName);
+                subscription.setCreatedFromIp(clientIp);  // UPDATE IP
                 subscription.setLastUsedAt(java.time.LocalDateTime.now());                
                 subscriptionRepository.save(subscription);
 
@@ -107,6 +115,7 @@ public class PushController {
                 subscription.setBrowser(browser);
                 subscription.setOs(os);
                 subscription.setDeviceName(deviceName);
+                subscription.setCreatedFromIp(clientIp);  // SET IP
                 subscription.setCreatedAt(java.time.LocalDateTime.now());
                 subscription.setLastUsedAt(java.time.LocalDateTime.now());                
                 subscriptionRepository.save(subscription);
@@ -306,5 +315,32 @@ public class PushController {
         if (ua.contains("linux")) return "Linux PC";
         
         return null;
-    }        
+    }  
+    
+    /**
+     * Get client IP address, checking for proxies and load balancers
+     */
+    private String getClientIp(jakarta.servlet.http.HttpServletRequest request) {
+        // Check common proxy headers first
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            // X-Forwarded-For can contain multiple IPs, take the first one
+            return ip.split(",")[0].trim();
+        }
+        
+        ip = request.getHeader("X-Real-IP");
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip;
+        }
+        
+        // CloudFront specific
+        ip = request.getHeader("CloudFront-Viewer-Address");
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            // Format is "ip:port", extract just the IP
+            return ip.split(":")[0];
+        }
+        
+        // Fallback to remote address
+        return request.getRemoteAddr();
+    }    
 }
