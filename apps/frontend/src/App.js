@@ -58,6 +58,92 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken]);
 
+  // ============ ADDED: Service Worker Message Listener ============
+  useEffect(() => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[APP DEBUG] 1. Setting up message listener');
+    
+    if ('serviceWorker' in navigator) {
+      console.log('[APP DEBUG] 2. Service Worker API available');
+      
+      const messageHandler = (event) => {
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('[APP DEBUG] 3. Message received at:', new Date().toISOString());
+        console.log('[APP DEBUG] 4. Event:', event);
+        console.log('[APP DEBUG] 5. Event.data:', event.data);
+        console.log('[APP DEBUG] 6. Event.origin:', event.origin);
+        console.log('[APP DEBUG] 7. Event.source:', event.source);
+        
+        if (event.data) {
+          console.log('[APP DEBUG] 8. Message type:', event.data.type);
+          console.log('[APP DEBUG] 9. Message taskId:', event.data.taskId);
+          
+          if (event.data.type === 'NOTIFICATION_CLICK') {
+            console.log('[APP DEBUG] 10. ✅ NOTIFICATION_CLICK detected');
+            const taskId = event.data.taskId;
+            console.log('[APP DEBUG] 11. Task ID:', taskId);
+            
+            console.log('[APP DEBUG] 12. Current location:', window.location.href);
+            console.log('[APP DEBUG] 13. Document readyState:', document.readyState);
+            console.log('[APP DEBUG] 14. Loading state before reload:', loading);
+            
+            console.log('[APP DEBUG] 15. Calling window.location.reload()...');
+            window.location.reload();
+            console.log('[APP DEBUG] 16. Reload called (may not execute due to reload)');
+          } else {
+            console.log('[APP DEBUG] 10. ⚠️ Unknown message type:', event.data.type);
+          }
+        } else {
+          console.log('[APP DEBUG] 8. ⚠️ No data in message');
+        }
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      };
+      
+      navigator.serviceWorker.addEventListener('message', messageHandler);
+      console.log('[APP DEBUG] 17. ✅ Message listener registered');
+      
+      // Check if SW is already registered
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) {
+          console.log('[APP DEBUG] 18. SW already registered');
+          console.log('[APP DEBUG] 18a. SW scope:', reg.scope);
+          console.log('[APP DEBUG] 18b. SW active:', reg.active ? 'YES' : 'NO');
+        } else {
+          console.log('[APP DEBUG] 18. ⚠️ No SW registered yet');
+        }
+      });
+      
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', messageHandler);
+        console.log('[APP DEBUG] 19. Message listener removed');
+      };
+    } else {
+      console.log('[APP DEBUG] 2. ❌ Service Worker API NOT available');
+    }
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  }, []);
+  
+  useEffect(() => {
+    console.log('[APP DEBUG] Loading state changed:', loading);
+    
+    // If stuck in loading state for more than 5 seconds, alert
+    if (loading) {
+      const timer = setTimeout(() => {
+        console.error('[APP DEBUG] ⚠️ STUCK IN LOADING STATE for 5+ seconds!');
+        console.log('[APP DEBUG] Current state:', {
+          loading,
+          user,
+          authToken,
+          tasks: tasks.length
+        });
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+    
+  // ============ End Added Code ============
+
   const checkAuth = async (token) => {
     console.log('\n🔐 === Starting Authentication Check ===');
     console.log('🎫 Using token:', token ? `${token.substring(0, 30)}...` : '❌ NONE');

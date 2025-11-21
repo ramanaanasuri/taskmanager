@@ -131,6 +131,113 @@ public class PushNotificationService {
         return !pushSubscriptionRepository.findByUserEmail(userEmail).isEmpty();
     }
 
+    //ADDED - New overloaded method to send notification with task ID
+    //This allows the frontend to navigate to specific task when notification is clicked
+    /**
+     * Send push notification to a specific user with task ID (by email)
+     * The task ID is included in the notification data so the frontend can identify
+     * which task triggered the notification
+     * 
+     * @param userEmail The user's email address
+     * @param title The notification title
+     * @param body The notification body text
+     * @param taskId The ID of the task this notification is about
+     */
+    public void sendNotificationToUser(String userEmail, String title, String body, Long taskId) {
+        if (pushService == null) {
+            logger.error("❌ Push service not initialized. Cannot send notification.");
+            return;
+        }
+
+        try {
+            Objects.requireNonNull(userEmail, "userEmail must not be null");
+            Objects.requireNonNull(taskId, "taskId must not be null");
+
+            List<PushSubscription> subscriptions = pushSubscriptionRepository.findByUserEmail(userEmail);
+            
+            if (subscriptions.isEmpty()) {
+                logger.warn("⚠️ No push subscriptions found for user: {}", userEmail);
+                return;
+            }
+
+            logger.info("📤 Sending notification with task ID {} to {} subscription(s) for user: {}", 
+                       taskId, subscriptions.size(), userEmail);
+
+            for (PushSubscription subscription : subscriptions) {
+                try {
+                    //ADDED - Call the new method that includes task ID
+                    sendNotificationWithTaskId(subscription, title, body, taskId);
+                } catch (Exception e) {
+                    logger.error("❌ Failed to send to subscription {}: {}", subscription.getId(), e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("❌ Error sending notification with task ID to user {}: {}", userEmail, e.getMessage(), e);
+        }
+    }
+
+    //ADDED - New private method to send notification with task ID included in payload
+    //The task ID is included in the "data" field so the service worker can extract it
+    /**
+     * Send push notification to a specific subscription with task ID
+     * The notification payload includes task data in the "data" field
+     */
+    private void sendNotificationWithTaskId(PushSubscription subscription, String title, String body, Long taskId) 
+            throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
+
+        logger.info("Sending notification with task ID to subscription: {}", subscription.getId());
+        logger.info("Task ID: {}", taskId);
+        logger.info("Title: {}", title);
+        logger.info("Body: {}", body);
+
+        //MODIFIED - Include task ID in the notification data
+        //The "data" field is accessible in the service worker via notification.data
+        String payload = String.format(
+            "{\"title\":\"%s\",\"body\":\"%s\",\"data\":{\"taskId\":\"%s\"}}",
+            escapeJson(title),
+            escapeJson(body),
+            taskId  //ADDED - Include task ID so frontend can identify the specific task
+        );
+
+        logger.info("Notification payload: {}", payload);
+
+        Notification notification = new Notification(
+            subscription.getEndpoint(),
+            subscription.getP256dh(),
+            subscription.getAuth(),
+            payload
+        );
+
+        try {
+            // Send notification and get response
+            HttpResponse response = pushService.send(notification);
+            int statusCode = response.getStatusLine().getStatusCode();
+            
+            if (statusCode == 201) {
+                // Success! Notification sent
+                logger.info("✅ Notification with task ID {} sent successfully to subscription: {}", 
+                           taskId, subscription.getId());
+                
+                // ✅ UPDATE last_used_at timestamp
+                updateSubscriptionLastUsed(subscription);
+                
+            } else if (statusCode == 410) {
+                // Subscription expired/invalid - remove it
+                logger.warn("⚠️ Subscription {} is expired (410 Gone), removing from database", subscription.getId());
+                pushSubscriptionRepository.delete(subscription);
+                
+            } else {
+                // Other error
+                logger.error("❌ Failed to send notification to subscription {}. Status: {}", 
+                            subscription.getId(), statusCode);
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ Exception sending notification with task ID to subscription {}: {}", 
+                        subscription.getId(), e.getMessage());
+            throw e;
+        }
+    }
     /**
      * Send push notification to a specific user (by email)
      */
@@ -164,6 +271,28 @@ public class PushNotificationService {
         }
     }
 
+    /**
+     * Send push notification to a specific subscription
+     */
+/*     private void sendNotification(PushSubscription subscription, String title, String body) 
+            throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
+        
+        String payload = String.format(
+            "{\"title\":\"%s\",\"body\":\"%s\"}",
+            escapeJson(title),
+            escapeJson(body)
+        );
+
+        Notification notification = new Notification(
+            subscription.getEndpoint(),
+            subscription.getP256dh(),
+            subscription.getAuth(),
+            payload
+        );
+
+        pushService.send(notification);
+        logger.info("✅ Notification sent successfully to subscription: {}", subscription.getId());
+    } */
 
     /**
      * Send push notification to a specific subscription
@@ -172,7 +301,6 @@ public class PushNotificationService {
      */
     private void sendNotification(PushSubscription subscription, String title, String body) 
             throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
-
         logger.info("Sending notification to subscription: {}", subscription.getId());
         logger.info("Subscription: {}", subscription);
         logger.info("Title: {}", title);

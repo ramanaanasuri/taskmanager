@@ -104,7 +104,7 @@ public class NotificationScheduler {
             pushNotificationService.sendNotificationToUser(
                 task.getUserEmail(),
                 title,
-                body
+                body,task.getId()  //ADDED - Pass task ID so notification includes task context
             );
             
             // Log successful notification (endpoint will be null, that's fine)
