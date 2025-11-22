@@ -703,7 +703,7 @@ const toggleTask = async (id) => {
               */}
               
               <div className="header-text">
-                <h1>TASK MANAGER PRO</h1>
+                <h1>Task Manager Pro</h1>
               </div>
             </div>
             <div className="user-info">

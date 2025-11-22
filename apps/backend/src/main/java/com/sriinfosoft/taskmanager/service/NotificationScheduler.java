@@ -15,8 +15,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
- * Scheduler that checks for due tasks and sends push notifications
+ * Scheduler that checks for due tasks and sends notifications (push + email)
  * Runs every minute to check if any tasks are due
+ * 
+ * MODIFIED for Email Integration - Now sends both push and email notifications
  */
 @Component
 public class NotificationScheduler {
@@ -29,16 +31,23 @@ public class NotificationScheduler {
     @Autowired
     private PushNotificationService pushNotificationService;
 
+    //ADDED for Email Integration - Email notification service
     @Autowired
-    private NotificationLogRepository notificationLogRepository;  // ADDED
+    private EmailService emailService;
+
+    @Autowired
+    private NotificationLogRepository notificationLogRepository;
 
     /**
      * Runs every minute to check for tasks that are due
      * cron expression: "0 * * * * *" means: at second 0 of every minute
+     * 
+     * MODIFIED for Email Integration - Now sends both push and email notifications
      */
     @Scheduled(cron = "0 * * * * *")
     public void checkAndSendDueTaskNotifications() {
         logger.info("🔔 Running scheduled task notification check at {}", LocalDateTime.now());
+        logger.debug("DEBUG: Email Integration - Scheduler triggered"); //ADDED for Email Integration
 
         try {
             // Get current time
@@ -49,6 +58,8 @@ public class NotificationScheduler {
             // 2. Have notifications enabled
             // 3. Have a due date within the next 2 minutes (to catch tasks even if scheduler misses exact time)
             LocalDateTime checkUntil = now.plusMinutes(2);
+            
+            logger.debug("DEBUG: Checking for tasks between {} and {}", now.minusMinutes(1), checkUntil); //ADDED for Email Integration
             
             List<Task> dueTasks = taskRepository.findDueTasksForNotification(
                 now.minusMinutes(1), // Look back 1 minute to catch any missed
@@ -63,23 +74,23 @@ public class NotificationScheduler {
                     // Check if we've already sent notification for this task
                     // (to avoid duplicate notifications)
                     if (task.getReminderSent() == null || !task.getReminderSent()) {
-                        logger.info("📤 Sending notification for task: {} (ID: {})", task.getTitle(), task.getId());
+                        logger.info("📤 Sending notifications for task: {} (ID: {})", task.getTitle(), task.getId());
+                        logger.debug("DEBUG: Task details - Priority: {}, Due: {}, Email: {}", 
+                            task.getPriority(), task.getDueDate(), task.getUserEmail()); //ADDED for Email Integration
                         
-                        // Send notification and log result
-                        sendTaskNotificationWithLogging(task);
+                        //MODIFIED for Email Integration - Now sends BOTH push and email notifications
+                        sendAllNotifications(task);
                         
                         // Mark as notification sent
                         task.setReminderSent(true);
                         taskRepository.save(task);
                         
-                        logger.info("✅ Notification sent and logged for task: {} (ID: {})", task.getTitle(), task.getId());
+                        logger.info("✅ All notifications sent for task: {} (ID: {})", task.getTitle(), task.getId());
                     } else {
                         logger.debug("⏭️ Skipping task {} - notification already sent", task.getId());
                     }
                 } catch (Exception e) {
                     logger.error("❌ Error sending notification for task {}: {}", task.getId(), e.getMessage(), e);
-                    // Log the failure
-                    logNotificationFailure(task, e.getMessage());
                 }
             }
 
@@ -88,10 +99,27 @@ public class NotificationScheduler {
         }
     }
 
+    //ADDED for Email Integration - Send ALL notifications (push + email) for a task
+    /**
+     * Send ALL notifications (push + email) for a task
+     */
+    private void sendAllNotifications(Task task) {
+        logger.debug("DEBUG: sendAllNotifications() called for task {}", task.getId()); //ADDED for Email Integration
+        
+        // 1. Send Push Notification
+        sendPushNotificationWithLogging(task);
+        
+        // 2. Send Email Notification (NEW)
+        sendEmailNotificationWithLogging(task);
+    }
+
     /**
      * Send push notification for a task AND log the result
+     * MODIFIED for Email Integration - Updated logging to distinguish between push and email
      */
-    private void sendTaskNotificationWithLogging(Task task) {
+    private void sendPushNotificationWithLogging(Task task) {
+        logger.debug("DEBUG: Preparing PUSH notification for task {}", task.getId()); //ADDED for Email Integration
+        
         String title = "⏰ Task Due: " + task.getTitle();
         String body = String.format(
             "Priority: %s | Due: %s",
@@ -100,68 +128,99 @@ public class NotificationScheduler {
         );
         
         try {
-            // Send the notification (void method - doesn't return endpoint)
+            // Send the push notification
             pushNotificationService.sendNotificationToUser(
                 task.getUserEmail(),
                 title,
-                body,task.getId()  //ADDED - Pass task ID so notification includes task context
+                body,
+                task.getId()
             );
             
-            // Log successful notification (endpoint will be null, that's fine)
-            logNotificationSuccess(task, null);
+            //MODIFIED for Email Integration - Updated logging parameter to specify "push"
+            logNotificationSuccess(task, "push", null);
+            logger.info("✅ Push notification sent for task {}", task.getId());
             
         } catch (Exception e) {
-            logger.error("Failed to send push notification for task {}: {}", task.getId(), e.getMessage());
+            logger.error("❌ Failed to send push notification for task {}: {}", task.getId(), e.getMessage());
             
-            // Log failed notification
-            logNotificationFailure(task, e.getMessage());
+            //MODIFIED for Email Integration - Updated logging parameter to specify "push"
+            logNotificationFailure(task, "push", e.getMessage());
+        }
+    }
+
+    //ADDED for Email Integration - Send email notification for a task AND log the result
+    /**
+     * Send email notification for a task AND log the result
+     */
+    private void sendEmailNotificationWithLogging(Task task) {
+        logger.debug("DEBUG: Preparing EMAIL notification for task {}", task.getId()); //ADDED for Email Integration
+        logger.debug("DEBUG: Email will be sent to: {}", task.getUserEmail()); //ADDED for Email Integration
+        
+        try {
+            // Send the email notification
+            emailService.sendTaskDueNotification(task, task.getUserEmail());
             
-            throw e;
+            // Log successful email notification
+            logNotificationSuccess(task, "email", task.getUserEmail());
+            logger.info("✅ Email notification sent for task {} to {}", task.getId(), task.getUserEmail()); //ADDED for Email Integration
+            
+        } catch (Exception e) {
+            logger.error("❌ Failed to send email notification for task {}: {}", task.getId(), e.getMessage());
+            logger.error("DEBUG: Email error details: ", e); //ADDED for Email Integration
+            
+            // Log failed email notification
+            logNotificationFailure(task, "email", e.getMessage());
         }
     }
 
     /**
      * Log successful notification to database
+     * MODIFIED for Email Integration - Now accepts notificationType parameter ("push" or "email")
      */
-    private void logNotificationSuccess(Task task, String endpoint) {
+    private void logNotificationSuccess(Task task, String notificationType, String endpoint) {
+        logger.debug("DEBUG: Logging {} notification success for task {}", notificationType, task.getId()); //ADDED for Email Integration
+        
         try {
             NotificationLog log = new NotificationLog();
             log.setTaskId(task.getId());
             log.setUserEmail(task.getUserEmail());
-            log.setNotificationType("push");  // lowercase to match enum
-            log.setStatus("sent");  // Use 'sent' status
+            log.setNotificationType(notificationType);  //MODIFIED for Email Integration - "push" or "email"
+            log.setStatus("sent");
             log.setSentToEndpoint(endpoint);
-            log.setDeviceType("web");  // Can be enhanced to get actual device type
+            log.setDeviceType(task.getCreatedFromDevice() != null ? task.getCreatedFromDevice() : "web");
             log.setCreatedAt(LocalDateTime.now());
             
             notificationLogRepository.save(log);
-            logger.debug("📝 Notification logged successfully for task {}", task.getId());
+            logger.debug("📝 {} notification logged successfully for task {}", notificationType, task.getId());
             
         } catch (Exception e) {
             // Don't let logging failure stop the process
-            logger.error("⚠️ Failed to log notification for task {}: {}", task.getId(), e.getMessage());
+            logger.error("⚠️ Failed to log {} notification for task {}: {}", notificationType, task.getId(), e.getMessage());
         }
     }
 
     /**
      * Log failed notification to database
+     * MODIFIED for Email Integration - Now accepts notificationType parameter ("push" or "email")
      */
-    private void logNotificationFailure(Task task, String errorMessage) {
+    private void logNotificationFailure(Task task, String notificationType, String errorMessage) {
+        logger.debug("DEBUG: Logging {} notification failure for task {}", notificationType, task.getId()); //ADDED for Email Integration
+        
         try {
             NotificationLog log = new NotificationLog();
             log.setTaskId(task.getId());
             log.setUserEmail(task.getUserEmail());
-            log.setNotificationType("push");
-            log.setStatus("failed");  // Use 'failed' status
+            log.setNotificationType(notificationType);  //MODIFIED for Email Integration - "push" or "email"
+            log.setStatus("failed");
             log.setErrorMessage(errorMessage);
             log.setCreatedAt(LocalDateTime.now());
             
             notificationLogRepository.save(log);
-            logger.debug("📝 Notification failure logged for task {}", task.getId());
+            logger.debug("📝 {} notification failure logged for task {}", notificationType, task.getId());
             
         } catch (Exception e) {
             // Don't let logging failure stop the process
-            logger.error("⚠️ Failed to log notification failure for task {}: {}", task.getId(), e.getMessage());
+            logger.error("⚠️ Failed to log {} notification failure for task {}: {}", notificationType, task.getId(), e.getMessage());
         }
     }
 

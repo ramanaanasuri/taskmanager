@@ -40,6 +40,14 @@
             <artifactId>web-push</artifactId>
             <version>5.1.1</version>
         </dependency>
+
+        <!-- ADDED for Email Integration - Spring Boot Mail for Email Notifications -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <!-- END Email Integration Addition -->
+                
         <!-- BouncyCastle - Required by web-push -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
