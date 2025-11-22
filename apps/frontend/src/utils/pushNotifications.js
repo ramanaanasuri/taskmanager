@@ -45,9 +45,7 @@ export async function subscribeToPushNotifications(apiBaseUrl, authToken) {
 
     console.log('✅ Notification permission granted');
 
-    // Register service worker
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    await navigator.serviceWorker.ready;
+    const registration = await navigator.serviceWorker.ready;
     console.log('✅ Service worker registered');
 
     // Check if already subscribed

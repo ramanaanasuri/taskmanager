@@ -141,7 +141,75 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [loading]);
+
+// ============ ADDED: Handle taskId from Notification Click ============
+// When user clicks notification, sw.js navigates to /?taskId=123
+// This effect detects that taskId and highlights the corresponding task
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const taskIdFromNotification = params.get('taskId');
+  
+  if (taskIdFromNotification) {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[APP DEBUG - NOTIFICATION] 📌 Task ID from URL:', taskIdFromNotification);
+    console.log('[APP DEBUG - NOTIFICATION] Current tasks loaded:', tasks.length);
     
+    // Wait for tasks to load, then scroll to and highlight the task
+    if (tasks.length > 0) {
+      setTimeout(() => {
+        const taskElement = document.querySelector(`[data-task-id="${taskIdFromNotification}"]`);
+        
+        if (taskElement) {
+          console.log('[APP DEBUG - NOTIFICATION] ✅ Task element found, highlighting...');
+          
+          // Scroll to task
+          taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Highlight with yellow background
+          taskElement.style.backgroundColor = '#fff3cd';
+          taskElement.style.transition = 'background-color 0.3s ease';
+          
+          console.log('[APP DEBUG - NOTIFICATION] ✅ Task highlighted:', taskIdFromNotification);
+          
+          // Remove highlight after 3 seconds
+          setTimeout(() => {
+            taskElement.style.backgroundColor = '';
+            console.log('[APP DEBUG - NOTIFICATION] 🔄 Highlight removed');
+          }, 3000);
+        } else {
+          console.warn('[APP DEBUG - NOTIFICATION] ⚠️ Task element not found in DOM');
+          console.log('[APP DEBUG - NOTIFICATION] Available task IDs:', 
+            Array.from(document.querySelectorAll('[data-task-id]')).map(el => el.getAttribute('data-task-id'))
+          );
+        }
+      }, 500); // Wait 500ms for DOM to be ready
+      
+      // Clean URL - remove taskId parameter to keep URL clean
+      window.history.replaceState({}, document.title, '/');
+      console.log('[APP DEBUG - NOTIFICATION] 🔄 URL cleaned (taskId parameter removed)');
+    }
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  }
+}, [tasks]); // Re-run when tasks array changes (after fetch completes)
+// ============ End TaskId Handler ============  
+  // Register Service Worker on App Mount
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      console.log('[APP DEBUG] Registering service worker...');
+      
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('[APP DEBUG] ✅ SW registered successfully');
+          console.log('[APP DEBUG] Scope:', registration.scope);
+          registration.update(); // Check for updates
+        })
+        .catch(error => {
+          console.error('[APP DEBUG] ❌ SW registration failed:', error);
+        });
+    } else {
+      console.log('[APP DEBUG] ⚠️ Service workers not supported');
+    }
+  }, []); // Empty array = run once on mount    
   // ============ End Added Code ============
 
   const checkAuth = async (token) => {
@@ -776,7 +844,11 @@ const toggleTask = async (id) => {
 
               <div className="task-table-body">
                 {tasks.map(task => (
-                  <div key={task.id} className={`task-row ${task.completed ? 'completed-task' : ''}`}>
+                    <div 
+                      key={task.id} 
+                      className={`task-row ${task.completed ? 'completed-task' : ''}`}
+                      data-task-id={task.id}
+                    >
                     {/* Main Info Row: Checkbox + Task Name */}
                     <div className="task-main-info">
                       <div className="td-status">

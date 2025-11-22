@@ -1,6 +1,16 @@
 // Service Worker for Web Push Notifications
 console.log('Service Worker loaded');
+// Take control immediately
+self.addEventListener('install', (event) => {
+  console.log('[SW DEBUG] Installing...');
+  self.skipWaiting(); // Activate immediately
+});
 
+self.addEventListener('activate', (event) => {
+  console.log('[SW DEBUG] Activating...');
+  event.waitUntil(clients.claim()); // Take control of all pages immediately
+  console.log('[SW DEBUG] Claimed all clients');
+});
 // Handle push notification events
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
@@ -34,20 +44,6 @@ self.addEventListener('push', (event) => {
   );
 });
 
-/* // Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event);
-  
-  event.notification.close();
-
-  if (event.action === 'view') {
-    // Open the app when "View Task" is clicked
-    event.waitUntil(
-      clients.openWindow('https://taskmanager.gcp.sriinfosoft.com/')
-    );
-  }
-}); */
-
 //MODIFIED - Complete rewrite of notification click handler to:
 // 1. Extract task ID from notification data (for future use)
 // 2. Navigate to existing window instead of opening new tab (preserves session)
@@ -68,7 +64,12 @@ self.addEventListener('notificationclick', async (event) => {
   console.log('[SW DEBUG] 6. Extracted taskId:', taskId);
   
   // Build target URL
-  let targetUrl = 'https://taskmanager.gcp.sriinfosoft.com/';
+  // If taskId exists, append it to URL so App.js can highlight the specific task
+  // This avoids needing React Router and uses existing URL parameter handling
+  let targetUrl = taskId 
+    ? `https://taskmanager.gcp.sriinfosoft.com/?taskId=${taskId}`
+    : 'https://taskmanager.gcp.sriinfosoft.com/';
+  console.log('[SW DEBUG] 7. Target URL (with taskId):', targetUrl);
   console.log('[SW DEBUG] 7. Target URL:', targetUrl);
   
   event.waitUntil(
