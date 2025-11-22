@@ -166,7 +166,7 @@ useEffect(() => {
           taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           
           // Highlight with yellow background
-          taskElement.style.backgroundColor = '#fff3cd';
+          taskElement.style.backgroundColor = '#a8d8ff';
           taskElement.style.transition = 'background-color 0.3s ease';
           
           console.log('[APP DEBUG - NOTIFICATION] ✅ Task highlighted:', taskIdFromNotification);
@@ -175,7 +175,7 @@ useEffect(() => {
           setTimeout(() => {
             taskElement.style.backgroundColor = '';
             console.log('[APP DEBUG - NOTIFICATION] 🔄 Highlight removed');
-          }, 3000);
+          }, 60000);
         } else {
           console.warn('[APP DEBUG - NOTIFICATION] ⚠️ Task element not found in DOM');
           console.log('[APP DEBUG - NOTIFICATION] Available task IDs:', 
