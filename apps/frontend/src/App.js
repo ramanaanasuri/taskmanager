@@ -192,7 +192,7 @@ useEffect(() => {
   }
 }, [tasks]); // Re-run when tasks array changes (after fetch completes)
 // ============ End TaskId Handler ============  
-  // Register Service Worker on App Mount
+/*   // Register Service Worker on App Mount
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       console.log('[APP DEBUG] Registering service worker...');
@@ -209,7 +209,44 @@ useEffect(() => {
     } else {
       console.log('[APP DEBUG] ⚠️ Service workers not supported');
     }
-  }, []); // Empty array = run once on mount    
+  }, []); // Empty array = run once on mount   */
+// Register Service Worker on App Mount
+useEffect(() => {
+  if ('serviceWorker' in navigator) {
+    console.log('[APP DEBUG] Registering service worker...');
+    
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('[APP DEBUG] ✅ SW registered successfully');
+        console.log('[APP DEBUG] Scope:', registration.scope);
+        
+        // Force update check (desktop cache fix)
+        registration.update().then(() => {
+          console.log('[APP DEBUG] Initial update check completed');
+        });
+        
+        // Auto-update every 60 seconds (desktop cache fix)
+        const updateInterval = setInterval(() => {
+          console.log('[APP DEBUG] Checking for SW updates...');
+          registration.update();
+        }, 60000);
+        
+        // Cleanup on unmount
+        return () => clearInterval(updateInterval);
+      })
+      .catch(error => {
+        console.error('[APP DEBUG] ❌ SW registration failed:', error);
+      });
+  } else {
+    console.log('[APP DEBUG] ⚠️ Service workers not supported');
+  }
+  
+  // Auto-reload when new SW takes control (desktop fix)
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    console.log('[APP DEBUG] New SW activated - reloading page');
+    window.location.reload();
+  });
+}, []);    
   // ============ End Added Code ============
 
   const checkAuth = async (token) => {
