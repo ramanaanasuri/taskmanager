@@ -18,7 +18,7 @@ function App() {
   const [tempEditDate, setTempEditDate] = useState('');
   const [enableNotifications, setEnableNotifications] = useState(false);
   const [newTaskPhone, setNewTaskPhone] = useState('');  
-
+  const [enableSms, setEnableSms] = useState(false);  //ADDED for SMS Integration
   // ============ DEBUG: Component Mount ============
   useEffect(() => {
     console.log('=== 🚀 App Component Mounted ===');
@@ -346,7 +346,7 @@ const addTask = async (e) => {
     completed: false,
     notificationsEnabled: enableNotifications,
     phoneNumber: newTaskPhone || null,
-    smsEnabled: false
+    smsEnabled: enableSms
   };
 
   console.log('📦 ═══════════════════════════════════════');
@@ -377,6 +377,7 @@ const addTask = async (e) => {
     setTempDueDate('');
     setEnableNotifications(false);
     setNewTaskPhone('');
+    setEnableSms(false);
   } catch (error) {
     console.error('❌ ═══════════════════════════════════════');
     console.error('❌ ERROR adding task!');
@@ -824,22 +825,54 @@ const toggleTask = async (id) => {
                 You'll be asked for browser notification permission when you add the task
               </small>
             </div>
+            {/* SMS Notification Checkbox - ADDED for SMS Integration */}
+            <div className="form-group">
+              <label className="notification-label" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.95rem'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={enableSms}
+                  onChange={(e) => setEnableSms(e.target.checked)}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <span>📱 Enable SMS notifications for this task</span>
+              </label>
+              <small style={{
+                display: 'block',
+                color: '#666',
+                fontSize: '0.85rem',
+                marginTop: '0.25rem',
+                marginLeft: '1.5rem'
+              }}>
+                Receive text message when task is due
+              </small>
+            </div>            
 
             {/* Phone Number Input - Only shown when notifications enabled */}
-            {enableNotifications && (
+            {enableSms && (
             <div className="form-group">
               <label htmlFor="task-phone" className="form-label">
-                Phone Number <span style={{color: '#999', fontWeight: 'normal'}}>(Optional - for future SMS)</span>
+                Phone Number <span style={{color: '#ff4444', fontWeight: 'bold'}}>*</span>
               </label>
               <div className="phone-input-wrapper">
                 <input
                   id="task-phone"
                   type="tel"
                   className="form-input"
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="+15055550006 (E.164 format)"
                   value={newTaskPhone}
                   onChange={(e) => setNewTaskPhone(e.target.value)}
-                  pattern="[+]?[0-9\s\-\(\)]+"
+                  pattern="^\+[1-9]\d{1,14}$"
+                  required={enableSms}
                 />
               </div>
               <small style={{
@@ -848,7 +881,7 @@ const toggleTask = async (id) => {
                 fontSize: '0.85rem',
                 marginTop: '0.35rem'
               }}>
-                💡 We'll use this for SMS notifications in the future (Web Push works without it)
+                📞 Use E.164 format: +[country code][number] (e.g., +15055550006 for USA)
               </small>
             </div>
           )}
