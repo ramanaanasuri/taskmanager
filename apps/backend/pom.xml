@@ -47,7 +47,15 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
         <!-- END Email Integration Addition -->
-                
+
+        <!-- ADDED for SMS Integration - AWS SDK for SNS (SMS Notifications) -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-sns</artifactId>
+            <version>1.12.529</version>
+        </dependency>
+        <!-- END SMS Integration Addition -->
+
         <!-- BouncyCastle - Required by web-push -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
@@ -108,6 +116,13 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        
+        <!-- Spring Boot DevTools - Automatic reload on code changes -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
             <optional>true</optional>
         </dependency>
         

@@ -15,10 +15,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
- * Scheduler that checks for due tasks and sends notifications (push + email)
+ * Scheduler that checks for due tasks and sends notifications (push + email + SMS)
  * Runs every minute to check if any tasks are due
  * 
  * MODIFIED for Email Integration - Now sends both push and email notifications
+ * MODIFIED for SMS Integration - Now sends push, email, and SMS notifications
  */
 @Component
 public class NotificationScheduler {
@@ -35,6 +36,10 @@ public class NotificationScheduler {
     @Autowired
     private EmailService emailService;
 
+    //ADDED for SMS Integration - SMS notification service
+    @Autowired
+    private SmsService smsService;
+
     @Autowired
     private NotificationLogRepository notificationLogRepository;
 
@@ -43,11 +48,13 @@ public class NotificationScheduler {
      * cron expression: "0 * * * * *" means: at second 0 of every minute
      * 
      * MODIFIED for Email Integration - Now sends both push and email notifications
+     * MODIFIED for SMS Integration - Now sends push, email, and SMS notifications
      */
     @Scheduled(cron = "0 * * * * *")
     public void checkAndSendDueTaskNotifications() {
         logger.info("🔔 Running scheduled task notification check at {}", LocalDateTime.now());
         logger.debug("DEBUG: Email Integration - Scheduler triggered"); //ADDED for Email Integration
+        logger.debug("DEBUG: SMS Integration - Scheduler triggered"); //ADDED for SMS Integration
 
         try {
             // Get current time
@@ -79,6 +86,7 @@ public class NotificationScheduler {
                             task.getPriority(), task.getDueDate(), task.getUserEmail()); //ADDED for Email Integration
                         
                         //MODIFIED for Email Integration - Now sends BOTH push and email notifications
+                        //MODIFIED for SMS Integration - Now sends push, email, and SMS notifications
                         sendAllNotifications(task);
                         
                         // Mark as notification sent
@@ -87,7 +95,7 @@ public class NotificationScheduler {
                         
                         logger.info("✅ All notifications sent for task: {} (ID: {})", task.getTitle(), task.getId());
                     } else {
-                        logger.debug("⏭️ Skipping task {} - notification already sent", task.getId());
+                        logger.debug("⭐️ Skipping task {} - notification already sent", task.getId());
                     }
                 } catch (Exception e) {
                     logger.error("❌ Error sending notification for task {}: {}", task.getId(), e.getMessage(), e);
@@ -100,8 +108,9 @@ public class NotificationScheduler {
     }
 
     //ADDED for Email Integration - Send ALL notifications (push + email) for a task
+    //MODIFIED for SMS Integration - Now also sends SMS if enabled
     /**
-     * Send ALL notifications (push + email) for a task
+     * Send ALL notifications (push + email + SMS) for a task
      */
     private void sendAllNotifications(Task task) {
         logger.debug("DEBUG: sendAllNotifications() called for task {}", task.getId()); //ADDED for Email Integration
@@ -109,8 +118,12 @@ public class NotificationScheduler {
         // 1. Send Push Notification
         sendPushNotificationWithLogging(task);
         
-        // 2. Send Email Notification (NEW)
+        // 2. Send Email Notification
         sendEmailNotificationWithLogging(task);
+        
+        // 3. Send SMS Notification (NEW)
+        //ADDED for SMS Integration - Send SMS if enabled
+        sendSmsNotificationWithLogging(task);
     }
 
     /**
@@ -173,9 +186,50 @@ public class NotificationScheduler {
         }
     }
 
+    //ADDED for SMS Integration - Send SMS notification for a task AND log the result
+    /**
+     * Send SMS notification for a task AND log the result
+     * Only sends if task has SMS enabled and phone number is set
+     */
+    private void sendSmsNotificationWithLogging(Task task) {
+        logger.debug("DEBUG: Preparing SMS notification for task {}", task.getId()); //ADDED for SMS Integration
+        logger.debug("DEBUG: SMS enabled: {}, Phone number: {}", task.getSmsEnabled(), task.getPhoneNumber()); //ADDED for SMS Integration
+        
+        // Check if SMS is enabled for this task
+        if (task.getSmsEnabled() == null || !task.getSmsEnabled()) {
+            logger.debug("⏭️ SMS notifications disabled for task {}", task.getId()); //ADDED for SMS Integration
+            return;
+        }
+        
+        // Check if phone number is set
+        if (task.getPhoneNumber() == null || task.getPhoneNumber().trim().isEmpty()) {
+            logger.warn("⚠️ SMS enabled but no phone number set for task {}", task.getId()); //ADDED for SMS Integration
+            return;
+        }
+        
+        logger.debug("DEBUG: SMS will be sent to: {}", task.getPhoneNumber()); //ADDED for SMS Integration
+        
+        try {
+            // Send the SMS notification
+            smsService.sendTaskDueSmsNotification(task, task.getPhoneNumber());
+            
+            // Log successful SMS notification
+            logNotificationSuccess(task, "sms", task.getPhoneNumber());
+            logger.info("✅ SMS notification sent for task {} to {}", task.getId(), task.getPhoneNumber()); //ADDED for SMS Integration
+            
+        } catch (Exception e) {
+            logger.error("❌ Failed to send SMS notification for task {}: {}", task.getId(), e.getMessage());
+            logger.error("DEBUG: SMS error details: ", e); //ADDED for SMS Integration
+            
+            // Log failed SMS notification
+            logNotificationFailure(task, "sms", e.getMessage());
+        }
+    }
+
     /**
      * Log successful notification to database
      * MODIFIED for Email Integration - Now accepts notificationType parameter ("push" or "email")
+     * MODIFIED for SMS Integration - Now also accepts "sms" as notificationType
      */
     private void logNotificationSuccess(Task task, String notificationType, String endpoint) {
         logger.debug("DEBUG: Logging {} notification success for task {}", notificationType, task.getId()); //ADDED for Email Integration
@@ -184,7 +238,7 @@ public class NotificationScheduler {
             NotificationLog log = new NotificationLog();
             log.setTaskId(task.getId());
             log.setUserEmail(task.getUserEmail());
-            log.setNotificationType(notificationType);  //MODIFIED for Email Integration - "push" or "email"
+            log.setNotificationType(notificationType);  //MODIFIED for Email Integration - "push", "email", or "sms"
             log.setStatus("sent");
             log.setSentToEndpoint(endpoint);
             log.setDeviceType(task.getCreatedFromDevice() != null ? task.getCreatedFromDevice() : "web");
@@ -202,6 +256,7 @@ public class NotificationScheduler {
     /**
      * Log failed notification to database
      * MODIFIED for Email Integration - Now accepts notificationType parameter ("push" or "email")
+     * MODIFIED for SMS Integration - Now also accepts "sms" as notificationType
      */
     private void logNotificationFailure(Task task, String notificationType, String errorMessage) {
         logger.debug("DEBUG: Logging {} notification failure for task {}", notificationType, task.getId()); //ADDED for Email Integration
@@ -210,7 +265,7 @@ public class NotificationScheduler {
             NotificationLog log = new NotificationLog();
             log.setTaskId(task.getId());
             log.setUserEmail(task.getUserEmail());
-            log.setNotificationType(notificationType);  //MODIFIED for Email Integration - "push" or "email"
+            log.setNotificationType(notificationType);  //MODIFIED for Email Integration - "push", "email", or "sms"
             log.setStatus("failed");
             log.setErrorMessage(errorMessage);
             log.setCreatedAt(LocalDateTime.now());
