@@ -98,6 +98,9 @@ public class SecurityConfig {
                 "/login/oauth2/**",        // Explicit Spring OAuth2 callback pattern
                 "/error"
             ).permitAll()
+                // ✅ ADDED: API Tester endpoints - uses its own auth via .env credentials
+                .requestMatchers("/api/tester/**").permitAll()  // API Tester authentication endpoint
+                .requestMatchers("/api-tester.html").permitAll() // API Tester HTML page            
                 // ✅ ADDED: Explicitly require authentication for push endpoints
                 .requestMatchers("/api/push/**").authenticated()                
                 .anyRequest().authenticated()

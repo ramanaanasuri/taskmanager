@@ -53,6 +53,10 @@ public class Task {
     @Column(name = "sms_enabled")
     private Boolean smsEnabled = false;
 
+    // ADDED for Email opt-in
+    @Column(name = "email_enabled")
+    private Boolean emailEnabled = false;    
+
     // NEW: Tracks if notification was already sent to prevent duplicates
     @Column(name = "reminder_sent")
     private Boolean reminderSent = false;
@@ -179,6 +183,15 @@ public class Task {
         return reminderSent;
     }
 
+    // ADDED for Email opt-in
+    public Boolean getEmailEnabled() {
+        return emailEnabled;
+    }
+    
+    public void setEmailEnabled(Boolean emailEnabled) {
+        this.emailEnabled = emailEnabled;
+    }    
+
     public void setReminderSent(Boolean reminderSent) {
         this.reminderSent = reminderSent;
     }   
@@ -238,6 +251,11 @@ public class Task {
             smsEnabled = false;
         }
         
+        // ADDED - Ensure emailEnabled is never null
+        if (emailEnabled == null) {
+            emailEnabled = false;
+        }
+
         // Set timestamps if not already set
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
@@ -267,5 +285,9 @@ public class Task {
         if (smsEnabled == null) {
             smsEnabled = false;
         }
+        // ADDED - Ensure emailEnabled is never null
+        if (emailEnabled == null) {
+            emailEnabled = false;
+        }        
     }       
 }

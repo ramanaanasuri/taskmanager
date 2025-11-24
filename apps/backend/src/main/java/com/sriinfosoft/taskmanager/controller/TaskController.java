@@ -251,6 +251,31 @@ public class TaskController {
             if (taskDetails.getPriority() != null) {
                 task.setPriority(taskDetails.getPriority());
             }
+            //ADDED - Update notification fields (for edit modal support)
+            // Update email notifications
+            if (taskDetails.getEmailEnabled() != null) {
+                System.out.println("Updating emailEnabled to: " + taskDetails.getEmailEnabled());
+                task.setEmailEnabled(taskDetails.getEmailEnabled());
+            }
+            
+            // Update push notifications
+            if (taskDetails.getNotificationsEnabled() != null) {
+                System.out.println("Updating notificationsEnabled to: " + taskDetails.getNotificationsEnabled());
+                task.setNotificationsEnabled(taskDetails.getNotificationsEnabled());
+            }
+            
+            // Update SMS notifications
+            if (taskDetails.getSmsEnabled() != null) {
+                System.out.println("Updating smsEnabled to: " + taskDetails.getSmsEnabled());
+                task.setSmsEnabled(taskDetails.getSmsEnabled());
+            }
+            
+            // Update phone number
+            if (taskDetails.getPhoneNumber() != null) {
+                System.out.println("Updating phoneNumber to: " + taskDetails.getPhoneNumber());
+                task.setPhoneNumber(taskDetails.getPhoneNumber());
+            }
+            //END ADDED            
 
             // Update due date
             task.setDueDate(taskDetails.getDueDate());

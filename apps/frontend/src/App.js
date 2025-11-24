@@ -19,6 +19,8 @@ function App() {
   const [enableNotifications, setEnableNotifications] = useState(false);
   const [newTaskPhone, setNewTaskPhone] = useState('');  
   const [enableSms, setEnableSms] = useState(false);  //ADDED for SMS Integration
+
+  const [enableEmail, setEnableEmail] = useState(false);  //ADDED for Email opt-in
   // ============ DEBUG: Component Mount ============
   useEffect(() => {
     console.log('=== 🚀 App Component Mounted ===');
@@ -345,8 +347,9 @@ const addTask = async (e) => {
     dueDate: formattedDueDate,
     completed: false,
     notificationsEnabled: enableNotifications,
+    emailEnabled: enableEmail,  //ADDED for Email opt-in
     phoneNumber: newTaskPhone || null,
-    smsEnabled: enableSms
+    smsEnabled: enableSms  //MODIFIED for SMS Integration
   };
 
   console.log('📦 ═══════════════════════════════════════');
@@ -376,8 +379,9 @@ const addTask = async (e) => {
     setNewTaskDueDate('');
     setTempDueDate('');
     setEnableNotifications(false);
+    setEnableSms(false);  //ADDED for SMS Integration - reset SMS checkbox
+    setEnableEmail(false);  //ADDED for Email opt-in - reset email checkbox
     setNewTaskPhone('');
-    setEnableSms(false);
   } catch (error) {
     console.error('❌ ═══════════════════════════════════════');
     console.error('❌ ERROR adding task!');
@@ -432,10 +436,19 @@ const updateTask = async (id, updates) => {
       priority: updates.priority !== undefined ? updates.priority : task.priority,
       dueDate: formattedDueDate !== undefined ? formattedDueDate : task.dueDate,
       completed: task.completed === true,  // Explicit boolean conversion
-      notificationsEnabled: task.notificationsEnabled === true,
-      phoneNumber: task.phoneNumber || null,
-      smsEnabled: task.smsEnabled === true
+      // ✅ NEW - Uses updates if provided, falls back to task
+      notificationsEnabled: updates.notificationsEnabled !== undefined ? updates.notificationsEnabled : (task.notificationsEnabled === true),
+      emailEnabled: updates.emailEnabled !== undefined ? updates.emailEnabled : (task.emailEnabled === true),
+      smsEnabled: updates.smsEnabled !== undefined ? updates.smsEnabled : (task.smsEnabled === true),
+      phoneNumber: updates.phoneNumber !== undefined ? updates.phoneNumber : (task.phoneNumber || null),
     };
+
+    //ADDED - Debug logging for notification fields
+    console.log("\n🔔 === NOTIFICATION FLAGS DEBUG ===");
+    console.log("Email enabled:", task.emailEnabled, "→", payload.emailEnabled);
+    console.log("Push enabled:", task.notificationsEnabled, "→", payload.notificationsEnabled);
+    console.log("SMS enabled:", task.smsEnabled, "→", payload.smsEnabled);
+    console.log("Phone number:", task.phoneNumber, "→", payload.phoneNumber);
 
     console.log('\n📤 === PAYLOAD TO BACKEND ===');
     console.log('Full payload:', JSON.stringify(payload, null, 2));
@@ -794,6 +807,38 @@ const toggleTask = async (id) => {
                 )}
               </div>
             </div>
+            {/* Email Notification Checkbox - ADDED for Email opt-in */}
+            <div className="form-group">
+              <label className="notification-label" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.95rem'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={enableEmail}
+                  onChange={(e) => setEnableEmail(e.target.checked)}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <span>📧 Enable email notifications for this task</span>
+              </label>
+              <small style={{
+                display: 'block',
+                color: '#666',
+                fontSize: '0.85rem',
+                marginTop: '0.25rem',
+                marginLeft: '1.5rem'
+              }}>
+                Receive email when task is due
+              </small>
+            </div>
+
             {/* Notification Option */}
             <div className="form-group">
               <label className="notification-label" style={{
@@ -825,6 +870,7 @@ const toggleTask = async (id) => {
                 You'll be asked for browser notification permission when you add the task
               </small>
             </div>
+
             {/* SMS Notification Checkbox - ADDED for SMS Integration */}
             <div className="form-group">
               <label className="notification-label" style={{
@@ -855,9 +901,9 @@ const toggleTask = async (id) => {
               }}>
                 Receive text message when task is due
               </small>
-            </div>            
+            </div>
 
-            {/* Phone Number Input - Only shown when notifications enabled */}
+            {/* Phone Number Input - Only shown when SMS enabled */}
             {enableSms && (
             <div className="form-group">
               <label htmlFor="task-phone" className="form-label">
@@ -967,6 +1013,14 @@ const toggleTask = async (id) => {
                     <div className="td-actions">
                       <button
                         onClick={() => {
+                          //ADDED - Debug log when opening edit modal
+                          console.log("\n✏️ === OPENING EDIT MODAL ===");
+                          console.log("Task ID:", task.id);
+                          console.log("Email Enabled:", task.emailEnabled);
+                          console.log("Push Enabled:", task.notificationsEnabled);
+                          console.log("SMS Enabled:", task.smsEnabled);
+                          console.log("Phone Number:", task.phoneNumber);
+                          console.log("Full Task:", JSON.stringify(task, null, 2));
                           setEditingTask(task);
                           setTempEditDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : '');
                         }}
@@ -1001,10 +1055,19 @@ const toggleTask = async (id) => {
             <h2 className="modal-title">Edit Task</h2>
             <form onSubmit={(e) => {
               e.preventDefault();
+              console.log('\n✏️ === SUBMITTING EDIT FORM ===');
+              console.log('📧 emailEnabled:', editingTask.emailEnabled);
+              console.log('🔔 notificationsEnabled:', editingTask.notificationsEnabled);
+              console.log('📱 smsEnabled:', editingTask.smsEnabled);
+              console.log('📞 phoneNumber:', editingTask.phoneNumber);
               updateTask(editingTask.id, {
                 title: editingTask.title,
                 priority: editingTask.priority,
-                dueDate: editingTask.dueDate
+                dueDate: editingTask.dueDate,
+                emailEnabled: editingTask.emailEnabled,
+                notificationsEnabled: editingTask.notificationsEnabled,
+                smsEnabled: editingTask.smsEnabled,
+                phoneNumber: editingTask.phoneNumber
               });
             }}>
               <div className="modal-form-group">
@@ -1068,6 +1131,130 @@ const toggleTask = async (id) => {
                   <small className="date-preview">Selected: {formatDisplayDate(editingTask.dueDate)}</small>
                 )}
               </div>
+              {/* ADDED - Email Notification Checkbox in Edit Modal */}
+              <div className="modal-form-group">
+                <label className="notification-label" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={editingTask.emailEnabled || false}
+                    onChange={(e) => setEditingTask({...editingTask, emailEnabled: e.target.checked})}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <span>📧 Enable email notifications for this task</span>
+                </label>
+                <small style={{
+                  display: 'block',
+                  color: '#666',
+                  fontSize: '0.85rem',
+                  marginTop: '0.25rem',
+                  marginLeft: '1.5rem'
+                }}>
+                  Receive email when task is due
+                </small>
+              </div>
+
+              {/* ADDED - Push Notification Checkbox in Edit Modal */}
+              <div className="modal-form-group">
+                <label className="notification-label" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={editingTask.notificationsEnabled || false}
+                    onChange={(e) => setEditingTask({...editingTask, notificationsEnabled: e.target.checked})}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <span>🔔 Enable push notifications for this task</span>
+                </label>
+                <small style={{
+                  display: 'block',
+                  color: '#666',
+                  fontSize: '0.85rem',
+                  marginTop: '0.25rem',
+                  marginLeft: '1.5rem'
+                }}>
+                  You'll receive browser notifications when task is due
+                </small>
+              </div>
+
+              {/* ADDED - SMS Notification Checkbox in Edit Modal */}
+              <div className="modal-form-group">
+                <label className="notification-label" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={editingTask.smsEnabled || false}
+                    onChange={(e) => setEditingTask({...editingTask, smsEnabled: e.target.checked})}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <span>📱 Enable SMS notifications for this task</span>
+                </label>
+                <small style={{
+                  display: 'block',
+                  color: '#666',
+                  fontSize: '0.85rem',
+                  marginTop: '0.25rem',
+                  marginLeft: '1.5rem'
+                }}>
+                  Receive text message when task is due
+                </small>
+              </div>
+
+              {/* ADDED - Phone Number Input in Edit Modal (shows when SMS enabled) */}
+              {editingTask.smsEnabled && (
+                <div className="modal-form-group">
+                  <label htmlFor="edit-task-phone" className="modal-label">
+                    Phone Number <span style={{color: '#ff4444', fontWeight: 'bold'}}>*</span>
+                  </label>
+                  <div className="phone-input-wrapper">
+                    <input
+                      id="edit-task-phone"
+                      type="tel"
+                      className="form-input"
+                      placeholder="+15055550006 (E.164 format)"
+                      value={editingTask.phoneNumber || ''}
+                      onChange={(e) => setEditingTask({...editingTask, phoneNumber: e.target.value})}
+                      pattern="^\+[1-9]\d{1,14}$"
+                      required={editingTask.smsEnabled}
+                    />
+                  </div>
+                  <small style={{
+                    display: 'block',
+                    color: '#64748b',
+                    fontSize: '0.85rem',
+                    marginTop: '0.35rem'
+                  }}>
+                    📞 Use E.164 format: +[country code][number] (e.g., +15055550006 for USA)
+                  </small>
+                </div>
+              )}
 
               <div className="modal-actions">
                 <button type="submit" className="modal-btn-save">

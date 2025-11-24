@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager API Tester</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --info: #3b82f6;
+            --info-light: #dbeafe;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--gray-800);
+        }
+
+        /* Login Screen */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 24px;
+            padding: 48px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-logo .icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .login-logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .login-logo p {
+            color: var(--gray-500);
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-info { background: var(--info); color: white; }
+        .btn-outline {
+            background: white;
+            border: 2px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn:hover:not(:disabled) { opacity: 0.9; }
+        .btn:active:not(:disabled) { transform: scale(0.98); }
+
+        .login-error {
+            background: var(--danger-light);
+            color: var(--danger);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Main App */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--gray-900);
+        }
+
+        .app-header .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--gray-100);
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        .app-main {
+            padding: 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Configuration Card */
+        .config-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .config-card h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--gray-800);
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .config-item label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-500);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .config-item input, .config-item textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            transition: all 0.2s;
+        }
+
+        .config-item input:focus, .config-item textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-connected {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .status-disconnected {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        /* Test Sections */
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+        }
+
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .test-card-header .icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .test-card-header.purple .icon { background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); }
+        .test-card-header.blue .icon { background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); }
+        .test-card-header.green .icon { background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%); }
+        .test-card-header.orange .icon { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+        .test-card-header.pink .icon { background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); }
+        .test-card-header.cyan .icon { background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); }
+
+        .test-card-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .test-card-header p {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+
+        .test-card-body {
+            padding: 24px;
+        }
+
+        .test-form-group {
+            margin-bottom: 16px;
+        }
+
+        .test-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-600);
+            margin-bottom: 6px;
+        }
+
+        .test-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .test-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--gray-50);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .checkbox-item:has(input:checked) {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .checkbox-item input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .checkbox-item span {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-sm {
+            padding: 10px 18px;
+            font-size: 14px;
+            border-radius: 10px;
+        }
+
+        /* Results */
+        .result-container {
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--gray-200);
+        }
+
+        .result-header {
+            padding: 12px 16px;
+            background: var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        .result-body {
+            padding: 16px;
+            background: var(--gray-900);
+            color: #e5e7eb;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .result-success { border-color: var(--success); }
+        .result-success .result-header { background: var(--success-light); color: var(--success); }
+
+        .result-error { border-color: var(--danger); }
+        .result-error .result-header { background: var(--danger-light); color: var(--danger); }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .quick-btn {
+            padding: 12px 20px;
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        /* Task List */
+        .task-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: var(--gray-50);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-item:hover {
+            background: var(--primary-light);
+        }
+
+        .task-item.selected {
+            background: var(--primary);
+            color: white;
+        }
+
+        .task-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .task-id {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            background: var(--gray-200);
+            border-radius: 6px;
+        }
+
+        .task-item.selected .task-id {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .priority-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-high { background: var(--danger-light); color: var(--danger); }
+        .priority-medium { background: var(--warning-light); color: var(--warning); }
+        .priority-low { background: var(--success-light); color: var(--success); }
+
+        /* Log Panel */
+        .log-panel {
+            background: white;
+            border-radius: 20px;
+            margin-top: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-header h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            color: var(--gray-800);
+        }
+
+        .log-body {
+            padding: 20px;
+            background: var(--gray-900);
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            color: var(--gray-300);
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-800);
+        }
+
+        .log-entry:last-child { border-bottom: none; }
+
+        .log-time { color: var(--gray-500); margin-right: 12px; }
+        .log-success { color: var(--success); }
+        .log-error { color: var(--danger); }
+        .log-info { color: var(--info); }
+
+        /* Loader */
+        .loader {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .test-grid { grid-template-columns: 1fr; }
+            .app-header { flex-direction: column; gap: 16px; padding: 16px; }
+            .app-main { padding: 16px; }
+            .config-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card fade-in">
+            <div class="login-logo">
+                <div class="icon">🧪</div>
+                <h1>API Tester Console</h1>
+                <p>Secure testing interface for Task Manager APIs</p>
+            </div>
+            
+            <div id="loginError" class="login-error">
+                Invalid username or password
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" class="form-input" placeholder="Enter username" required autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <div style="position: relative;">
+                        <input type="password" id="loginPassword" class="form-input" placeholder="Enter password" required autocomplete="current-password" style="padding-right: 50px;">
+                        <button type="button" id="togglePassword" onclick="togglePasswordVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; padding: 0;">👁️</button>
+                    </div>
+                </div>
+                
+                <button type="submit" id="loginBtn" class="btn btn-primary">
+                    <span id="loginBtnText">🔐 Sign In</span>
+                    <span id="loginLoader" class="loader hidden"></span>
+                </button>
+            </form>
+            
+            <p style="text-align: center; margin-top: 24px; font-size: 13px; color: var(--gray-400);">
+                Task Manager Pro © 2025 • SriInfosoft Inc
+            </p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appContainer" class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <div class="logo-icon">🧪</div>
+                <span>API Tester Console</span>
+            </div>
+            
+            <div class="header-actions">
+                <div class="user-badge">
+                    <span>👤</span>
+                    <span id="currentUser">admin</span>
+                </div>
+                <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Configuration -->
+            <div class="config-card fade-in">
+                <h2>⚙️ Configuration</h2>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label>API Base URL</label>
+                        <input type="text" id="apiUrl" value="">
+                    </div>
+                    <div class="config-item">
+                        <label>JWT Token (from Task Manager App)</label>
+                        <textarea id="jwtToken" rows="2" placeholder="Paste JWT token or click 'Load from App'"></textarea>
+                    </div>
+                    <div class="config-item">
+                        <label>Selected Task ID</label>
+                        <input type="number" id="selectedTaskId" value="" placeholder="Select from list below">
+                    </div>
+                    <div class="config-item">
+                        <label>API Status</label>
+                        <div id="connectionStatus" class="status-indicator status-disconnected">⚠️ Not Connected</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions fade-in">
+                <button class="quick-btn" onclick="testConnection()">🔌 Test Connection</button>
+                <button class="quick-btn" onclick="loadTokenFromApp()">🔑 Load Token from App</button>
+                <button class="quick-btn" onclick="fetchAllTasks()">📋 Fetch All Tasks</button>
+                <button class="quick-btn" onclick="clearLogs()">🗑️ Clear Logs</button>
+                <button class="quick-btn" onclick="exportLogs()">📥 Export Logs</button>
+            </div>
+
+            <!-- Test Cards Grid -->
+            <div class="test-grid">
+                <!-- Authentication Tests -->
+                <div class="test-card fade-in">
+                    <div class="test-card-header purple">
+                        <div class="icon">🔐</div>
+                        <div>
+                            <h3>Authentication</h3>
+                            <p>Test auth endpoints and token validation</p>
+                        </div>
+                    </div>
+                    <div class="test-card-body">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-primary" onclick="testGetMe()">👤 Get Current User</button>
+                            <button class="btn btn-sm btn-outline" onclick="testValidateToken()">✅ Validate Token</button>
+                        </div>
+                        <div id="authResult" class="result-container hidden">
+                            <div class="result-header"><span>Response</span><span id="authStatus"></span></div>
+                            <div class="result-body" id="authResultBody"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task CRUD -->
+                <div class="test-card fade-in">
+                    <div class="test-card-header blue">
+                        <div class="icon">📝</div>
+                        <div>
+                            <h3>Task Operations</h3>
+                            <p>Create, Read, Update, Delete tasks</p>
+                        </div>
+                    </div>
+                    <div class="test-card-body">
+                        <div class="test-form-group">
+                            <label>Task Title</label>
+                            <input type="text" id="taskTitle" class="test-input" placeholder="Enter task title" value="Test Task from API Tester">
+                        </div>
+                        <div class="test-form-group">
+                            <label>Priority</label>
+                            <select id="taskPriority" class="test-input">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM" selected>Medium</option>
+                                <option value="HIGH">High</option>
+                            </select>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-success" onclick="createTask()">➕ Create</button>
+                            <button class="btn btn-sm btn-info" onclick="fetchTask()">📖 Fetch</button>
+                            <button class="btn btn-sm btn-warning" onclick="updateTaskBasic()">✏️ Update</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTask()">🗑️ Delete</button>
+                        </div>
+                        <div id="taskResult" class="result-container hidden">
+                            <div class="result-header"><span>Response</span><span id="taskStatus"></span></div>
+                            <div class="result-body" id="taskResultBody"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <div class="test-card fade-in">
+                    <div class="test-card-header green">
+                        <div class="icon">🔔</div>
+                        <div>
+                            <h3>Notification Settings</h3>
+                            <p>Test email, push, and SMS notifications</p>
+                        </div>
+                    </div>
+                    <div class="test-card-body">
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="testEmailEnabled">
+                                <span>📧 Email</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="testPushEnabled">
+                                <span>🔔 Push</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="testSmsEnabled">
+                                <span>📱 SMS</span>
+                            </label>
+                        </div>
+                        <div class="test-form-group">
+                            <label>Phone Number (E.164 format)</label>
+                            <input type="tel" id="testPhoneNumber" class="test-input" placeholder="+15055550006">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-success" onclick="enableAllNotifications()">✅ Enable All</button>
+                            <button class="btn btn-sm btn-danger" onclick="disableAllNotifications()">❌ Disable All</button>
+                            <button class="btn btn-sm btn-primary" onclick="updateNotifications()">💾 Save to Task</button>
+                        </div>
+                        <div id="notifResult" class="result-container hidden">
+                            <div class="result-header"><span>Response</span><span id="notifStatus"></span></div>
+                            <div class="result-body" id="notifResultBody"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Operations -->
+                <div class="test-card fade-in">
+                    <div class="test-card-header orange">
+                        <div class="icon">⚡</div>
+                        <div>
+                            <h3>Bulk Operations</h3>
+                            <p>Batch updates and stress testing</p>
+                        </div>
+                    </div>
+                    <div class="test-card-body">
+                        <div class="test-form-group">
+                            <label>Number of Tasks to Create (1-20)</label>
+                            <input type="number" id="bulkCount" class="test-input" value="5" min="1" max="20">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-success" onclick="bulkCreateTasks()">📦 Bulk Create</button>
+                            <button class="btn btn-sm btn-warning" onclick="markAllComplete()">✅ Complete All</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteAllTasks()">🗑️ Delete All</button>
+                        </div>
+                        <div id="bulkResult" class="result-container hidden">
+                            <div class="result-header"><span>Response</span><span id="bulkStatus"></span></div>
+                            <div class="result-body" id="bulkResultBody"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task List -->
+                <div class="test-card fade-in">
+                    <div class="test-card-header pink">
+                        <div class="icon">📋</div>
+                        <div>
+                            <h3>Task List</h3>
+                            <p>View and select tasks for testing</p>
+                        </div>
+                    </div>
+                    <div class="test-card-body">
+                        <button class="btn btn-sm btn-primary" onclick="fetchAllTasks()" style="margin-bottom: 16px;">🔄 Refresh List</button>
+                        <div id="taskListContainer" class="task-list">
+                            <p style="color: var(--gray-400); text-align: center; padding: 20px;">
+                                Click "Refresh List" to load tasks
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date/Time Testing -->
+                <div class="test-card fade-in">
+                    <div class="test-card-header cyan">
+                        <div class="icon">📅</div>
+                        <div>
+                            <h3>Schedule & Due Date</h3>
+                            <p>Test date/time handling and timezone</p>
+                        </div>
+                    </div>
+                    <div class="test-card-body">
+                        <div class="test-form-group">
+                            <label>Due Date & Time</label>
+                            <input type="datetime-local" id="testDueDate" class="test-input">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-info" onclick="setDueDateNow()">⏰ Now</button>
+                            <button class="btn btn-sm btn-warning" onclick="setDueDate1Hour()">1️⃣ +1 Hour</button>
+                            <button class="btn btn-sm btn-success" onclick="updateDueDate()">💾 Save to Task</button>
+                        </div>
+                        <div id="dateResult" class="result-container hidden">
+                            <div class="result-header"><span>Response</span><span id="dateStatus"></span></div>
+                            <div class="result-body" id="dateResultBody"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="log-panel fade-in">
+                <div class="log-header">
+                    <h3>📜 Activity Log</h3>
+                    <span id="logCount">0 entries</span>
+                </div>
+                <div class="log-body" id="logBody">
+                    <div class="log-entry">
+                        <span class="log-time">[--:--:--]</span>
+                        <span class="log-info">Ready to start testing...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ============ PASSWORD VISIBILITY TOGGLE ============
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const toggleBtn = document.getElementById('togglePassword');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        // ============ CONFIGURATION ============
+        const CONFIG = {
+            SESSION_KEY: 'api_tester_session',
+            TESTER_AUTH_ENDPOINT: '/api/tester/auth'
+        };
+
+        // ============ STATE ============
+        let currentTasks = [];
+        let logEntries = [];
+        let apiBaseUrl = '';
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', () => {
+            const session = localStorage.getItem(CONFIG.SESSION_KEY);
+            if (session) {
+                try {
+                    const sessionData = JSON.parse(session);
+                    if (sessionData.expires > Date.now()) {
+                        apiBaseUrl = sessionData.apiUrl || '';
+                        showApp(sessionData.username);
+                        return;
+                    }
+                } catch (e) {}
+            }
+            showLogin();
+        });
+
+        // ============ AUTH FUNCTIONS ============
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('loginBtnText');
+            const loader = document.getElementById('loginLoader');
+            
+            btn.disabled = true;
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                // Authenticate against backend endpoint
+                const response = await fetch(CONFIG.TESTER_AUTH_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store session
+                    const session = {
+                        username: data.username || username,
+                        apiUrl: data.apiUrl || window.location.origin,
+                        expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+                    };
+                    localStorage.setItem(CONFIG.SESSION_KEY, JSON.stringify(session));
+                    apiBaseUrl = session.apiUrl;
+                    
+                    showApp(session.username);
+                } else {
+                    // Try to get error message from response
+                    let errorMsg = 'Invalid username or password';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorData.message || errorMsg;
+                        console.error('Auth error:', errorData);
+                    } catch (e) {
+                        console.error('Auth failed with status:', response.status);
+                    }
+                    showLoginError(errorMsg + ' (Status: ' + response.status + ')');
+                }
+            } catch (e) {
+                console.error('Connection error:', e);
+                showLoginError('Connection error: ' + e.message + '. Check if backend is running and /api/tester/auth endpoint exists.');
+            } finally {
+                btn.disabled = false;
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+            }
+        });
+
+        function showLoginError(message) {
+            const errorEl = document.getElementById('loginError');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => errorEl.style.display = 'none', 4000);
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function showApp(username) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('currentUser').textContent = username;
+            document.getElementById('apiUrl').value = apiBaseUrl;
+            
+            loadTokenFromApp();
+            log('Session started for user: ' + username, 'success');
+        }
+
+        function logout() {
+            localStorage.removeItem(CONFIG.SESSION_KEY);
+            showLogin();
+        }
+
+        // ============ HELPER FUNCTIONS ============
+        function getConfig() {
+            return {
+                apiUrl: document.getElementById('apiUrl').value.replace(/\/$/, ''),
+                token: document.getElementById('jwtToken').value.trim(),
+                taskId: document.getElementById('selectedTaskId').value
+            };
+        }
+
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            logEntries.unshift({ time, message, type });
+            
+            const logBody = document.getElementById('logBody');
+            logBody.innerHTML = `<div class="log-entry"><span class="log-time">[${time}]</span><span class="log-${type}">${message}</span></div>` + logBody.innerHTML;
+            document.getElementById('logCount').textContent = `${logEntries.length} entries`;
+        }
+
+        function clearLogs() {
+            logEntries = [];
+            document.getElementById('logBody').innerHTML = `<div class="log-entry"><span class="log-time">[${new Date().toLocaleTimeString()}]</span><span class="log-info">Logs cleared</span></div>`;
+            document.getElementById('logCount').textContent = '0 entries';
+        }
+
+        function exportLogs() {
+            const content = logEntries.map(e => `[${e.time}] [${e.type.toUpperCase()}] ${e.message}`).join('\n');
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `api-tester-logs-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            log('Logs exported', 'success');
+        }
+
+        function showResult(containerId, data, isError = false) {
+            const container = document.getElementById(containerId);
+            const body = document.getElementById(containerId + 'Body');
+            const status = document.getElementById(containerId.replace('Result', 'Status'));
+            
+            container.classList.remove('hidden', 'result-success', 'result-error');
+            container.classList.add(isError ? 'result-error' : 'result-success');
+            status.textContent = isError ? '❌ Error' : '✅ Success';
+            body.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        }
+
+        async function apiCall(method, endpoint, body = null) {
+            const config = getConfig();
+            if (!config.token) throw new Error('JWT Token is required. Load from app or paste manually.');
+
+            const options = {
+                method,
+                headers: { 'Authorization': `Bearer ${config.token}`, 'Content-Type': 'application/json' }
+            };
+            if (body) options.body = JSON.stringify(body);
+
+            const url = `${config.apiUrl}${endpoint}`;
+            log(`${method} ${endpoint}`, 'info');
+
+            const response = await fetch(url, options);
+            const data = await response.json();
+            if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
+            return data;
+        }
+
+        // Wrapper to handle GET /tasks/{id} 405 error
+        async function fetchTaskById(taskId) {
+            const config = getConfig();
+            try {
+                return await apiCall('GET', `/api/tasks/${taskId}`);
+            } catch (e) {
+                if (e.message.includes('405')) {
+                    const allTasks = await apiCall('GET', '/api/tasks');
+                    const task = allTasks.find(t => t.id == taskId);
+                    if (task) return task;
+                    throw new Error('Task not found');
+                }
+                throw e;
+            }
+        }
+
+        // ============ QUICK ACTIONS ============
+        function loadTokenFromApp() {
+            try {
+                const token = localStorage.getItem('jwt_token');
+                if (token) {
+                    document.getElementById('jwtToken').value = token;
+                    log('JWT token loaded from app storage', 'success');
+                    updateConnectionStatus(true);
+                } else {
+                    log('No JWT token found. Login to Task Manager first.', 'error');
+                    updateConnectionStatus(false);
+                }
+            } catch (e) {
+                log('Failed to load token: ' + e.message, 'error');
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const data = await apiCall('GET', '/api/auth/me');
+                log(`Connected as: ${data.name || data.email}`, 'success');
+                updateConnectionStatus(true);
+            } catch (e) {
+                log('Connection failed: ' + e.message, 'error');
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const el = document.getElementById('connectionStatus');
+            el.className = 'status-indicator ' + (connected ? 'status-connected' : 'status-disconnected');
+            el.innerHTML = connected ? '✅ Connected' : '⚠️ Not Connected';
+        }
+
+        // ============ AUTH TESTS ============
+        async function testGetMe() {
+            try {
+                const data = await apiCall('GET', '/api/auth/me');
+                showResult('authResult', data);
+                log('Get current user: Success', 'success');
+            } catch (e) {
+                showResult('authResult', e.message, true);
+                log('Get current user: Failed - ' + e.message, 'error');
+            }
+        }
+
+        async function testValidateToken() {
+            try {
+                const data = await apiCall('GET', '/api/auth/me');
+                showResult('authResult', { valid: true, user: data });
+                log('Token validation: Valid', 'success');
+            } catch (e) {
+                showResult('authResult', { valid: false, error: e.message }, true);
+                log('Token validation: Invalid', 'error');
+            }
+        }
+
+        // ============ TASK CRUD ============
+        async function fetchAllTasks() {
+            try {
+                currentTasks = await apiCall('GET', '/api/tasks');
+                renderTaskList();
+                log(`Fetched ${currentTasks.length} tasks`, 'success');
+            } catch (e) {
+                log('Fetch tasks failed: ' + e.message, 'error');
+            }
+        }
+
+        function renderTaskList() {
+            const container = document.getElementById('taskListContainer');
+            if (currentTasks.length === 0) {
+                container.innerHTML = '<p style="color: var(--gray-400); text-align: center; padding: 20px;">No tasks found</p>';
+                return;
+            }
+            container.innerHTML = currentTasks.map(task => `
+                <div class="task-item" onclick="selectTask(${task.id})" data-id="${task.id}">
+                    <div class="task-info">
+                        <span class="task-id">#${task.id}</span>
+                        <span>${task.title.substring(0, 25)}${task.title.length > 25 ? '...' : ''}</span>
+                    </div>
+                    <span class="priority-badge priority-${task.priority.toLowerCase()}">${task.priority}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectTask(id) {
+            document.getElementById('selectedTaskId').value = id;
+            document.querySelectorAll('.task-item').forEach(el => el.classList.toggle('selected', el.dataset.id == id));
+            log(`Selected task #${id}`, 'info');
+        }
+
+        async function fetchTask() {
+            const config = getConfig();
+            if (!config.taskId) { showResult('taskResult', 'Please select a task first', true); return; }
+            try {
+                const data = await fetchTaskById(config.taskId);
+                showResult('taskResult', data);
+                log(`Fetched task #${config.taskId}`, 'success');
+            } catch (e) {
+                showResult('taskResult', e.message, true);
+                log('Fetch task failed: ' + e.message, 'error');
+            }
+        }
+
+        async function createTask() {
+            try {
+                const data = await apiCall('POST', '/api/tasks', {
+                    title: document.getElementById('taskTitle').value,
+                    priority: document.getElementById('taskPriority').value,
+                    completed: false, emailEnabled: false, notificationsEnabled: false, smsEnabled: false
+                });
+                showResult('taskResult', data);
+                log(`Created task #${data.id}`, 'success');
+                fetchAllTasks();
+            } catch (e) {
+                showResult('taskResult', e.message, true);
+                log('Create task failed: ' + e.message, 'error');
+            }
+        }
+
+        async function updateTaskBasic() {
+            const config = getConfig();
+            if (!config.taskId) { showResult('taskResult', 'Please select a task first', true); return; }
+            try {
+                const current = await fetchTaskById(config.taskId);
+                const data = await apiCall('PUT', `/api/tasks/${config.taskId}`, {
+                    ...current,
+                    title: document.getElementById('taskTitle').value,
+                    priority: document.getElementById('taskPriority').value
+                });
+                showResult('taskResult', data);
+                log(`Updated task #${config.taskId}`, 'success');
+                fetchAllTasks();
+            } catch (e) {
+                showResult('taskResult', e.message, true);
+                log('Update failed: ' + e.message, 'error');
+            }
+        }
+
+        async function deleteTask() {
+            const config = getConfig();
+            if (!config.taskId) { showResult('taskResult', 'Please select a task first', true); return; }
+            if (!confirm(`Delete task #${config.taskId}?`)) return;
+            try {
+                await apiCall('DELETE', `/api/tasks/${config.taskId}`);
+                showResult('taskResult', { message: `Task #${config.taskId} deleted` });
+                log(`Deleted task #${config.taskId}`, 'success');
+                fetchAllTasks();
+            } catch (e) {
+                showResult('taskResult', e.message, true);
+                log('Delete failed: ' + e.message, 'error');
+            }
+        }
+
+        // ============ NOTIFICATION TESTS ============
+        function enableAllNotifications() {
+            document.getElementById('testEmailEnabled').checked = true;
+            document.getElementById('testPushEnabled').checked = true;
+            document.getElementById('testSmsEnabled').checked = true;
+            document.getElementById('testPhoneNumber').value = '+15055550006';
+        }
+
+        function disableAllNotifications() {
+            document.getElementById('testEmailEnabled').checked = false;
+            document.getElementById('testPushEnabled').checked = false;
+            document.getElementById('testSmsEnabled').checked = false;
+            document.getElementById('testPhoneNumber').value = '';
+        }
+
+        async function updateNotifications() {
+            const config = getConfig();
+            if (!config.taskId) { showResult('notifResult', 'Please select a task first', true); return; }
+            
+            const emailEnabled = document.getElementById('testEmailEnabled').checked;
+            const notificationsEnabled = document.getElementById('testPushEnabled').checked;
+            const smsEnabled = document.getElementById('testSmsEnabled').checked;
+            const phoneNumber = document.getElementById('testPhoneNumber').value || null;
+            
+            try {
+                const current = await fetchTaskById(config.taskId);
+                const data = await apiCall('PUT', `/api/tasks/${config.taskId}`, {
+                    ...current, emailEnabled, notificationsEnabled, smsEnabled, phoneNumber: smsEnabled ? phoneNumber : null
+                });
+                showResult('notifResult', { sent: { emailEnabled, notificationsEnabled, smsEnabled, phoneNumber }, received: { emailEnabled: data.emailEnabled, notificationsEnabled: data.notificationsEnabled, smsEnabled: data.smsEnabled, phoneNumber: data.phoneNumber }});
+                log(`Notifications updated for task #${config.taskId}`, 'success');
+            } catch (e) {
+                showResult('notifResult', e.message, true);
+                log('Update notifications failed: ' + e.message, 'error');
+            }
+        }
+
+        // ============ BULK OPERATIONS ============
+        async function bulkCreateTasks() {
+            const count = Math.min(20, Math.max(1, parseInt(document.getElementById('bulkCount').value) || 5));
+            const results = [];
+            for (let i = 1; i <= count; i++) {
+                try {
+                    const data = await apiCall('POST', '/api/tasks', {
+                        title: `Bulk Task ${i} - ${new Date().toLocaleTimeString()}`,
+                        priority: ['LOW', 'MEDIUM', 'HIGH'][Math.floor(Math.random() * 3)],
+                        completed: false
+                    });
+                    results.push({ id: data.id, status: 'created' });
+                    log(`Created bulk task ${i}/${count}`, 'success');
+                } catch (e) {
+                    results.push({ index: i, status: 'failed', error: e.message });
+                }
+            }
+            showResult('bulkResult', { total: count, created: results.filter(r => r.status === 'created').length, results });
+            fetchAllTasks();
+        }
+
+        async function markAllComplete() {
+            if (!confirm('Mark all tasks as complete?')) return;
+            await fetchAllTasks();
+            let completed = 0;
+            for (const task of currentTasks) {
+                try {
+                    await apiCall('PUT', `/api/tasks/${task.id}`, { ...task, completed: true });
+                    completed++;
+                } catch (e) {}
+            }
+            showResult('bulkResult', { message: `Marked ${completed}/${currentTasks.length} tasks complete` });
+            log(`Marked ${completed} tasks complete`, 'success');
+            fetchAllTasks();
+        }
+
+        async function deleteAllTasks() {
+            if (!confirm('⚠️ DELETE ALL TASKS?')) return;
+            if (!confirm('Are you REALLY sure?')) return;
+            await fetchAllTasks();
+            let deleted = 0;
+            for (const task of currentTasks) {
+                try {
+                    await apiCall('DELETE', `/api/tasks/${task.id}`);
+                    deleted++;
+                } catch (e) {}
+            }
+            showResult('bulkResult', { message: `Deleted ${deleted}/${currentTasks.length} tasks` });
+            log(`Deleted ${deleted} tasks`, 'success');
+            fetchAllTasks();
+        }
+
+        // ============ DATE OPERATIONS ============
+        function setDueDateNow() {
+            const now = new Date();
+            document.getElementById('testDueDate').value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        }
+
+        function setDueDate1Hour() {
+            const future = new Date(Date.now() + 60 * 60 * 1000);
+            document.getElementById('testDueDate').value = new Date(future.getTime() - future.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        }
+
+        async function updateDueDate() {
+            const config = getConfig();
+            if (!config.taskId) { showResult('dateResult', 'Please select a task first', true); return; }
+            const dueDate = document.getElementById('testDueDate').value;
+            if (!dueDate) { showResult('dateResult', 'Please select a date', true); return; }
+            
+            try {
+                const current = await fetchTaskById(config.taskId);
+                const utcDate = new Date(dueDate).toISOString();
+                const data = await apiCall('PUT', `/api/tasks/${config.taskId}`, { ...current, dueDate: utcDate });
+                showResult('dateResult', { localInput: dueDate, utcSent: utcDate, serverResponse: data.dueDate });
+                log(`Due date updated for task #${config.taskId}`, 'success');
+            } catch (e) {
+                showResult('dateResult', e.message, true);
+                log('Update due date failed: ' + e.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

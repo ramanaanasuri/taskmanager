@@ -167,6 +167,20 @@ public class NotificationScheduler {
      */
     private void sendEmailNotificationWithLogging(Task task) {
         logger.debug("DEBUG: Preparing EMAIL notification for task {}", task.getId()); //ADDED for Email Integration
+        logger.debug("DEBUG: Email enabled: {}, User email: {}", task.getEmailEnabled(), task.getUserEmail()); //MODIFIED for Email opt-in
+        
+        // Check if email is enabled for this task (ADDED for Email opt-in)
+        if (task.getEmailEnabled() == null || !task.getEmailEnabled()) {
+            logger.debug("⏭️ Email notifications disabled for task {}", task.getId()); //ADDED for Email opt-in
+            return;
+        }
+        
+        // Check if user email exists
+        if (task.getUserEmail() == null || task.getUserEmail().trim().isEmpty()) {
+            logger.warn("⚠️ Email enabled but no user email set for task {}", task.getId()); //ADDED for Email opt-in
+            return;
+        }
+        
         logger.debug("DEBUG: Email will be sent to: {}", task.getUserEmail()); //ADDED for Email Integration
         
         try {
