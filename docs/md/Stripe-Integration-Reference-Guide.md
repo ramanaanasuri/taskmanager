@@ -68,7 +68,7 @@ STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # Webhook Signing Secret (from Dashboard → Webhooks → Signing secret)
 # Starts with: whsec_
-STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+STRIPE_WEBHOOK_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # Price IDs (from Dashboard → Products → [Product] → Pricing)
 # IMPORTANT: Use PRICE IDs (price_xxx), NOT Product IDs (prod_xxx)
