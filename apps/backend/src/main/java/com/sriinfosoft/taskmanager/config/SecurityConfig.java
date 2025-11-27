@@ -100,7 +100,10 @@ public class SecurityConfig {
             ).permitAll()
                 // ✅ ADDED: API Tester endpoints - uses its own auth via .env credentials
                 .requestMatchers("/api/tester/**").permitAll()  // API Tester authentication endpoint
-                .requestMatchers("/api-tester.html").permitAll() // API Tester HTML page            
+                .requestMatchers("/api-tester.html").permitAll() // API Tester HTML page  
+                // ✅ ADDED: Stripe webhook endpoint - uses signature verification instead of JWT
+                .requestMatchers("/api/stripe/webhook").permitAll()  // Stripe webhook (verified by signature)
+                .requestMatchers("/api/stripe/plans").permitAll()    // Public pricing info
                 // ✅ ADDED: Explicitly require authentication for push endpoints
                 .requestMatchers("/api/push/**").authenticated()                
                 .anyRequest().authenticated()

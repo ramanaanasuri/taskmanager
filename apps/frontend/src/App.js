@@ -4,7 +4,13 @@ import API_BASE_URL from './config';
 import './App.css';
 import { subscribeToPushNotifications } from './utils/pushNotifications';
 import { convertLocalToUTC } from './utils/dateUtils';  //ADDED - for timezone conversion
-
+// ============================================
+// ADDED for Stripe Payment Integration
+// ============================================
+import { SubscriptionModal, UpgradeButton, useSubscription } from './SubscriptionModal';
+// ============================================
+// END Stripe Payment Integration Imports
+// ============================================
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
@@ -21,6 +27,13 @@ function App() {
   const [enableSms, setEnableSms] = useState(false);  //ADDED for SMS Integration
 
   const [enableEmail, setEnableEmail] = useState(false);  //ADDED for Email opt-in
+  // ============================================
+  // ADDED for Stripe Payment Integration
+  // ============================================
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);  // Controls subscription modal visibility
+  // ============================================
+  // END Stripe State
+  // ============================================  
   // ============ DEBUG: Component Mount ============
   useEffect(() => {
     console.log('=== 🚀 App Component Mounted ===');
@@ -28,6 +41,15 @@ function App() {
     console.log('📍 Current URL:', window.location.href);
     console.log('🔗 URL Search Params:', window.location.search);
   }, []);
+
+  // ============================================
+  // ADDED for Stripe Payment Integration
+  // Hook to fetch and manage subscription state
+  // ============================================
+  const { subscription, refresh: refreshSubscription } = useSubscription(authToken);
+  // ============================================
+  // END Stripe Hook
+  // ============================================  
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -52,6 +74,28 @@ function App() {
         setLoading(false);
       }
     }
+    // ============================================
+    // ADDED for Stripe Payment Integration
+    // Check for subscription success/cancel from Stripe redirect
+    // ============================================
+    const subscriptionStatus = params.get('subscription');
+    if (subscriptionStatus === 'success') {
+      console.log('✅ [Stripe] Subscription payment successful!');
+      // Refresh subscription data after successful payment
+      setTimeout(() => {
+        if (typeof refreshSubscription === 'function') {
+          refreshSubscription();
+        }
+      }, 1000);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (subscriptionStatus === 'canceled') {
+      console.log('❌ [Stripe] Subscription payment was canceled.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    // ============================================
+    // END Stripe Subscription Check
+    // ============================================    
   }, []);
 
   useEffect(() => {
@@ -722,6 +766,17 @@ const toggleTask = async (id) => {
             </div>
             <div className="user-info">
               <span>Welcome, {user.name}</span>
+              {/* ============================================ */}
+              {/* ADDED for Stripe Payment Integration */}
+              {/* Upgrade/Premium button - opens subscription modal */}
+              {/* ============================================ */}
+              <UpgradeButton 
+                onClick={() => setShowSubscriptionModal(true)} 
+                subscription={subscription} 
+              />
+              {/* ============================================ */}
+              {/* END Stripe UpgradeButton */}
+              {/* ============================================ */}              
               <button onClick={handleLogout} className="logout-btn">
                 Sign Out
               </button>
@@ -1271,6 +1326,21 @@ const toggleTask = async (id) => {
           </div>
         </div>
       )}
+
+      {/* ============================================ */}
+      {/* ADDED for Stripe Payment Integration */}
+      {/* Subscription Modal - displays pricing plans and handles checkout */}
+      {/* ============================================ */}
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        authToken={authToken}
+        user={user}
+      />
+      {/* ============================================ */}
+      {/* END Stripe SubscriptionModal */}
+      {/* ============================================ */}
+
       {/* Footer */}
       <footer className="app-footer">
         <div className="footer-content">

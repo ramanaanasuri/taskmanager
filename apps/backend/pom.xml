@@ -55,7 +55,17 @@
             <version>1.12.529</version>
         </dependency>
         <!-- END SMS Integration Addition -->
-
+        <!-- ============================================ -->
+        <!-- ADDED for Stripe Payment Integration -->
+        <!-- ============================================ -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>24.0.0</version>
+        </dependency>
+        <!-- ============================================ -->
+        <!-- END Stripe Payment Integration -->
+        <!-- ============================================ -->
         <!-- BouncyCastle - Required by web-push -->
         <dependency>
             <groupId>org.bouncycastle</groupId>

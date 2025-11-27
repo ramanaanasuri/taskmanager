@@ -12,6 +12,8 @@ DB_CONT="taskmanager-db"
 BE_CONT="taskmanager-backend"
 FE_CONT="taskmanager-frontend"
 
+./scripts/fixCtrlM.sh
+
 
 # ---- Helpers --------------------------------------------------------------
 compose() {
