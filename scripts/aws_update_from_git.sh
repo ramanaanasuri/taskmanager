@@ -5,7 +5,7 @@ set -euo pipefail
 REPO_DIR="/home/ec2-user/sriinfo/taskmanager" # change to your repo path
 BRANCH="${1:-feature/notifications-clean}"    # default branch, override by arg
 REMOTE="origin"
-REPLACE_SCRIPT="/home/ec2-user/sriinfo/scripts/set_aws_env.sh"  # your script
+REPLACE_SCRIPT="$REPO_DIR/scripts/set_aws_env.sh"  # your script
 # ==================
 
 echo ">>> Updating repo in: $REPO_DIR"
