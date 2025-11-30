@@ -17,6 +17,16 @@ import java.util.Map;
 /**
  * REST Controller for Stripe payment operations.
  * Handles checkout, subscription management, and webhooks.
+ * 
+ * Endpoints:
+ *   GET  /api/stripe/subscription           - Get user subscription info
+ *   POST /api/stripe/create-checkout-session - Create Stripe checkout
+ *   POST /api/stripe/create-portal-session   - Create Stripe customer portal
+ *   POST /api/stripe/cancel-subscription     - Cancel subscription (downgrade to free) //Added
+ *   GET  /api/stripe/plans                   - Get available plans
+ *   POST /api/stripe/webhook                 - Handle Stripe webhooks
+ *   GET  /api/stripe/can-send-sms           - Check SMS credits
+ *   GET  /api/stripe/can-use-ai             - Check AI credits
  */
 @RestController
 @RequestMapping("/api/stripe")
@@ -46,6 +56,14 @@ public class StripeController {
     /**
      * GET /api/stripe/subscription
      * Get current user's subscription information
+     * 
+     * Response includes:
+     * - subscriptionStatus: free | active | canceled | past_due | trialing
+     * - subscriptionPlan: free | basic | pro | enterprise
+     * - isPremium: boolean
+     * - canCancel: boolean (true if user can downgrade to free)
+     * - smsCreditsUsed/Limit: usage stats
+     * - aiRequestsUsed/Limit: usage stats
      */
     @GetMapping("/subscription")
     public ResponseEntity<?> getSubscription(@RequestHeader("Authorization") String bearerToken) {
@@ -130,6 +148,58 @@ public class StripeController {
         } catch (Exception e) {
             System.err.println("❌ [StripeController] Error creating portal: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ============ Cancel Subscription ============ //Added: Complete section
+
+    /**
+     * POST /api/stripe/cancel-subscription
+     * Cancel user's subscription and downgrade to free plan
+     * 
+     * This endpoint:
+     * 1. Cancels the subscription in Stripe (immediately)
+     * 2. Updates the database to free plan
+     * 3. Returns updated subscription info
+     * 
+     * Response on success:
+     * {
+     *   "success": true,
+     *   "message": "Your subscription has been canceled...",
+     *   "subscription": { updated subscription info }
+     * }
+     * 
+     * Response on error:
+     * { "error": "error message" }
+     */
+    @PostMapping("/cancel-subscription")
+    public ResponseEntity<?> cancelSubscription(@RequestHeader("Authorization") String bearerToken) {
+        try {
+            String email = getEmailFromToken(bearerToken);
+            System.out.println("📛 [StripeController] Cancel subscription for: " + email);
+            
+            // Call service to cancel subscription
+            Map<String, Object> result = stripeService.cancelSubscription(email);
+            
+            // Get updated subscription info to return to frontend
+            Map<String, Object> updatedSubscription = stripeService.getSubscriptionInfo(email);
+            result.put("subscription", updatedSubscription);
+            
+            System.out.println("✅ [StripeController] Subscription canceled successfully for: " + email);
+            return ResponseEntity.ok(result);
+            
+        } catch (StripeException e) {
+            System.err.println("❌ [StripeController] Stripe error during cancel: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Stripe error: " + e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            System.err.println("⚠️ [StripeController] Cancel validation error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("❌ [StripeController] Error canceling subscription: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Failed to cancel subscription. Please try again."));
         }
     }
 

@@ -2,6 +2,13 @@
  * SubscriptionModal.js
  * Stripe subscription management component for Task Manager Pro
  * 
+ * Features:
+ * - View available plans (Free, Basic, Pro, Enterprise)
+ * - Subscribe to paid plans via Stripe Checkout
+ * - Cancel subscription / Downgrade to Free (IN-APP - no redirect!)
+ * - Manage subscription via Stripe Portal (for payment method updates)
+ * - View usage stats (SMS, AI credits)
+ * 
  * Usage: Import and add to App.js with minimal changes
  */
 import React, { useState, useEffect } from 'react';
@@ -15,10 +22,18 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
+  
+  //Added: State for cancel confirmation dialog
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelProcessing, setCancelProcessing] = useState(false);
 
-  // Fetch plans and current subscription
+  // Fetch plans and current subscription + Reset states when modal opens
   useEffect(() => {
     if (isOpen && authToken) {
+      // Reset processing states when modal opens (fixes stuck state after browser back)
+      setProcessing(false);
+      setCancelProcessing(false);
+      setError(null);
       fetchData();
     }
   }, [isOpen, authToken]);
@@ -48,7 +63,14 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
 
   // Handle plan selection (create checkout session)
   const handleSelectPlan = async (planKey) => {
-    if (planKey === 'free') return; // Free plan doesn't need checkout
+    //Modified: Handle free plan click - show cancel confirmation instead of returning
+    if (planKey === 'free') {
+      // If user is on a paid plan and can cancel, show confirmation dialog
+      if (subscription?.canCancel) {
+        setShowCancelConfirm(true);
+      }
+      return;
+    }
     
     setProcessing(true);
     setError(null);
@@ -73,7 +95,45 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
     }
   };
 
-  // Handle manage subscription (open customer portal)
+  //Added: Handle cancel subscription (IN-APP - no redirect to Stripe!)
+  const handleCancelSubscription = async () => {
+    setCancelProcessing(true);
+    setError(null);
+    
+    try {
+      console.log('📛 [Subscription] Canceling subscription...');
+      
+      const response = await axios.post(
+        `${API_BASE_URL}/api/stripe/cancel-subscription`,
+        {},
+        { headers: { Authorization: `Bearer ${authToken}` }}
+      );
+      
+      console.log('✅ [Subscription] Canceled:', response.data);
+      
+      // Update local subscription state with new data from response
+      if (response.data.subscription) {
+        setSubscription(response.data.subscription);
+      } else {
+        // Refresh subscription data if not returned
+        await fetchData();
+      }
+      
+      // Close confirmation dialog
+      setShowCancelConfirm(false);
+      
+      // Show success message
+      alert('Your subscription has been canceled. You are now on the Free plan.');
+      
+    } catch (err) {
+      console.error('❌ [Subscription] Cancel error:', err);
+      setError(err.response?.data?.error || 'Failed to cancel subscription. Please try again.');
+    } finally {
+      setCancelProcessing(false);
+    }
+  };
+
+  // Handle manage subscription (open customer portal - for payment method updates)
   const handleManageSubscription = async () => {
     setProcessing(true);
     setError(null);
@@ -96,6 +156,36 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
       setError(err.response?.data?.error || 'Failed to open subscription management');
       setProcessing(false);
     }
+  };
+
+  //Added: Helper function to determine button text and state for each plan
+  const getPlanButtonProps = (planKey) => {
+    const isCurrentPlan = subscription?.subscriptionPlan === planKey;
+    const canCancel = subscription?.canCancel;
+    const isFreePlan = planKey === 'free';
+    
+    let disabled = processing || cancelProcessing;
+    let buttonText = 'Select Plan';
+    let buttonClass = '';
+    
+    if (isCurrentPlan) {
+      disabled = true;
+      buttonText = 'Current Plan';
+      buttonClass = 'current';
+    } else if (isFreePlan) {
+      // Enable free button if user can cancel (is on paid plan with active subscription)
+      if (canCancel) {
+        disabled = false;
+        buttonText = 'Downgrade to Free';
+        buttonClass = 'downgrade';
+      } else {
+        disabled = true;
+        buttonText = 'Free Forever';
+        buttonClass = 'free-btn';
+      }
+    }
+    
+    return { disabled, buttonText, buttonClass };
   };
 
   if (!isOpen) return null;
@@ -128,13 +218,17 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
                   {subscription.isPremium ? '✅ Active' : '📋 Free Plan'}
                 </span>
                 {subscription.isPremium && (
-                  <button 
-                    onClick={handleManageSubscription} 
-                    className="manage-btn"
-                    disabled={processing}
-                  >
-                    {processing ? 'Loading...' : '⚙️ Manage'}
-                  </button>
+                  <div className="plan-actions">
+                    {/* Billing button - for payment methods, invoices */}
+                    <button 
+                      onClick={handleManageSubscription} 
+                      className="manage-btn"
+                      disabled={processing || cancelProcessing}
+                      title="Update payment method, view invoices"
+                    >
+                      {processing ? 'Loading...' : '💳 Billing'}
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -159,39 +253,40 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
 
             {/* Plans Grid */}
             <div className="plans-grid">
-              {plans && Object.entries(plans).map(([key, plan]) => (
-                <div 
-                  key={key} 
-                  className={`plan-card ${plan.popular ? 'popular' : ''} ${subscription?.subscriptionPlan === key ? 'current' : ''}`}
-                >
-                  {plan.popular && <div className="popular-badge">Most Popular</div>}
-                  {subscription?.subscriptionPlan === key && <div className="current-badge">Current Plan</div>}
-                  
-                  <h3 className="plan-name">{plan.name}</h3>
-                  
-                  <div className="plan-price">
-                    <span className="price-amount">${plan.price}</span>
-                    {plan.price > 0 && <span className="price-interval">/{plan.interval}</span>}
-                  </div>
-                  
-                  <ul className="plan-features">
-                    {plan.features?.map((feature, idx) => (
-                      <li key={idx}>✓ {feature}</li>
-                    ))}
-                  </ul>
-                  
-                  <button
-                    className={`plan-select-btn ${key === 'free' ? 'free-btn' : ''}`}
-                    onClick={() => handleSelectPlan(key)}
-                    disabled={processing || subscription?.subscriptionPlan === key || key === 'free'}
+              {plans && Object.entries(plans).map(([key, plan]) => {
+                const btnProps = getPlanButtonProps(key);
+                
+                return (
+                  <div 
+                    key={key} 
+                    className={`plan-card ${plan.popular ? 'popular' : ''} ${subscription?.subscriptionPlan === key ? 'current' : ''}`}
                   >
-                    {processing ? 'Processing...' : 
-                     subscription?.subscriptionPlan === key ? 'Current Plan' :
-                     key === 'free' ? 'Free Forever' : 
-                     'Select Plan'}
-                  </button>
-                </div>
-              ))}
+                    {plan.popular && <div className="popular-badge">Most Popular</div>}
+                    {subscription?.subscriptionPlan === key && <div className="current-badge">Current Plan</div>}
+                    
+                    <h3 className="plan-name">{plan.name}</h3>
+                    
+                    <div className="plan-price">
+                      <span className="price-amount">${plan.price}</span>
+                      {plan.price > 0 && <span className="price-interval">/{plan.interval}</span>}
+                    </div>
+                    
+                    <ul className="plan-features">
+                      {plan.features?.map((feature, idx) => (
+                        <li key={idx}>✓ {feature}</li>
+                      ))}
+                    </ul>
+                    
+                    <button
+                      className={`plan-select-btn ${btnProps.buttonClass}`}
+                      onClick={() => handleSelectPlan(key)}
+                      disabled={btnProps.disabled}
+                    >
+                      {processing || cancelProcessing ? 'Processing...' : btnProps.buttonText}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Footer note */}
@@ -199,6 +294,46 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
               🔒 Secure payments by Stripe • Cancel anytime
             </p>
           </>
+        )}
+
+        {/* Added: Cancel Confirmation Dialog */}
+        {showCancelConfirm && (
+          <div className="cancel-confirm-overlay" onClick={() => setShowCancelConfirm(false)}>
+            <div className="cancel-confirm-dialog" onClick={(e) => e.stopPropagation()}>
+              <h3>⚠️ Cancel Subscription?</h3>
+              <p>Are you sure you want to cancel your <strong>{subscription?.subscriptionPlan?.toUpperCase()}</strong> subscription?</p>
+              
+              <div className="cancel-confirm-details">
+                <p>You will lose access to:</p>
+                <ul>
+                  <li>📱 SMS notifications ({subscription?.smsCreditsLimit === -1 ? 'Unlimited' : subscription?.smsCreditsLimit + '/month'})</li>
+                  <li>🤖 AI requests ({subscription?.aiRequestsLimit === -1 ? 'Unlimited' : subscription?.aiRequestsLimit + '/month'})</li>
+                  <li>⭐ Priority support</li>
+                </ul>
+              </div>
+              
+              <p className="cancel-confirm-note">
+                <strong>This action takes effect immediately.</strong>
+              </p>
+              
+              <div className="cancel-confirm-buttons">
+                <button 
+                  className="cancel-confirm-btn cancel-yes"
+                  onClick={handleCancelSubscription}
+                  disabled={cancelProcessing}
+                >
+                  {cancelProcessing ? 'Canceling...' : 'Yes, Cancel Subscription'}
+                </button>
+                <button 
+                  className="cancel-confirm-btn cancel-no"
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={cancelProcessing}
+                >
+                  Keep My Plan
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

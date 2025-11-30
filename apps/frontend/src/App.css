@@ -1617,6 +1617,308 @@ input[type="tel"].form-input:focus {
   }
 }
 
+/* ============================================
+   Cancel Subscription Styles
+   Add these to your App.css
+   ============================================ */
+
+/* Plan Actions Container (Cancel + Billing buttons) */
+.plan-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Cancel Button in header */
+.cancel-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ef4444;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: #ef4444;
+  color: white;
+}
+
+.cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Billing Button */
+.manage-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #6366f1;
+  background: transparent;
+  color: #6366f1;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.manage-btn:hover:not(:disabled) {
+  background: #6366f1;
+  color: white;
+}
+
+.manage-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Downgrade Button on Free Plan Card */
+.plan-select-btn.downgrade {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.plan-select-btn.downgrade:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+}
+
+/* Current Plan Button */
+.plan-select-btn.current {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  color: white;
+  cursor: default;
+}
+
+/* Cancel Confirmation Overlay */
+.cancel-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Cancel Confirmation Dialog */
+.cancel-confirm-dialog {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cancel-confirm-dialog h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #1f2937;
+}
+
+.cancel-confirm-dialog > p {
+  margin: 0 0 16px 0;
+  color: #4b5563;
+  font-size: 15px;
+}
+
+/* Warning Details Box */
+.cancel-confirm-details {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.cancel-confirm-details p {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+.cancel-confirm-details ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #7f1d1d;
+  font-size: 14px;
+}
+
+.cancel-confirm-details li {
+  margin: 4px 0;
+}
+
+/* Note */
+.cancel-confirm-note {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Buttons Container */
+.cancel-confirm-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Confirm Buttons */
+.cancel-confirm-btn {
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.cancel-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Yes, Cancel Button */
+.cancel-confirm-btn.cancel-yes {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.cancel-confirm-btn.cancel-yes:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+}
+
+/* Keep My Plan Button */
+.cancel-confirm-btn.cancel-no {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.cancel-confirm-btn.cancel-no:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+/* Current Plan Banner - Update for new layout */
+.current-plan-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.plan-badge {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.plan-status {
+  color: #1e40af;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .cancel-confirm-dialog {
+    background: #1f2937;
+  }
+  
+  .cancel-confirm-dialog h3 {
+    color: #f9fafb;
+  }
+  
+  .cancel-confirm-dialog > p {
+    color: #d1d5db;
+  }
+  
+  .cancel-confirm-details {
+    background: #450a0a;
+    border-color: #7f1d1d;
+  }
+  
+  .cancel-confirm-details p {
+    color: #fca5a5;
+  }
+  
+  .cancel-confirm-details ul {
+    color: #fecaca;
+  }
+  
+  .cancel-confirm-note {
+    color: #9ca3af;
+  }
+  
+  .cancel-confirm-btn.cancel-no {
+    background: #374151;
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+  
+  .cancel-confirm-btn.cancel-no:hover:not(:disabled) {
+    background: #4b5563;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .cancel-confirm-dialog {
+    padding: 20px;
+    margin: 16px;
+  }
+  
+  .plan-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+  
+  .current-plan-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 /* ============================================ */
 /* END Stripe Subscription Modal Styles */
 /* ============================================ */
