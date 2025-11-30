@@ -477,10 +477,58 @@ public class StripeService {
             user.setStripeSubscriptionId(subscription.getId());
             System.out.println("   - Set stripe_subscription_id: " + subscription.getId());
             
-            // Set status
-            SubscriptionStatus newStatus = mapStripeStatus(subscription.getStatus());
-            user.setSubscriptionStatus(newStatus);
-            System.out.println("   - Set subscription_status: " + newStatus);
+            // ============================================================
+            // Modified: Added race condition protection for status updates
+            // ============================================================
+            // PROBLEM: When subscribing, two webhooks fire almost simultaneously:
+            //   1. subscription.created (status: "incomplete") - payment processing
+            //   2. subscription.updated (status: "active") - payment succeeded
+            // If webhook 1 saves AFTER webhook 2, it overwrites "active" with "free"
+            //
+            // SOLUTION: Only skip updates when Stripe status is "incomplete" 
+            //           AND user is already active. Allow ALL other transitions.
+            //
+            // SCENARIO ANALYSIS:
+            // | Current DB | Stripe Status  | Action         | Result     |
+            // |------------|----------------|----------------|------------|
+            // | free       | incomplete     | Update         | free       |
+            // | free       | active         | Update         | active ✅  |
+            // | active     | incomplete     | SKIP (race)    | active ✅  |
+            // | active     | canceled       | Update         | canceled ✅|
+            // | active     | past_due       | Update         | past_due ✅|
+            // | trialing   | active         | Update         | active ✅  |
+            // ============================================================
+            
+            //Added: Get current status from database before updating
+            SubscriptionStatus currentStatus = user.getSubscriptionStatus();
+            
+            //Added: Get raw Stripe status for race condition check
+            String stripeStatus = subscription.getStatus();
+            
+            SubscriptionStatus newStatus = mapStripeStatus(stripeStatus); //Modified: pass stripeStatus instead of subscription.getStatus()
+            
+            //Added: Log current and new status for debugging
+            System.out.println("   - Current DB status: " + currentStatus);
+            System.out.println("   - Stripe status: " + stripeStatus + " -> mapped to: " + newStatus);
+            
+            //Added: Race condition protection logic
+            // Only skip if user is already ACTIVE and Stripe status is "incomplete"
+            // This prevents the race condition where "incomplete" webhook arrives after "active"
+            // BUT allows all legitimate transitions: canceled, past_due, free (deleted), etc.
+            boolean isIncompleteRaceCondition = 
+                currentStatus == SubscriptionStatus.active && 
+                (stripeStatus.equals("incomplete") || stripeStatus.equals("incomplete_expired"));
+            
+            //Added: Conditional status update with race condition protection
+            if (isIncompleteRaceCondition) {
+                System.out.println("   - SKIPPED status update: User already active, ignoring 'incomplete' status (race condition protection)");
+            } else {
+                user.setSubscriptionStatus(newStatus);
+                System.out.println("   - Set subscription_status: " + newStatus);
+            }
+            // ============================================================
+            // End of race condition fix
+            // ============================================================
             
             // Determine plan from price
             if (subscription.getItems() != null && !subscription.getItems().getData().isEmpty()) {
@@ -537,13 +585,22 @@ public class StripeService {
         }
     }
 
+    //Modified: Enhanced mapStripeStatus with better logging and explicit handling
     private SubscriptionStatus mapStripeStatus(String stripeStatus) {
+        System.out.println("🔄 [StripeService] Mapping Stripe status: " + stripeStatus); //Added: logging
         return switch (stripeStatus) {
             case "active" -> SubscriptionStatus.active;
             case "canceled" -> SubscriptionStatus.canceled;
-            case "past_due" -> SubscriptionStatus.past_due;
+            case "past_due", "unpaid" -> SubscriptionStatus.past_due; //Modified: added "unpaid" case
             case "trialing" -> SubscriptionStatus.trialing;
-            default -> SubscriptionStatus.free;
+            case "incomplete", "incomplete_expired" -> { //Added: explicit handling of incomplete statuses
+                System.out.println("⚠️ [StripeService] Payment still processing (incomplete)");
+                yield SubscriptionStatus.free;
+            }
+            default -> {
+                System.out.println("⚠️ [StripeService] Unknown Stripe status: " + stripeStatus); //Added: logging unknown status
+                yield SubscriptionStatus.free;
+            }
         };
     }
 
