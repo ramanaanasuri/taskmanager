@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager Pro - Architecture Diagrams</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#6366f1',
+        primaryTextColor: '#ffffff',
+        primaryBorderColor: '#4f46e5',
+        lineColor: '#475569',
+        secondaryColor: '#f1f5f9',
+        tertiaryColor: '#ffffff',
+        textColor: '#1e293b',
+        actorTextColor: '#ffffff',
+        actorLineColor: '#64748b',
+        signalColor: '#1e293b',
+        signalTextColor: '#1e293b',
+        labelTextColor: '#1e293b',
+        loopTextColor: '#1e293b',
+        noteBorderColor: '#ca8a04',
+        noteBkgColor: '#fef9c3',
+        noteTextColor: '#1e293b',
+        activationBorderColor: '#4f46e5',
+        activationBkgColor: '#e0e7ff',
+        sequenceNumberColor: '#ffffff',
+        fontFamily: 'Inter, system-ui, sans-serif'
+      },
+      sequence: {
+        actorMargin: 50,
+        boxMargin: 10,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageMargin: 35,
+        mirrorActors: true,
+        useMaxWidth: true
+      }
+    });
+  </script>
+  
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --bg: #f8fafc;
+      --bg-white: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* Page Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      color: white;
+    }
+    
+    .page-header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .page-header p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    
+    /* Table of Contents */
+    .toc {
+      background: var(--bg-white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    
+    .toc h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+    }
+    
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+    
+    .toc a {
+      display: block;
+      padding: 10px 16px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .toc a:hover {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .toc a .num {
+      color: var(--primary);
+      font-weight: 700;
+      margin-right: 8px;
+    }
+    
+    .toc a:hover .num {
+      color: white;
+    }
+    
+    /* Diagram Card */
+    .diagram-card {
+      background: var(--bg-white);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 32px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .diagram-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px 24px;
+      color: white;
+    }
+    
+    .diagram-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .diagram-header h2 .icon {
+      font-size: 24px;
+    }
+    
+    .diagram-header p {
+      margin-top: 6px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .diagram-content {
+      padding: 24px;
+    }
+    
+    .diagram-box {
+      background: #f8fafc;
+      border: 2px solid var(--border-dark);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .diagram-box:last-child {
+      margin-bottom: 0;
+    }
+    
+    .diagram-box-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .diagram-box-title .icon {
+      font-size: 18px;
+    }
+    
+    .mermaid {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    
+    /* Force dark text on sequence diagrams */
+    .mermaid .messageText,
+    .mermaid text.messageText,
+    .mermaid .labelText,
+    .mermaid .loopText {
+      fill: #1e293b !important;
+      font-weight: 500 !important;
+    }
+    
+    .mermaid .messageLine0,
+    .mermaid .messageLine1,
+    .mermaid line[class*="messageLine"] {
+      stroke: #475569 !important;
+      stroke-width: 1.5px !important;
+    }
+    
+    .mermaid .arrowMarkerPath {
+      fill: #475569 !important;
+      stroke: #475569 !important;
+    }
+    
+    .mermaid .note {
+      fill: #fef9c3 !important;
+      stroke: #ca8a04 !important;
+    }
+    
+    .mermaid .noteText {
+      fill: #1e293b !important;
+    }
+    
+    .mermaid .actor {
+      fill: #6366f1 !important;
+      stroke: #4f46e5 !important;
+    }
+    
+    .mermaid text.actor {
+      fill: #ffffff !important;
+      font-weight: 600 !important;
+    }
+    
+    /* Info Tables */
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    
+    .info-table th,
+    .info-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    
+    .info-table th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .info-table tr:hover td {
+      background: #f8fafc;
+    }
+    
+    .info-table code {
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    
+    /* Code Block */
+    .code-block {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      overflow-x: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      border: 2px solid #334155;
+    }
+    
+    .code-block .comment { color: #64748b; }
+    .code-block .keyword { color: #c084fc; }
+    .code-block .string { color: #4ade80; }
+    .code-block .variable { color: #38bdf8; }
+    
+    /* Section Divider */
+    .section-divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--border-dark), transparent);
+      margin: 24px 0;
+    }
+    
+    /* Back to Top */
+    .back-to-top {
+      text-align: center;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+    }
+    
+    .back-to-top a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .back-to-top a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 32px;
+      margin-top: 40px;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+    
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    
+    /* Print styles */
+    @media print {
+      .diagram-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      
+      .toc {
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Page Header -->
+    <header class="page-header">
+      <h1>🏗️ Task Manager Pro - Architecture</h1>
+      <p>Complete system architecture documentation with sequence diagrams and infrastructure overview</p>
+    </header>
+    
+    <!-- Table of Contents -->
+    <nav class="toc" id="toc">
+      <h2>📑 Table of Contents</h2>
+      <div class="toc-grid">
+        <a href="#overview"><span class="num">1.</span> System Overview</a>
+        <a href="#google-oauth"><span class="num">2.</span> Google OAuth Flow</a>
+        <a href="#facebook-oauth"><span class="num">3.</span> Facebook OAuth Flow</a>
+        <a href="#push-notifications"><span class="num">4.</span> Push Notifications</a>
+        <a href="#sms-notifications"><span class="num">5.</span> SMS Notifications</a>
+        <a href="#email-notifications"><span class="num">6.</span> Email Notifications</a>
+        <a href="#stripe-payments"><span class="num">7.</span> Stripe Payments</a>
+        <a href="#aws-infrastructure"><span class="num">8.</span> AWS Infrastructure</a>
+        <a href="#cicd-pipeline"><span class="num">9.</span> CI/CD Pipeline</a>
+      </div>
+    </nav>
+    
+    <!-- 1. System Overview -->
+    <article class="diagram-card" id="overview">
+      <div class="diagram-header">
+        <h2><span class="icon">🏗️</span> 1. System Overview</h2>
+        <p>High-level architecture showing all components and integrations</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">📊</span> High-Level System Architecture</div>
+          <div class="mermaid">
+graph TB
+    subgraph Users["👥 Users"]
+        Web[Web Browser]
+        Mobile[Mobile PWA]
+    end
+
+    subgraph CDN["☁️ AWS CloudFront"]
+        CF[CDN + SSL/TLS]
+    end
+
+    subgraph Frontend["🎨 Frontend"]
+        React[React.js<br/>Service Worker]
+    end
+
+    subgraph Backend["⚙️ Backend"]
+        Spring[Spring Boot<br/>REST API]
+    end
+
+    subgraph Database["💾 Database"]
+        MariaDB[(MariaDB<br/>AWS RDS)]
+    end
+
+    subgraph Auth["🔐 Authentication"]
+        Google[Google OAuth 2.0]
+        Facebook[Facebook OAuth 2.0]
+    end
+
+    subgraph Notifications["📬 Notifications"]
+        SES[AWS SES<br/>Email]
+        SNS[AWS SNS<br/>SMS]
+        WebPush[Web Push API<br/>VAPID]
+    end
+
+    subgraph Payments["💳 Payments"]
+        Stripe[Stripe API]
+    end
+
+    Users --> CF
+    CF --> React
+    CF --> Spring
+    Spring --> MariaDB
+    Spring --> Google
+    Spring --> Facebook
+    Spring --> SES
+    Spring --> SNS
+    Spring --> WebPush
+    Spring --> Stripe
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Component</th>
+            <th>Technology</th>
+            <th>Purpose</th>
+          </tr>
+          <tr>
+            <td>Frontend</td>
+            <td>React.js + PWA</td>
+            <td>Progressive web application with offline support</td>
+          </tr>
+          <tr>
+            <td>Backend</td>
+            <td>Spring Boot</td>
+            <td>REST API with JWT authentication</td>
+          </tr>
+          <tr>
+            <td>Database</td>
+            <td>MariaDB (AWS RDS)</td>
+            <td>Primary data storage with automated backups</td>
+          </tr>
+          <tr>
+            <td>CDN</td>
+            <td>AWS CloudFront</td>
+            <td>Global content delivery with SSL/TLS</td>
+          </tr>
+        </table>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 2. Google OAuth -->
+    <article class="diagram-card" id="google-oauth">
+      <div class="diagram-header">
+        <h2><span class="icon">🔵</span> 2. Google OAuth 2.0 Flow</h2>
+        <p>Authentication sequence using Google as identity provider</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">🔐</span> Google OAuth Sequence</div>
+          <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🎨 React Frontend
+    participant S as ⚙️ Spring Boot
+    participant G as 🔵 Google OAuth
+
+    U->>R: Click "Login with Google"
+    R->>G: Redirect to Google OAuth
+    U->>G: Enter Google credentials
+    G->>R: Return Authorization Code
+    R->>S: Send Auth Code to backend
+    S->>G: Exchange code for tokens
+    G->>S: Return ID token + Access token
+    S->>S: Verify token, create/find user
+    S->>S: Generate JWT token
+    S->>R: Return JWT + User Info
+    R->>R: Store JWT in localStorage
+    R->>U: Show Dashboard
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Configuration</th>
+            <th>Value</th>
+          </tr>
+          <tr>
+            <td>Authorization Endpoint</td>
+            <td><code>https://accounts.google.com/o/oauth2/v2/auth</code></td>
+          </tr>
+          <tr>
+            <td>Token Endpoint</td>
+            <td><code>https://oauth2.googleapis.com/token</code></td>
+          </tr>
+          <tr>
+            <td>Scopes</td>
+            <td><code>openid</code>, <code>email</code>, <code>profile</code></td>
+          </tr>
+          <tr>
+            <td>Redirect URI (Prod)</td>
+            <td><code>https://taskmanager.sriinfosoft.com/oauth2/callback/google</code></td>
+          </tr>
+        </table>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 3. Facebook OAuth -->
+    <article class="diagram-card" id="facebook-oauth">
+      <div class="diagram-header">
+        <h2><span class="icon">🔵</span> 3. Facebook OAuth 2.0 Flow</h2>
+        <p>Authentication sequence using Facebook as identity provider</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">🔐</span> Facebook OAuth Sequence</div>
+          <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🎨 React Frontend
+    participant S as ⚙️ Spring Boot
+    participant F as 🔵 Facebook OAuth
+
+    U->>R: Click "Login with Facebook"
+    R->>F: Redirect to FB OAuth Dialog
+    U->>F: Approve permissions
+    F->>R: Redirect with Auth Code
+    R->>S: Send Auth Code to backend
+    S->>F: Exchange code for access token
+    F->>S: Return access token
+    S->>F: GET /me?fields=id,name,email
+    F->>S: Return user profile data
+    S->>S: Create/find user, Generate JWT
+    S->>R: Return JWT + User Info
+    R->>U: Show Dashboard
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Configuration</th>
+            <th>Value</th>
+          </tr>
+          <tr>
+            <td>Authorization Endpoint</td>
+            <td><code>https://www.facebook.com/v18.0/dialog/oauth</code></td>
+          </tr>
+          <tr>
+            <td>Token Endpoint</td>
+            <td><code>https://graph.facebook.com/v18.0/oauth/access_token</code></td>
+          </tr>
+          <tr>
+            <td>User Info Endpoint</td>
+            <td><code>https://graph.facebook.com/me?fields=id,name,email</code></td>
+          </tr>
+          <tr>
+            <td>Scopes</td>
+            <td><code>email</code>, <code>public_profile</code></td>
+          </tr>
+        </table>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 4. Push Notifications -->
+    <article class="diagram-card" id="push-notifications">
+      <div class="diagram-header">
+        <h2><span class="icon">🔔</span> 4. Push Notifications (Web Push API)</h2>
+        <p>Browser push notifications using VAPID authentication</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">📲</span> Web Push Notification Flow</div>
+          <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant SW as 🔧 Service Worker
+    participant S as ⚙️ Spring Boot
+    participant D as 💾 MariaDB
+    participant WP as 🔔 Web Push Service
+
+    Note over U,WP: === SUBSCRIPTION PHASE ===
+    U->>SW: Enable notifications
+    SW->>U: Request permission
+    U->>SW: Grant permission
+    SW->>WP: Subscribe with VAPID public key
+    WP->>SW: Return PushSubscription
+    SW->>S: POST /api/push/subscribe
+    S->>D: Store endpoint, p256dh_key, auth_key
+
+    Note over U,WP: === NOTIFICATION PHASE (Scheduler) ===
+    S->>D: Query tasks due in 1 hour
+    D->>S: Return task list
+    S->>D: Get user push subscriptions
+    D->>S: Return endpoint + keys
+    S->>WP: Send push via VAPID (encrypted)
+    WP->>SW: Deliver to Service Worker
+    SW->>U: 🔔 "Task Due in 1 hour!"
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Component</th>
+            <th>Technology</th>
+          </tr>
+          <tr>
+            <td>Protocol</td>
+            <td>Web Push API (RFC 8030)</td>
+          </tr>
+          <tr>
+            <td>Authentication</td>
+            <td>VAPID (Voluntary Application Server Identification)</td>
+          </tr>
+          <tr>
+            <td>Encryption</td>
+            <td>ECDH + AES-GCM</td>
+          </tr>
+          <tr>
+            <td>Backend Library</td>
+            <td><code>webpush-java</code> (nl.martijndwars)</td>
+          </tr>
+          <tr>
+            <td>Frontend</td>
+            <td>Service Worker + Push API</td>
+          </tr>
+        </table>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 5. SMS Notifications -->
+    <article class="diagram-card" id="sms-notifications">
+      <div class="diagram-header">
+        <h2><span class="icon">📱</span> 5. SMS Notifications (AWS SNS)</h2>
+        <p>SMS notifications for premium subscribers via AWS Simple Notification Service</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">📲</span> SMS Notification Flow</div>
+          <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as ⏰ Scheduler
+    participant S as ⚙️ Spring Boot
+    participant D as 💾 MariaDB
+    participant SNS as 📱 AWS SNS
+    participant U as 👤 User Phone
+
+    C->>S: Trigger hourly check
+    S->>D: Query tasks due in 1 hour
+    D->>S: Return task list
+    S->>D: Check user subscription plan
+    D->>S: Plan: Pro, SMS: Enabled
+    S->>D: Get user phone number
+    D->>S: Return +1234567890
+    S->>SNS: SNS Publish SMS
+    SNS->>U: 📲 "Task Due in 1 hour"
+    S->>D: Log notification sent
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Configuration</th>
+            <th>Value</th>
+          </tr>
+          <tr>
+            <td>AWS Region</td>
+            <td><code>us-east-1</code></td>
+          </tr>
+          <tr>
+            <td>SMS Type</td>
+            <td>Transactional</td>
+          </tr>
+          <tr>
+            <td>Sender ID</td>
+            <td><code>TaskMgrPro</code></td>
+          </tr>
+          <tr>
+            <td>Availability</td>
+            <td>Pro plan subscribers only</td>
+          </tr>
+        </table>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 6. Email Notifications -->
+    <article class="diagram-card" id="email-notifications">
+      <div class="diagram-header">
+        <h2><span class="icon">📧</span> 6. Email Notifications (AWS SES)</h2>
+        <p>Daily digest and task reminder emails via AWS Simple Email Service</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">📬</span> Email Notification Flow</div>
+          <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as ⏰ Scheduler
+    participant S as ⚙️ Spring Boot
+    participant D as 💾 MariaDB
+    participant SES as 📧 AWS SES
+    participant U as 👤 User Email
+
+    C->>S: Daily digest trigger (8 AM)
+    S->>D: Query users with email enabled
+    D->>S: Return user list
+    S->>D: Query tasks due today per user
+    D->>S: Return task list
+    S->>S: Build HTML email template
+    S->>SES: SES SendEmail API
+    SES->>U: 📧 Daily Task Digest
+    S->>D: Log email sent
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Configuration</th>
+            <th>Value</th>
+          </tr>
+          <tr>
+            <td>From Address</td>
+            <td><code>notifications@sriinfosoft.com</code></td>
+          </tr>
+          <tr>
+            <td>Email Type</td>
+            <td>HTML with inline CSS</td>
+          </tr>
+          <tr>
+            <td>Schedule</td>
+            <td>Daily at 8:00 AM user timezone</td>
+          </tr>
+          <tr>
+            <td>Availability</td>
+            <td>All plans</td>
+          </tr>
+        </table>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 7. Stripe Payments -->
+    <article class="diagram-card" id="stripe-payments">
+      <div class="diagram-header">
+        <h2><span class="icon">💳</span> 7. Stripe Payment Integration</h2>
+        <p>Subscription management with Stripe Checkout and webhooks</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">💰</span> Stripe Checkout Flow</div>
+          <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant R as 🎨 React Frontend
+    participant S as ⚙️ Spring Boot
+    participant ST as 💳 Stripe API
+    participant D as 💾 MariaDB
+
+    U->>R: Select Pro Plan ($9.99/mo)
+    R->>S: POST /api/stripe/create-checkout
+    S->>ST: Create Checkout Session
+    ST->>S: Return session URL
+    S->>R: Return checkout URL
+    R->>U: Redirect to Stripe Checkout
+    U->>ST: Enter payment details
+    ST->>U: Payment successful
+
+    Note over ST,D: Webhook (async)
+    ST->>S: POST /webhook (checkout.session.completed)
+    S->>D: Update user subscription
+    D->>D: Plan: Pro, Status: Active
+
+    U->>R: Redirect back to app
+    R->>S: GET /api/stripe/subscription
+    S->>D: Query subscription status
+    S->>R: Return Pro plan details
+    R->>U: 🎉 Pro features unlocked!
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Webhook Event</th>
+            <th>Action</th>
+          </tr>
+          <tr>
+            <td><code>checkout.session.completed</code></td>
+            <td>Activate subscription</td>
+          </tr>
+          <tr>
+            <td><code>customer.subscription.created</code></td>
+            <td>Log subscription start</td>
+          </tr>
+          <tr>
+            <td><code>customer.subscription.updated</code></td>
+            <td>Update plan/status</td>
+          </tr>
+          <tr>
+            <td><code>customer.subscription.deleted</code></td>
+            <td>Downgrade to Free</td>
+          </tr>
+          <tr>
+            <td><code>invoice.payment_succeeded</code></td>
+            <td>Log payment</td>
+          </tr>
+          <tr>
+            <td><code>invoice.payment_failed</code></td>
+            <td>Mark as past_due</td>
+          </tr>
+        </table>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 8. AWS Infrastructure -->
+    <article class="diagram-card" id="aws-infrastructure">
+      <div class="diagram-header">
+        <h2><span class="icon">☁️</span> 8. AWS Infrastructure</h2>
+        <p>Production cloud infrastructure on Amazon Web Services</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">🏢</span> AWS Cloud Architecture</div>
+          <div class="mermaid">
+graph TB
+    subgraph Internet["🌐 Internet"]
+        Users[👥 Users]
+    end
+
+    subgraph AWS["☁️ AWS Cloud (us-east-1)"]
+        subgraph Edge["Edge Services"]
+            Route53[Route 53<br/>DNS]
+            CloudFront[CloudFront<br/>CDN + SSL]
+        end
+
+        subgraph Compute["Compute"]
+            S3[S3 Bucket<br/>React Frontend]
+            EC2[EC2 Instance<br/>Spring Boot]
+        end
+
+        subgraph Data["Data Layer"]
+            RDS[(RDS MariaDB<br/>Primary)]
+        end
+
+        subgraph Services["Supporting Services"]
+            SES[SES - Email]
+            SNS[SNS - SMS]
+            Secrets[Secrets Manager]
+            CloudWatch[CloudWatch Logs]
+            S3_Backup[S3 - Backups]
+        end
+    end
+
+    subgraph External["External Services"]
+        Google[Google OAuth]
+        Facebook[Facebook OAuth]
+        Stripe[Stripe Payments]
+        WebPush[Web Push Services]
+    end
+
+    Users --> Route53
+    Route53 --> CloudFront
+    CloudFront --> S3
+    CloudFront --> EC2
+    EC2 --> RDS
+    EC2 --> SES
+    EC2 --> SNS
+    EC2 --> Secrets
+    EC2 --> CloudWatch
+    RDS --> S3_Backup
+    EC2 --> Google
+    EC2 --> Facebook
+    EC2 --> Stripe
+    EC2 --> WebPush
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Service</th>
+            <th>Purpose</th>
+            <th>Configuration</th>
+          </tr>
+          <tr>
+            <td>Route 53</td>
+            <td>DNS management</td>
+            <td>A record → CloudFront</td>
+          </tr>
+          <tr>
+            <td>CloudFront</td>
+            <td>CDN + SSL/TLS</td>
+            <td>ACM certificate, S3 + EC2 origins</td>
+          </tr>
+          <tr>
+            <td>S3</td>
+            <td>Static hosting</td>
+            <td>React build files</td>
+          </tr>
+          <tr>
+            <td>EC2</td>
+            <td>Application server</td>
+            <td>t3.small, Docker container</td>
+          </tr>
+          <tr>
+            <td>RDS</td>
+            <td>Database</td>
+            <td>db.t3.micro, automated backups</td>
+          </tr>
+          <tr>
+            <td>Secrets Manager</td>
+            <td>Credentials</td>
+            <td>DB passwords, API keys</td>
+          </tr>
+        </table>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 9. CI/CD Pipeline -->
+    <article class="diagram-card" id="cicd-pipeline">
+      <div class="diagram-header">
+        <h2><span class="icon">🚀</span> 9. CI/CD Pipeline & Automation</h2>
+        <p>End-to-end automation for build, test, deploy, and operations</p>
+      </div>
+      <div class="diagram-content">
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">🔄</span> Deployment Pipeline</div>
+          <div class="mermaid">
+graph LR
+    subgraph Dev["👨‍💻 Development"]
+        Code[Code Changes]
+        Git[Git Push]
+    end
+
+    subgraph CI["🔄 CI"]
+        Build[Build]
+        Test[Test]
+        Lint[Lint]
+    end
+
+    subgraph CD["🚀 CD"]
+        Docker[Docker Build]
+        Deploy[Deploy]
+    end
+
+    subgraph Prod["☁️ Production"]
+        Frontend[S3 + CloudFront]
+        Backend[Docker Container]
+        DB[(MariaDB)]
+    end
+
+    subgraph Ops["📊 Operations"]
+        Health[Health Checks]
+        Backup[DB Backups]
+        Alerts[Slack Alerts]
+    end
+
+    Code --> Git
+    Git --> Build
+    Build --> Test
+    Test --> Lint
+    Lint --> Docker
+    Docker --> Deploy
+    Deploy --> Frontend
+    Deploy --> Backend
+    Backend --> DB
+    Frontend --> Health
+    Backend --> Health
+    DB --> Backup
+    Health --> Alerts
+          </div>
+        </div>
+        
+        <table class="info-table">
+          <tr>
+            <th>Script</th>
+            <th>Purpose</th>
+            <th>Schedule</th>
+          </tr>
+          <tr>
+            <td><code>deploy-frontend.sh</code></td>
+            <td>npm build → S3 upload → CloudFront invalidation</td>
+            <td>On push</td>
+          </tr>
+          <tr>
+            <td><code>deploy-backend.sh</code></td>
+            <td>Maven build → Docker → EC2 restart → Health check</td>
+            <td>On push</td>
+          </tr>
+          <tr>
+            <td><code>db-backup.sh</code></td>
+            <td>mysqldump → gzip → S3 upload → Cleanup old</td>
+            <td>Daily 2 AM</td>
+          </tr>
+          <tr>
+            <td><code>health-check.sh</code></td>
+            <td>API endpoint monitoring → Slack alerts</td>
+            <td>Every 5 min</td>
+          </tr>
+          <tr>
+            <td><code>ssl-renew.sh</code></td>
+            <td>Check/renew SSL certificates</td>
+            <td>Weekly</td>
+          </tr>
+          <tr>
+            <td><code>log-rotate.sh</code></td>
+            <td>Archive and compress old logs</td>
+            <td>Daily</td>
+          </tr>
+        </table>
+        
+        <div class="section-divider"></div>
+        
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">💻</span> Frontend Deployment Script</div>
+          <div class="code-block"><span class="comment">#!/bin/bash</span>
+<span class="comment"># deploy-frontend.sh</span>
+
+<span class="keyword">set</span> -e
+
+<span class="variable">S3_BUCKET</span>=<span class="string">"taskmanager-frontend-prod"</span>
+<span class="variable">CLOUDFRONT_DIST_ID</span>=<span class="string">"E1234567890ABC"</span>
+
+<span class="comment"># Build React app</span>
+npm ci
+npm run build
+
+<span class="comment"># Upload to S3 with cache headers</span>
+aws s3 sync ./build s3://<span class="variable">$S3_BUCKET</span> --delete \
+    --cache-control <span class="string">"max-age=31536000"</span>
+
+<span class="comment"># Upload index.html with no-cache</span>
+aws s3 cp ./build/index.html s3://<span class="variable">$S3_BUCKET</span>/index.html \
+    --cache-control <span class="string">"no-cache"</span>
+
+<span class="comment"># Invalidate CloudFront cache</span>
+aws cloudfront create-invalidation \
+    --distribution-id <span class="variable">$CLOUDFRONT_DIST_ID</span> \
+    --paths <span class="string">"/*"</span>
+
+<span class="keyword">echo</span> <span class="string">"✅ Frontend deployed!"</span></div>
+        </div>
+        
+        <div class="diagram-box">
+          <div class="diagram-box-title"><span class="icon">💾</span> Database Backup Script</div>
+          <div class="code-block"><span class="comment">#!/bin/bash</span>
+<span class="comment"># db-backup.sh - Runs daily at 2 AM via cron</span>
+
+<span class="keyword">set</span> -e
+
+<span class="variable">DB_HOST</span>=<span class="string">"taskmanager-db.xxxxx.rds.amazonaws.com"</span>
+<span class="variable">S3_BUCKET</span>=<span class="string">"taskmanager-backups"</span>
+<span class="variable">DATE</span>=$(date +%Y%m%d_%H%M%S)
+<span class="variable">BACKUP_FILE</span>=<span class="string">"backup_<span class="variable">$DATE</span>.sql.gz"</span>
+
+<span class="comment"># Dump database and compress</span>
+mysqldump -h <span class="variable">$DB_HOST</span> -u admin \
+    --single-transaction \
+    --routines \
+    taskmanager | gzip > /tmp/<span class="variable">$BACKUP_FILE</span>
+
+<span class="comment"># Upload to S3</span>
+aws s3 cp /tmp/<span class="variable">$BACKUP_FILE</span> s3://<span class="variable">$S3_BUCKET</span>/daily/
+
+<span class="comment"># Cleanup backups older than 30 days</span>
+aws s3 ls s3://<span class="variable">$S3_BUCKET</span>/daily/ | <span class="keyword">while</span> read line; <span class="keyword">do</span>
+    file_date=$(echo <span class="variable">$line</span> | awk <span class="string">'{print $1}'</span>)
+    <span class="keyword">if</span> [[ $(date -d <span class="string">"<span class="variable">$file_date</span>"</span> +%s) -lt $(date -d <span class="string">"30 days ago"</span> +%s) ]]; <span class="keyword">then</span>
+        aws s3 rm s3://<span class="variable">$S3_BUCKET</span>/daily/$(echo <span class="variable">$line</span> | awk <span class="string">'{print $4}'</span>)
+    <span class="keyword">fi</span>
+<span class="keyword">done</span>
+
+<span class="comment"># Cleanup local file</span>
+rm -f /tmp/<span class="variable">$BACKUP_FILE</span>
+
+<span class="keyword">echo</span> <span class="string">"✅ Backup complete: <span class="variable">$BACKUP_FILE</span>"</span></div>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- Footer -->
+    <footer class="footer">
+      <p><strong>Task Manager Pro</strong> — Architecture Documentation</p>
+      <p>© 2025 <a href="https://sriinfosoft.com">SriInfoSoft</a> | Built by Ramana Anasuri</p>
+      <p style="margin-top: 12px;">
+        <a href="https://taskmanager.sriinfosoft.com" target="_blank">🚀 Live Demo</a> &nbsp;|&nbsp;
+        <a href="https://www.linkedin.com/in/ramanaanasuri/" target="_blank">🔗 LinkedIn</a>
+      </p>
+    </footer>
+    
+  </div>
+</body>
+</html>

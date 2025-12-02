@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager Pro - Complete Technical Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --bg: #f8fafc;
+      --bg-white: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 24px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* Ensure diagrams don't get cut off */
+    @media (min-width: 1024px) {
+      .ascii-diagram {
+        min-width: 700px;
+      }
+    }
+    
+    /* Page Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 40px 32px;
+      background: var(--gradient);
+      border-radius: 20px;
+      color: white;
+      box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .page-header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    
+    .page-header .subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 24px;
+    }
+    
+    .page-header .badges {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .badge {
+      background: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Table of Contents */
+    .toc {
+      background: var(--bg-white);
+      border: 2px solid #c7d2fe;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    }
+    
+    .toc h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    
+    .toc a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: 2px solid #e0e7ff;
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .toc a:hover {
+      background: var(--gradient);
+      color: white;
+      border-color: transparent;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .toc a .num {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+    }
+    
+    .toc a:hover .num {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    /* Section Card */
+    .section-card {
+      background: var(--bg-white);
+      border: 2px solid #c7d2fe;
+      border-radius: 20px;
+      margin-bottom: 40px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
+    }
+    
+    .section-header {
+      background: var(--gradient);
+      padding: 24px 28px;
+      color: white;
+    }
+    
+    .section-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    
+    .section-header h2 .icon {
+      font-size: 28px;
+    }
+    
+    .section-header p {
+      margin-top: 8px;
+      font-size: 15px;
+      opacity: 0.9;
+    }
+    
+    .section-content {
+      padding: 28px;
+      overflow-x: auto;
+    }
+    
+    /* Content Box */
+    .content-box {
+      background: #ffffff;
+      border: 2px solid #c7d2fe;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      overflow: visible;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+    }
+    
+    .content-box:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* Allow horizontal scroll within content box for diagrams */
+    .content-box .ascii-diagram,
+    .content-box .code-block {
+      margin-left: -8px;
+      margin-right: -8px;
+    }
+    
+    .content-box-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid #e0e7ff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .content-box-title .icon {
+      font-size: 20px;
+    }
+    
+    .content-box-title .tag {
+      margin-left: auto;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+    
+    /* ASCII Diagram Box */
+    .ascii-diagram {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+      border: 2px solid #6366f1;
+      border-radius: 12px;
+      padding: 24px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #e2e8f0;
+      white-space: pre;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+    }
+    
+    .ascii-diagram::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    .ascii-diagram::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+    }
+    
+    .ascii-diagram::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px;
+    }
+    
+    .ascii-diagram::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    
+    /* Tables */
+    .info-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 14px;
+      border: 2px solid #6366f1;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    }
+    
+    .info-table th,
+    .info-table td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .info-table th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+    
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .info-table tbody tr {
+      background: white;
+      transition: all 0.2s;
+    }
+    
+    .info-table tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    
+    .info-table tbody tr:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+    }
+    
+    .info-table code {
+      background: linear-gradient(135deg, #e0e7ff, #ede9fe);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #4f46e5;
+      font-weight: 500;
+    }
+    
+    /* Code Block */
+    .code-block {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+      border: 2px solid #6366f1;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+    }
+    
+    .code-header {
+      background: rgba(255,255,255,0.1);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .code-header .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    
+    .code-header .dot.red { background: #ef4444; }
+    .code-header .dot.yellow { background: #eab308; }
+    .code-header .dot.green { background: #22c55e; }
+    
+    .code-header .filename {
+      margin-left: 12px;
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+    
+    .code-header .lang {
+      margin-left: auto;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .code-content {
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #f1f5f9;
+      white-space: pre;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .code-content::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    .code-content::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+    }
+    
+    .code-content::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px;
+    }
+    
+    .code-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    
+    .code-content .comment { color: #a5b4fc; font-style: italic; }
+    .code-content .keyword { color: #f472b6; font-weight: 500; }
+    .code-content .string { color: #4ade80; }
+    .code-content .variable { color: #38bdf8; }
+    .code-content .function { color: #fbbf24; }
+    .code-content .annotation { color: #fb923c; }
+    .code-content .type { color: #22d3ee; }
+    .code-content .number { color: #c4b5fd; }
+    
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    
+    .feature-item {
+      background: white;
+      border: 2px solid #c7d2fe;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    
+    .feature-item:hover {
+      border-color: #6366f1;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+    }
+    
+    .feature-item .icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    
+    .feature-item strong {
+      display: block;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    
+    .feature-item p {
+      font-size: 12px;
+      color: var(--text-light);
+      margin: 0;
+    }
+    
+    /* Divider */
+    .section-divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #c7d2fe, transparent);
+      margin: 28px 0;
+    }
+    
+    /* Back to Top */
+    .back-to-top {
+      text-align: center;
+      padding: 20px;
+      border-top: 2px solid #e0e7ff;
+      margin-top: 20px;
+    }
+    
+    .back-to-top a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    .back-to-top a:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 40px;
+      margin-top: 40px;
+      background: var(--bg-white);
+      border: 2px solid #c7d2fe;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    }
+    
+    .footer h3 {
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+    }
+    
+    .footer p {
+      color: var(--text-light);
+      font-size: 14px;
+    }
+    
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .footer .links {
+      margin-top: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+    
+    /* Print */
+    @media print {
+      .section-card { break-inside: avoid; page-break-inside: avoid; }
+      .toc { break-after: page; }
+      body { padding: 0; }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-header h1 { font-size: 28px; }
+      .section-header h2 { font-size: 18px; }
+      .ascii-diagram { 
+        font-size: 9px; 
+        padding: 12px;
+        line-height: 1.2;
+      }
+      .code-content { font-size: 11px; }
+      body { padding: 12px; }
+      .section-content { padding: 16px; }
+      .content-box { padding: 16px; }
+    }
+    
+    @media (max-width: 480px) {
+      .ascii-diagram {
+        font-size: 8px;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Page Header -->
+    <header class="page-header">
+      <h1>📘 Task Manager Pro</h1>
+      <p class="subtitle">Complete Technical Documentation & Architecture Reference</p>
+      <div class="badges">
+        <span class="badge">☁️ Multi-Cloud</span>
+        <span class="badge">🔐 OAuth 2.0</span>
+        <span class="badge">💳 Stripe</span>
+        <span class="badge">📬 Notifications</span>
+        <span class="badge">🚀 CI/CD</span>
+      </div>
+    </header>
+    
+    <!-- Table of Contents -->
+    <nav class="toc" id="toc">
+      <h2>📑 Table of Contents</h2>
+      <div class="toc-grid">
+        <a href="#overview"><span class="num">1</span> System Overview</a>
+        <a href="#google-oauth"><span class="num">2</span> Google OAuth Flow</a>
+        <a href="#facebook-oauth"><span class="num">3</span> Facebook OAuth Flow</a>
+        <a href="#push-notifications"><span class="num">4</span> Push Notifications</a>
+        <a href="#sms-notifications"><span class="num">5</span> SMS Notifications</a>
+        <a href="#email-notifications"><span class="num">6</span> Email Notifications</a>
+        <a href="#stripe-payments"><span class="num">7</span> Stripe Payments</a>
+        <a href="#aws-infrastructure"><span class="num">8</span> AWS Infrastructure</a>
+        <a href="#cicd-automation"><span class="num">9</span> CI/CD Automation</a>
+        <a href="#request-flow"><span class="num">10</span> Complete Request Flow</a>
+      </div>
+    </nav>
+    
+    <!-- 1. System Overview -->
+    <article class="section-card" id="overview">
+      <div class="section-header">
+        <h2><span class="icon">🏗️</span> 1. System Overview</h2>
+        <p>Multi-cloud task management application</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="feature-grid">
+          <div class="feature-item">
+            <div class="icon">⚛️</div>
+            <strong>Frontend</strong>
+            <p>React.js with PWA support</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">🍃</div>
+            <strong>Backend</strong>
+            <p>Spring Boot REST API</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">🐬</div>
+            <strong>Database</strong>
+            <p>MariaDB with backups</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">☁️</div>
+            <strong>Cloud</strong>
+            <p>AWS + GCP + Azure</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">🔐</div>
+            <strong>Auth</strong>
+            <p>Google & Facebook OAuth</p>
+          </div>
+          <div class="feature-item">
+            <div class="icon">💳</div>
+            <strong>Payments</strong>
+            <p>Stripe Subscriptions</p>
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">📊</span> High-Level Architecture Diagram
+          </div>
+          <div class="ascii-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              TASK MANAGER PRO                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Users     │    │   Mobile    │    │   Desktop   │    │   Tablet    │  │
+│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘  │
+│         │                  │                  │                  │          │
+│         └──────────────────┴────────┬─────────┴──────────────────┘          │
+│                                     │                                        │
+│                          ┌──────────▼──────────┐                            │
+│                          │   AWS CloudFront    │                            │
+│                          │   (CDN + SSL/TLS)   │                            │
+│                          └──────────┬──────────┘                            │
+│                                     │                                        │
+│         ┌───────────────────────────┼───────────────────────────┐           │
+│         │                           │                           │           │
+│         ▼                           ▼                           ▼           │
+│  ┌─────────────┐           ┌─────────────┐           ┌─────────────┐       │
+│  │   React     │           │ Spring Boot │           │   MariaDB   │       │
+│  │  Frontend   │◄─────────►│   Backend   │◄─────────►│  Database   │       │
+│  │   (S3)      │           │   (Docker)  │           │   (RDS)     │       │
+│  └─────────────┘           └──────┬──────┘           └─────────────┘       │
+│                                   │                                         │
+│         ┌─────────────────────────┼─────────────────────────┐              │
+│         │                         │                         │              │
+│         ▼                         ▼                         ▼              │
+│  ┌─────────────┐           ┌─────────────┐           ┌─────────────┐       │
+│  │  AWS SES    │           │  AWS SNS    │           │  Web Push   │       │
+│  │  (Email)    │           │  (SMS)      │           │  API(VAPID) │       │
+│  └─────────────┘           └─────────────┘           └─────────────┘       │
+│                                                                             │
+│  ┌─────────────┐           ┌─────────────┐           ┌─────────────┐       │
+│  │  Google     │           │  Facebook   │           │   Stripe    │       │
+│  │  OAuth 2.0  │           │  OAuth 2.0  │           │  Payments   │       │
+│  └─────────────┘           └─────────────┘           └─────────────┘       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+          </div>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 2. Google OAuth -->
+    <article class="section-card" id="google-oauth">
+      <div class="section-header">
+        <h2><span class="icon">🔵</span> 2. Google OAuth 2.0 Flow</h2>
+        <p>Authentication sequence using Google as identity provider</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">🔐</span> Authentication Sequence
+            <span class="tag">OAuth 2.0</span>
+          </div>
+          <div class="ascii-diagram">
+┌──────┐          ┌──────────┐          ┌──────────┐          ┌────────┐
+│ User │          │  React   │          │ Spring   │          │ Google │
+│      │          │ Frontend │          │ Backend  │          │ OAuth  │
+└──┬───┘          └────┬─────┘          └────┬─────┘          └───┬────┘
+   │                   │                     │                    │
+   │ 1. Click "Login   │                     │                    │
+   │    with Google"   │                     │                    │
+   │──────────────────►│                     │                    │
+   │                   │                     │                    │
+   │                   │ 2. Redirect to      │                    │
+   │                   │    Google OAuth     │                    │
+   │◄──────────────────│─────────────────────│───────────────────►│
+   │                   │                     │                    │
+   │ 3. User enters    │                     │                    │
+   │    Google creds   │                     │                    │
+   │────────────────────────────────────────────────────────────►│
+   │                   │                     │                    │
+   │                   │ 4. Google returns   │                    │
+   │◄──────────────────│◄────────────────────│◄───────────────────│
+   │                   │    Auth Code        │                    │
+   │                   │                     │                    │
+   │                   │ 5. Send Auth Code   │                    │
+   │                   │    to Backend       │                    │
+   │                   │────────────────────►│                    │
+   │                   │                     │                    │
+   │                   │                     │ 6. Exchange code   │
+   │                   │                     │    for tokens      │
+   │                   │                     │───────────────────►│
+   │                   │                     │                    │
+   │                   │                     │ 7. Return ID token │
+   │                   │                     │    + Access token  │
+   │                   │                     │◄───────────────────│
+   │                   │                     │                    │
+   │                   │                     │ 8. Verify token,   │
+   │                   │                     │    create/find user│
+   │                   │                     │    generate JWT    │
+   │                   │                     │                    │
+   │                   │ 9. Return JWT +     │                    │
+   │                   │    User Info        │                    │
+   │                   │◄────────────────────│                    │
+   │                   │                     │                    │
+   │ 10. Store JWT,    │                     │                    │
+   │     show dashboard│                     │                    │
+   │◄──────────────────│                     │                    │
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">⚙️</span> Google OAuth Configuration
+          </div>
+          <table class="info-table">
+            <tr>
+              <th>Setting</th>
+              <th>Value</th>
+            </tr>
+            <tr>
+              <td>Authorization Endpoint</td>
+              <td><code>https://accounts.google.com/o/oauth2/v2/auth</code></td>
+            </tr>
+            <tr>
+              <td>Token Endpoint</td>
+              <td><code>https://oauth2.googleapis.com/token</code></td>
+            </tr>
+            <tr>
+              <td>Scopes</td>
+              <td><code>openid</code>, <code>email</code>, <code>profile</code></td>
+            </tr>
+            <tr>
+              <td>Redirect URI (Prod)</td>
+              <td><code>https://taskmanager.sriinfosoft.com/oauth2/callback/google</code></td>
+            </tr>
+            <tr>
+              <td>Redirect URI (Dev)</td>
+              <td><code>http://localhost:3000/oauth2/callback/google</code></td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 3. Facebook OAuth -->
+    <article class="section-card" id="facebook-oauth">
+      <div class="section-header">
+        <h2><span class="icon">🔵</span> 3. Facebook OAuth 2.0 Flow</h2>
+        <p>Authentication sequence using Facebook as identity provider</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">🔐</span> Authentication Sequence
+            <span class="tag">OAuth 2.0</span>
+          </div>
+          <div class="ascii-diagram">
+┌──────┐          ┌──────────┐          ┌──────────┐          ┌──────────┐
+│ User │          │  React   │          │ Spring   │          │ Facebook │
+│      │          │ Frontend │          │ Backend  │          │  OAuth   │
+└──┬───┘          └────┬─────┘          └────┬─────┘          └────┬─────┘
+   │                   │                     │                     │
+   │ 1. Click "Login   │                     │                     │
+   │    with Facebook" │                     │                     │
+   │──────────────────►│                     │                     │
+   │                   │                     │                     │
+   │                   │ 2. Redirect to      │                     │
+   │                   │    FB OAuth Dialog  │                     │
+   │◄──────────────────│─────────────────────│────────────────────►│
+   │                   │                     │                     │
+   │ 3. User approves  │                     │                     │
+   │    permissions    │                     │                     │
+   │─────────────────────────────────────────────────────────────►│
+   │                   │                     │                     │
+   │                   │ 4. FB redirects     │                     │
+   │◄──────────────────│◄────────────────────│◄────────────────────│
+   │                   │    with Auth Code   │                     │
+   │                   │                     │                     │
+   │                   │ 5. Send code to     │                     │
+   │                   │    Backend          │                     │
+   │                   │────────────────────►│                     │
+   │                   │                     │                     │
+   │                   │                     │ 6. Exchange code    │
+   │                   │                     │    for access token │
+   │                   │                     │────────────────────►│
+   │                   │                     │                     │
+   │                   │                     │ 7. Get user profile │
+   │                   │                     │    /me?fields=...   │
+   │                   │                     │────────────────────►│
+   │                   │                     │                     │
+   │                   │                     │ 8. Return user data │
+   │                   │                     │◄────────────────────│
+   │                   │                     │                     │
+   │                   │                     │ 9. Create/find user │
+   │                   │                     │    Generate JWT     │
+   │                   │                     │                     │
+   │                   │ 10. Return JWT +    │                     │
+   │                   │     User Info       │                     │
+   │                   │◄────────────────────│                     │
+   │                   │                     │                     │
+   │ 11. Store JWT,    │                     │                     │
+   │     show dashboard│                     │                     │
+   │◄──────────────────│                     │                     │
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">⚙️</span> Facebook OAuth Configuration
+          </div>
+          <table class="info-table">
+            <tr>
+              <th>Setting</th>
+              <th>Value</th>
+            </tr>
+            <tr>
+              <td>Authorization Endpoint</td>
+              <td><code>https://www.facebook.com/v18.0/dialog/oauth</code></td>
+            </tr>
+            <tr>
+              <td>Token Endpoint</td>
+              <td><code>https://graph.facebook.com/v18.0/oauth/access_token</code></td>
+            </tr>
+            <tr>
+              <td>User Info Endpoint</td>
+              <td><code>https://graph.facebook.com/me?fields=id,name,email</code></td>
+            </tr>
+            <tr>
+              <td>Scopes</td>
+              <td><code>email</code>, <code>public_profile</code></td>
+            </tr>
+            <tr>
+              <td>App Mode</td>
+              <td>Development (Live requires Business Verification)</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 4. Push Notifications -->
+    <article class="section-card" id="push-notifications">
+      <div class="section-header">
+        <h2><span class="icon">🔔</span> 4. Push Notifications (Web Push API)</h2>
+        <p>Browser push notifications using VAPID authentication</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">📲</span> Web Push Notification Flow
+            <span class="tag">VAPID</span>
+          </div>
+          <div class="ascii-diagram">
+┌──────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+│ User │     │  React   │     │ Spring   │     │ MariaDB  │     │ Web Push │
+│      │     │  (PWA)   │     │ Backend  │     │          │     │ Service  │
+└──┬───┘     └────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘
+   │              │                │                │                │
+   │ 1. Enable    │                │                │                │
+   │    notifs    │                │                │                │
+   │─────────────►│                │                │                │
+   │              │                │                │                │
+   │              │ 2. Request     │                │                │
+   │              │    permission  │                │                │
+   │◄─────────────│                │                │                │
+   │              │                │                │                │
+   │ 3. Allow     │                │                │                │
+   │─────────────►│                │                │                │
+   │              │                │                │                │
+   │              │ 4. Subscribe   │                │                │
+   │              │    to Push API │                │                │
+   │              │    (get keys)  │                │                │
+   │              │                │                │                │
+   │              │ 5. Send subscription            │                │
+   │              │    (endpoint + keys)            │                │
+   │              │───────────────►│                │                │
+   │              │                │                │                │
+   │              │                │ 6. Store in    │                │
+   │              │                │    push_subs   │                │
+   │              │                │───────────────►│                │
+   │              │                │                │                │
+   │   ═══════════════════════ LATER: Task Due ═══════════════════  │
+   │              │                │                │                │
+   │              │                │ 7. Scheduler   │                │
+   │              │                │    queries due │                │
+   │              │                │    tasks       │                │
+   │              │                │───────────────►│                │
+   │              │                │                │                │
+   │              │                │◄───────────────│                │
+   │              │                │                │                │
+   │              │                │ 8. Get user's  │                │
+   │              │                │    push subs   │                │
+   │              │                │───────────────►│                │
+   │              │                │                │                │
+   │              │                │◄───────────────│                │
+   │              │                │  endpoint,     │                │
+   │              │                │  p256dh_key,   │                │
+   │              │                │  auth_key      │                │
+   │              │                │                │                │
+   │              │                │ 9. Send push   │                │
+   │              │                │    via VAPID   │                │
+   │              │                │───────────────────────────────►│
+   │              │                │                │                │
+   │              │ 10. Deliver    │                │                │
+   │              │     to Service │                │                │
+   │              │     Worker     │◄──────────────────────────────│
+   │◄─────────────│                │                │                │
+   │  "Task Due!" │                │                │                │
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">⚙️</span> Web Push Technology Stack
+          </div>
+          <table class="info-table">
+            <tr>
+              <th>Component</th>
+              <th>Technology</th>
+            </tr>
+            <tr>
+              <td>Protocol</td>
+              <td>Web Push API (RFC 8030)</td>
+            </tr>
+            <tr>
+              <td>Authentication</td>
+              <td>VAPID (Voluntary Application Server Identification)</td>
+            </tr>
+            <tr>
+              <td>Encryption</td>
+              <td>ECDH + AES-GCM</td>
+            </tr>
+            <tr>
+              <td>Backend Library</td>
+              <td><code>webpush-java</code> (nl.martijndwars)</td>
+            </tr>
+            <tr>
+              <td>Frontend</td>
+              <td>Service Worker + Push API</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">🗄️</span> Database Schema
+            <span class="tag">SQL</span>
+          </div>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="filename">push_subscriptions.sql</span>
+              <span class="lang">SQL</span>
+            </div>
+            <div class="code-content"><span class="keyword">CREATE TABLE</span> <span class="type">push_subscriptions</span> (
+    id <span class="type">BIGINT</span> <span class="keyword">AUTO_INCREMENT PRIMARY KEY</span>,
+    user_email <span class="type">VARCHAR</span>(<span class="number">255</span>) <span class="keyword">NOT NULL</span>,
+    endpoint <span class="type">TEXT</span> <span class="keyword">NOT NULL</span>,
+    p256dh_key <span class="type">TEXT</span>,
+    auth_key <span class="type">TEXT</span>,
+    device_type <span class="type">VARCHAR</span>(<span class="number">50</span>),
+    created_at <span class="type">TIMESTAMP</span> <span class="keyword">DEFAULT CURRENT_TIMESTAMP</span>,
+    updated_at <span class="type">TIMESTAMP</span> <span class="keyword">DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP</span>,
+    <span class="keyword">UNIQUE KEY</span> unique_endpoint (user_email, endpoint(<span class="number">255</span>))
+);</div>
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">☕</span> VAPID Configuration & Service
+            <span class="tag">Java</span>
+          </div>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="filename">PushNotificationService.java</span>
+              <span class="lang">Java</span>
+            </div>
+            <div class="code-content"><span class="comment">// application.properties</span>
+vapid.public.key=BEl62iUYgUiv...
+vapid.private.key=8hPSP0xY1L...
+vapid.subject=mailto:<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="dcaebdb2bdafa9aeb59cafaeb5b5b2bab3afb3baa8f2bfb3b1">[email&#160;protected]</a>
+
+<span class="comment">// PushNotificationService.java</span>
+<span class="annotation">@Service</span>
+<span class="keyword">public class</span> <span class="type">PushNotificationService</span> {
+    
+    <span class="annotation">@Value</span>(<span class="string">"${vapid.public.key}"</span>)
+    <span class="keyword">private</span> <span class="type">String</span> publicKey;
+    
+    <span class="annotation">@Value</span>(<span class="string">"${vapid.private.key}"</span>)
+    <span class="keyword">private</span> <span class="type">String</span> privateKey;
+    
+    <span class="keyword">public void</span> <span class="function">sendPushNotification</span>(<span class="type">PushSubscription</span> subscription, <span class="type">String</span> title, <span class="type">String</span> body) {
+        <span class="type">Notification</span> notification = <span class="keyword">new</span> <span class="type">Notification</span>(
+            subscription.<span class="function">getEndpoint</span>(),
+            subscription.<span class="function">getP256dhKey</span>(),
+            subscription.<span class="function">getAuthKey</span>(),
+            <span class="function">createPayload</span>(title, body)
+        );
+        
+        <span class="type">PushService</span> pushService = <span class="keyword">new</span> <span class="type">PushService</span>()
+            .<span class="function">setPublicKey</span>(publicKey)
+            .<span class="function">setPrivateKey</span>(privateKey)
+            .<span class="function">setSubject</span>(<span class="string">"mailto:<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c1b3a0afa0b2b4b3a881b2b3a8a8afa7aeb2aea7b5efa2aeac">[email&#160;protected]</a>"</span>);
+            
+        pushService.<span class="function">send</span>(notification);
+    }
+}</div>
+          </div>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 5. SMS Notifications -->
+    <article class="section-card" id="sms-notifications">
+      <div class="section-header">
+        <h2><span class="icon">📱</span> 5. SMS Notifications (AWS SNS)</h2>
+        <p>SMS notifications for premium subscribers via AWS Simple Notification Service</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">📲</span> SMS Notification Flow
+            <span class="tag">AWS SNS</span>
+          </div>
+          <div class="ascii-diagram">
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌─────────┐     ┌──────┐
+│Scheduler │     │ Spring   │     │ MariaDB  │     │ AWS SNS │     │ User │
+│ (Cron)   │     │ Backend  │     │          │     │         │     │Phone │
+└────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬────┘     └──┬───┘
+     │                │                │                │              │
+     │ 1. Trigger     │                │                │              │
+     │    check       │                │                │              │
+     │───────────────►│                │                │              │
+     │                │                │                │              │
+     │                │ 2. Query tasks │                │              │
+     │                │    due in 1hr  │                │              │
+     │                │───────────────►│                │              │
+     │                │                │                │              │
+     │                │◄───────────────│                │              │
+     │                │  Task list     │                │              │
+     │                │                │                │              │
+     │                │ 3. Check user  │                │              │
+     │                │    subscription│                │              │
+     │                │───────────────►│                │              │
+     │                │                │                │              │
+     │                │◄───────────────│                │              │
+     │                │  Plan: Pro     │                │              │
+     │                │  SMS: Enabled  │                │              │
+     │                │                │                │              │
+     │                │ 4. Get user    │                │              │
+     │                │    phone       │                │              │
+     │                │───────────────►│                │              │
+     │                │                │                │              │
+     │                │◄───────────────│                │              │
+     │                │  +1234567890   │                │              │
+     │                │                │                │              │
+     │                │ 5. SNS Publish │                │              │
+     │                │    SMS         │                │              │
+     │                │───────────────────────────────►│              │
+     │                │                │                │              │
+     │                │                │                │ 6. Deliver   │
+     │                │                │                │    SMS       │
+     │                │                │                │─────────────►│
+     │                │                │                │              │
+     │                │                │                │  "Task Due   │
+     │                │                │                │   in 1 hour" │
+     │                │                │                │              │
+     │                │ 7. Log notif   │                │              │
+     │                │    sent        │                │              │
+     │                │───────────────►│                │              │
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">☕</span> SMS Notification Service
+            <span class="tag">Java</span>
+          </div>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="filename">SmsNotificationService.java</span>
+              <span class="lang">Java</span>
+            </div>
+            <div class="code-content"><span class="annotation">@Service</span>
+<span class="keyword">public class</span> <span class="type">SmsNotificationService</span> {
+    
+    <span class="keyword">private final</span> <span class="type">SnsClient</span> snsClient;
+    
+    <span class="keyword">public void</span> <span class="function">sendSms</span>(<span class="type">String</span> phoneNumber, <span class="type">String</span> message) {
+        <span class="type">PublishRequest</span> request = <span class="type">PublishRequest</span>.<span class="function">builder</span>()
+            .<span class="function">phoneNumber</span>(phoneNumber)
+            .<span class="function">message</span>(message)
+            .<span class="function">messageAttributes</span>(<span class="type">Map</span>.<span class="function">of</span>(
+                <span class="string">"AWS.SNS.SMS.SenderID"</span>, <span class="type">MessageAttributeValue</span>.<span class="function">builder</span>()
+                    .<span class="function">stringValue</span>(<span class="string">"TaskMgrPro"</span>)
+                    .<span class="function">dataType</span>(<span class="string">"String"</span>)
+                    .<span class="function">build</span>(),
+                <span class="string">"AWS.SNS.SMS.SMSType"</span>, <span class="type">MessageAttributeValue</span>.<span class="function">builder</span>()
+                    .<span class="function">stringValue</span>(<span class="string">"Transactional"</span>)
+                    .<span class="function">dataType</span>(<span class="string">"String"</span>)
+                    .<span class="function">build</span>()
+            ))
+            .<span class="function">build</span>();
+            
+        snsClient.<span class="function">publish</span>(request);
+    }
+}</div>
+          </div>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 6. Email Notifications -->
+    <article class="section-card" id="email-notifications">
+      <div class="section-header">
+        <h2><span class="icon">📧</span> 6. Email Notifications (AWS SES)</h2>
+        <p>Daily digest and task reminder emails via AWS Simple Email Service</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">📬</span> Email Notification Flow
+            <span class="tag">AWS SES</span>
+          </div>
+          <div class="ascii-diagram">
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌─────────┐     ┌───────┐
+│Scheduler │     │ Spring   │     │ MariaDB  │     │ AWS SES │     │ User  │
+│ (Cron)   │     │ Backend  │     │          │     │         │     │ Email │
+└────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬────┘     └───┬───┘
+     │                │                │                │              │
+     │ 1. Daily       │                │                │              │
+     │    digest      │                │                │              │
+     │───────────────►│                │                │              │
+     │                │                │                │              │
+     │                │ 2. Query tasks │                │              │
+     │                │    due today   │                │              │
+     │                │───────────────►│                │              │
+     │                │                │                │              │
+     │                │◄───────────────│                │              │
+     │                │                │                │              │
+     │                │ 3. Build HTML  │                │              │
+     │                │    email       │                │              │
+     │                │                │                │              │
+     │                │ 4. SES Send    │                │              │
+     │                │    Email       │                │              │
+     │                │───────────────────────────────►│              │
+     │                │                │                │              │
+     │                │                │                │ 5. Deliver   │
+     │                │                │                │    Email     │
+     │                │                │                │─────────────►│
+     │                │                │                │              │
+     │                │                │                │  📧 Daily    │
+     │                │                │                │     Digest   │
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">☕</span> Email Notification Service
+            <span class="tag">Java</span>
+          </div>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="filename">EmailNotificationService.java</span>
+              <span class="lang">Java</span>
+            </div>
+            <div class="code-content"><span class="annotation">@Service</span>
+<span class="keyword">public class</span> <span class="type">EmailNotificationService</span> {
+    
+    <span class="keyword">private final</span> <span class="type">SesClient</span> sesClient;
+    
+    <span class="keyword">public void</span> <span class="function">sendTaskReminder</span>(<span class="type">String</span> toEmail, <span class="type">List</span>&lt;<span class="type">Task</span>&gt; tasks) {
+        <span class="type">String</span> htmlBody = <span class="function">buildHtmlEmail</span>(tasks);
+        
+        <span class="type">SendEmailRequest</span> request = <span class="type">SendEmailRequest</span>.<span class="function">builder</span>()
+            .<span class="function">source</span>(<span class="string">"<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e18f8e95888788828095888e8f92a1929388888f878e928e8795cf828e8c">[email&#160;protected]</a>"</span>)
+            .<span class="function">destination</span>(<span class="type">Destination</span>.<span class="function">builder</span>()
+                .<span class="function">toAddresses</span>(toEmail)
+                .<span class="function">build</span>())
+            .<span class="function">message</span>(<span class="type">Message</span>.<span class="function">builder</span>()
+                .<span class="function">subject</span>(<span class="type">Content</span>.<span class="function">builder</span>()
+                    .<span class="function">data</span>(<span class="string">"Task Manager Pro - Daily Digest"</span>)
+                    .<span class="function">build</span>())
+                .<span class="function">body</span>(<span class="type">Body</span>.<span class="function">builder</span>()
+                    .<span class="function">html</span>(<span class="type">Content</span>.<span class="function">builder</span>()
+                        .<span class="function">data</span>(htmlBody)
+                        .<span class="function">build</span>())
+                    .<span class="function">build</span>())
+                .<span class="function">build</span>())
+            .<span class="function">build</span>();
+            
+        sesClient.<span class="function">sendEmail</span>(request);
+    }
+}</div>
+          </div>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 7. Stripe Payments -->
+    <article class="section-card" id="stripe-payments">
+      <div class="section-header">
+        <h2><span class="icon">💳</span> 7. Stripe Payment Integration</h2>
+        <p>Subscription management with Stripe Checkout and webhooks</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">💰</span> Stripe Checkout Flow
+            <span class="tag">Payments</span>
+          </div>
+          <div class="ascii-diagram">
+┌──────┐     ┌──────────┐     ┌──────────┐     ┌─────────┐     ┌──────────┐
+│ User │     │  React   │     │ Spring   │     │ Stripe  │     │ MariaDB  │
+│      │     │ Frontend │     │ Backend  │     │   API   │     │          │
+└──┬───┘     └────┬─────┘     └────┬─────┘     └────┬────┘     └────┬─────┘
+   │              │                │                │               │
+   │ 1. Select    │                │                │               │
+   │    Pro Plan  │                │                │               │
+   │─────────────►│                │                │               │
+   │              │                │                │               │
+   │              │ 2. Create      │                │               │
+   │              │    checkout    │                │               │
+   │              │───────────────►│                │               │
+   │              │                │                │               │
+   │              │                │ 3. Create      │               │
+   │              │                │    Stripe      │               │
+   │              │                │    session     │               │
+   │              │                │───────────────►│               │
+   │              │                │                │               │
+   │              │                │◄───────────────│               │
+   │              │                │  Session URL   │               │
+   │              │                │                │               │
+   │              │◄───────────────│                │               │
+   │              │                │                │               │
+   │              │ 4. Redirect    │                │               │
+   │◄─────────────│    to Stripe   │                │               │
+   │              │                │                │               │
+   │ 5. Enter     │                │                │               │
+   │    payment   │                │                │               │
+   │─────────────────────────────────────────────►│               │
+   │              │                │                │               │
+   │              │ 6. Stripe      │                │               │
+   │              │    Webhook     │                │               │
+   │              │                │◄───────────────│               │
+   │              │                │ checkout.      │               │
+   │              │                │ session.       │               │
+   │              │                │ completed      │               │
+   │              │                │                │               │
+   │              │                │ 7. Update user │               │
+   │              │                │    subscription│               │
+   │              │                │───────────────────────────────►│
+   │              │                │                │               │
+   │              │                │                │  Plan: Pro    │
+   │              │                │                │  Status:Active│
+   │              │                │                │               │
+   │ 8. Redirect  │                │                │               │
+   │    to app    │                │                │               │
+   │◄─────────────────────────────────────────────│               │
+   │              │                │                │               │
+   │              │ 9. Show Pro    │                │               │
+   │◄─────────────│    features    │                │               │
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">🔄</span> Webhook Events Handled
+          </div>
+          <table class="info-table">
+            <tr>
+              <th>Event</th>
+              <th>Action</th>
+            </tr>
+            <tr>
+              <td><code>checkout.session.completed</code></td>
+              <td>Activate subscription</td>
+            </tr>
+            <tr>
+              <td><code>customer.subscription.created</code></td>
+              <td>Log subscription start</td>
+            </tr>
+            <tr>
+              <td><code>customer.subscription.updated</code></td>
+              <td>Update plan/status</td>
+            </tr>
+            <tr>
+              <td><code>customer.subscription.deleted</code></td>
+              <td>Downgrade to Free</td>
+            </tr>
+            <tr>
+              <td><code>invoice.payment_succeeded</code></td>
+              <td>Log payment</td>
+            </tr>
+            <tr>
+              <td><code>invoice.payment_failed</code></td>
+              <td>Mark as past_due</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">🗄️</span> Subscription Database Schema
+            <span class="tag">SQL</span>
+          </div>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="filename">users_subscription_fields.sql</span>
+              <span class="lang">SQL</span>
+            </div>
+            <div class="code-content"><span class="comment">-- Users table subscription fields</span>
+<span class="keyword">ALTER TABLE</span> users <span class="keyword">ADD COLUMN</span> subscription_plan 
+    <span class="type">ENUM</span>(<span class="string">'free'</span>,<span class="string">'basic'</span>,<span class="string">'pro'</span>,<span class="string">'enterprise'</span>) <span class="keyword">DEFAULT</span> <span class="string">'free'</span>;
+
+<span class="keyword">ALTER TABLE</span> users <span class="keyword">ADD COLUMN</span> subscription_status 
+    <span class="type">ENUM</span>(<span class="string">'free'</span>,<span class="string">'active'</span>,<span class="string">'canceled'</span>,<span class="string">'past_due'</span>,<span class="string">'trialing'</span>) <span class="keyword">DEFAULT</span> <span class="string">'free'</span>;
+
+<span class="keyword">ALTER TABLE</span> users <span class="keyword">ADD COLUMN</span> stripe_customer_id <span class="type">VARCHAR</span>(<span class="number">255</span>);
+<span class="keyword">ALTER TABLE</span> users <span class="keyword">ADD COLUMN</span> stripe_subscription_id <span class="type">VARCHAR</span>(<span class="number">255</span>);
+<span class="keyword">ALTER TABLE</span> users <span class="keyword">ADD COLUMN</span> subscription_start_date <span class="type">TIMESTAMP</span>;
+<span class="keyword">ALTER TABLE</span> users <span class="keyword">ADD COLUMN</span> subscription_end_date <span class="type">TIMESTAMP</span>;
+<span class="keyword">ALTER TABLE</span> users <span class="keyword">ADD COLUMN</span> sms_credits_limit <span class="type">INT</span> <span class="keyword">DEFAULT</span> <span class="number">0</span>;
+<span class="keyword">ALTER TABLE</span> users <span class="keyword">ADD COLUMN</span> ai_requests_limit <span class="type">INT</span> <span class="keyword">DEFAULT</span> <span class="number">0</span>;</div>
+          </div>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 8. AWS Infrastructure -->
+    <article class="section-card" id="aws-infrastructure">
+      <div class="section-header">
+        <h2><span class="icon">☁️</span> 8. AWS Infrastructure Architecture</h2>
+        <p>Production cloud infrastructure on Amazon Web Services (us-east-1)</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">🏢</span> AWS Cloud Architecture
+            <span class="tag">Production</span>
+          </div>
+          <div class="ascii-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           AWS CLOUD (us-east-1)                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                         Route 53 (DNS)                               │    │
+│  │                  taskmanager.sriinfosoft.com                         │    │
+│  └───────────────────────────────┬─────────────────────────────────────┘    │
+│                                  │                                           │
+│  ┌───────────────────────────────▼─────────────────────────────────────┐    │
+│  │                      CloudFront Distribution                         │    │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────┐  │    │
+│  │  │ SSL/TLS (ACM)   │  │ Edge Caching    │  │ Origin Failover     │  │    │
+│  │  │ Certificate     │  │ Global CDN      │  │ Health Checks       │  │    │
+│  │  └─────────────────┘  └─────────────────┘  └─────────────────────┘  │    │
+│  └───────────────────────────────┬─────────────────────────────────────┘    │
+│                                  │                                           │
+│         ┌────────────────────────┼────────────────────────┐                 │
+│         │                        │                        │                 │
+│         ▼                        ▼                        ▼                 │
+│  ┌─────────────┐         ┌─────────────┐         ┌─────────────┐           │
+│  │  S3 Bucket  │         │   EC2/ECS   │         │  RDS        │           │
+│  │  (Frontend) │         │  (Backend)  │         │  (MariaDB)  │           │
+│  │             │         │             │         │             │           │
+│  │ React Build │         │ Spring Boot │         │ Primary +   │           │
+│  │ Static Files│         │ Docker      │         │ Read Replica│           │
+│  └─────────────┘         └──────┬──────┘         └──────┬──────┘           │
+│                                 │                       │                   │
+│                                 │    Private Subnet     │                   │
+│                          ┌──────┴───────────────────────┴──────┐            │
+│                          │              VPC                     │            │
+│                          │   ┌─────────────────────────────┐   │            │
+│                          │   │     Security Groups          │   │            │
+│                          │   │  - Backend: 8080 from CF     │   │            │
+│                          │   │  - DB: 3306 from Backend     │   │            │
+│                          │   └─────────────────────────────┘   │            │
+│                          └──────────────────────────────────────┘            │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                     Supporting Services                              │    │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐   │    │
+│  │  │   SES   │  │   SNS   │  │Secrets  │  │   IAM   │  │CloudWatch│   │    │
+│  │  │ (Email) │  │  (SMS)  │  │ Manager │  │ (Roles) │  │ (Logs)  │   │    │
+│  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘   │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">⚙️</span> AWS Services Configuration
+          </div>
+          <table class="info-table">
+            <tr>
+              <th>Service</th>
+              <th>Purpose</th>
+              <th>Configuration</th>
+            </tr>
+            <tr>
+              <td>Route 53</td>
+              <td>DNS management</td>
+              <td>A record → CloudFront</td>
+            </tr>
+            <tr>
+              <td>CloudFront</td>
+              <td>CDN + SSL/TLS</td>
+              <td>ACM certificate, S3 + EC2 origins</td>
+            </tr>
+            <tr>
+              <td>S3</td>
+              <td>Static hosting</td>
+              <td>React build files, versioning enabled</td>
+            </tr>
+            <tr>
+              <td>EC2</td>
+              <td>Application server</td>
+              <td>t3.small, Docker container</td>
+            </tr>
+            <tr>
+              <td>RDS</td>
+              <td>Database</td>
+              <td>db.t3.micro, automated backups</td>
+            </tr>
+            <tr>
+              <td>Secrets Manager</td>
+              <td>Credentials</td>
+              <td>DB passwords, API keys, VAPID keys</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 9. CI/CD Automation -->
+    <article class="section-card" id="cicd-automation">
+      <div class="section-header">
+        <h2><span class="icon">🚀</span> 9. CI/CD & Automation Pipeline</h2>
+        <p>End-to-end automation for build, test, deploy, and operations</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">📜</span> Automation Scripts Overview
+          </div>
+          <table class="info-table">
+            <tr>
+              <th>Script</th>
+              <th>Purpose</th>
+              <th>Frequency</th>
+            </tr>
+            <tr>
+              <td><code>deploy-frontend.sh</code></td>
+              <td>Build React, upload to S3, invalidate CloudFront</td>
+              <td>On push</td>
+            </tr>
+            <tr>
+              <td><code>deploy-backend.sh</code></td>
+              <td>Build JAR, Docker build, push, restart container</td>
+              <td>On push</td>
+            </tr>
+            <tr>
+              <td><code>db-backup.sh</code></td>
+              <td>Full MariaDB backup to S3</td>
+              <td>Daily 2 AM</td>
+            </tr>
+            <tr>
+              <td><code>db-restore.sh</code></td>
+              <td>Restore from S3 backup</td>
+              <td>On demand</td>
+            </tr>
+            <tr>
+              <td><code>ssl-renew.sh</code></td>
+              <td>Check/renew SSL certificates</td>
+              <td>Weekly</td>
+            </tr>
+            <tr>
+              <td><code>health-check.sh</code></td>
+              <td>API endpoint monitoring</td>
+              <td>Every 5 min</td>
+            </tr>
+            <tr>
+              <td><code>log-rotate.sh</code></td>
+              <td>Archive and compress old logs</td>
+              <td>Daily</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">🎨</span> Frontend Deployment Script
+            <span class="tag">Bash</span>
+          </div>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="filename">deploy-frontend.sh</span>
+              <span class="lang">Bash</span>
+            </div>
+            <div class="code-content"><span class="comment">#!/bin/bash</span>
+<span class="comment"># Frontend Deployment Script</span>
+
+<span class="keyword">set</span> -e
+
+<span class="keyword">echo</span> <span class="string">"🚀 Starting Frontend Deployment..."</span>
+
+<span class="comment"># Variables</span>
+<span class="variable">S3_BUCKET</span>=<span class="string">"taskmanager-frontend-prod"</span>
+<span class="variable">CLOUDFRONT_DIST_ID</span>=<span class="string">"E1234567890ABC"</span>
+<span class="variable">BUILD_DIR</span>=<span class="string">"./build"</span>
+
+<span class="comment"># Step 1: Install dependencies</span>
+<span class="keyword">echo</span> <span class="string">"📦 Installing dependencies..."</span>
+npm ci
+
+<span class="comment"># Step 2: Build production bundle</span>
+<span class="keyword">echo</span> <span class="string">"🔨 Building production bundle..."</span>
+npm run build
+
+<span class="comment"># Step 3: Upload to S3</span>
+<span class="keyword">echo</span> <span class="string">"☁️ Uploading to S3..."</span>
+aws s3 sync <span class="variable">$BUILD_DIR</span> s3://<span class="variable">$S3_BUCKET</span> \
+    --delete \
+    --cache-control <span class="string">"max-age=31536000"</span> \
+    --exclude <span class="string">"index.html"</span> \
+    --exclude <span class="string">"service-worker.js"</span>
+
+<span class="comment"># Upload index.html with no-cache</span>
+aws s3 cp <span class="variable">$BUILD_DIR</span>/index.html s3://<span class="variable">$S3_BUCKET</span>/index.html \
+    --cache-control <span class="string">"no-cache, no-store, must-revalidate"</span>
+
+<span class="comment"># Step 4: Invalidate CloudFront cache</span>
+<span class="keyword">echo</span> <span class="string">"🔄 Invalidating CloudFront cache..."</span>
+aws cloudfront create-invalidation \
+    --distribution-id <span class="variable">$CLOUDFRONT_DIST_ID</span> \
+    --paths <span class="string">"/*"</span>
+
+<span class="keyword">echo</span> <span class="string">"✅ Frontend deployment complete!"</span></div>
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">💾</span> Database Backup Script
+            <span class="tag">Bash</span>
+          </div>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="filename">db-backup.sh</span>
+              <span class="lang">Bash</span>
+            </div>
+            <div class="code-content"><span class="comment">#!/bin/bash</span>
+<span class="comment"># Database Backup Script</span>
+
+<span class="keyword">set</span> -e
+
+<span class="keyword">echo</span> <span class="string">"💾 Starting Database Backup..."</span>
+
+<span class="comment"># Variables</span>
+<span class="variable">DB_HOST</span>=<span class="string">"taskmanager-db.xxxxx.us-east-1.rds.amazonaws.com"</span>
+<span class="variable">DB_NAME</span>=<span class="string">"taskmanager"</span>
+<span class="variable">DB_USER</span>=<span class="string">"admin"</span>
+<span class="variable">S3_BUCKET</span>=<span class="string">"taskmanager-backups"</span>
+<span class="variable">BACKUP_DIR</span>=<span class="string">"/tmp/db-backups"</span>
+<span class="variable">DATE</span>=$(date +%Y%m%d_%H%M%S)
+<span class="variable">BACKUP_FILE</span>=<span class="string">"taskmanager_backup_<span class="variable">$DATE</span>.sql.gz"</span>
+
+<span class="comment"># Step 1: Create backup directory</span>
+mkdir -p <span class="variable">$BACKUP_DIR</span>
+
+<span class="comment"># Step 2: Dump database</span>
+<span class="keyword">echo</span> <span class="string">"📦 Dumping database..."</span>
+mysqldump -h <span class="variable">$DB_HOST</span> -u <span class="variable">$DB_USER</span> -p<span class="variable">$DB_PASSWORD</span> \
+    --single-transaction \
+    --routines \
+    --triggers \
+    <span class="variable">$DB_NAME</span> | gzip > <span class="variable">$BACKUP_DIR</span>/<span class="variable">$BACKUP_FILE</span>
+
+<span class="comment"># Step 3: Upload to S3</span>
+<span class="keyword">echo</span> <span class="string">"☁️ Uploading to S3..."</span>
+aws s3 cp <span class="variable">$BACKUP_DIR</span>/<span class="variable">$BACKUP_FILE</span> s3://<span class="variable">$S3_BUCKET</span>/daily/<span class="variable">$BACKUP_FILE</span>
+
+<span class="comment"># Step 4: Cleanup old backups (keep last 30 days)</span>
+<span class="keyword">echo</span> <span class="string">"🧹 Cleaning up old backups..."</span>
+aws s3 ls s3://<span class="variable">$S3_BUCKET</span>/daily/ | <span class="keyword">while</span> read -r line; <span class="keyword">do</span>
+    <span class="variable">FILE_DATE</span>=$(echo <span class="variable">$line</span> | awk <span class="string">'{print $1}'</span>)
+    <span class="variable">FILE_NAME</span>=$(echo <span class="variable">$line</span> | awk <span class="string">'{print $4}'</span>)
+    <span class="keyword">if</span> [[ $(date -d <span class="string">"<span class="variable">$FILE_DATE</span>"</span> +%s) -lt $(date -d <span class="string">"30 days ago"</span> +%s) ]]; <span class="keyword">then</span>
+        aws s3 rm s3://<span class="variable">$S3_BUCKET</span>/daily/<span class="variable">$FILE_NAME</span>
+    <span class="keyword">fi</span>
+<span class="keyword">done</span>
+
+<span class="comment"># Step 5: Cleanup local file</span>
+rm -f <span class="variable">$BACKUP_DIR</span>/<span class="variable">$BACKUP_FILE</span>
+
+<span class="keyword">echo</span> <span class="string">"✅ Database backup complete: <span class="variable">$BACKUP_FILE</span>"</span></div>
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">🏥</span> Health Check Script
+            <span class="tag">Bash</span>
+          </div>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="filename">health-check.sh</span>
+              <span class="lang">Bash</span>
+            </div>
+            <div class="code-content"><span class="comment">#!/bin/bash</span>
+<span class="comment"># Health Check Script (runs via cron every 5 minutes)</span>
+
+<span class="variable">ENDPOINTS</span>=(
+    <span class="string">"https://taskmanager.sriinfosoft.com/api/health"</span>
+    <span class="string">"https://taskmanager.sriinfosoft.com/api/stripe/plans"</span>
+)
+
+<span class="variable">SLACK_WEBHOOK</span>=<span class="string">"https://hooks.slack.com/services/xxx/xxx/xxx"</span>
+
+<span class="keyword">for</span> <span class="variable">ENDPOINT</span> <span class="keyword">in</span> <span class="string">"${ENDPOINTS[@]}"</span>; <span class="keyword">do</span>
+    <span class="variable">HTTP_STATUS</span>=$(curl -s -o /dev/null -w <span class="string">"%{http_code}"</span> --max-time <span class="number">10</span> <span class="variable">$ENDPOINT</span>)
+    
+    <span class="keyword">if</span> [ <span class="string">"<span class="variable">$HTTP_STATUS</span>"</span> -ne <span class="number">200</span> ]; <span class="keyword">then</span>
+        <span class="comment"># Send Slack alert</span>
+        curl -X POST -H <span class="string">'Content-type: application/json'</span> \
+            --data <span class="string">"{\"text\":\"🚨 Health Check Failed!\nEndpoint: <span class="variable">$ENDPOINT</span>\nStatus: <span class="variable">$HTTP_STATUS</span>\"}"</span> \
+            <span class="variable">$SLACK_WEBHOOK</span>
+    <span class="keyword">fi</span>
+<span class="keyword">done</span></div>
+          </div>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- 10. Complete Request Flow -->
+    <article class="section-card" id="request-flow">
+      <div class="section-header">
+        <h2><span class="icon">🔄</span> 10. Complete Request Flow Sequence</h2>
+        <p>End-to-end request processing from client to database and back</p>
+      </div>
+      <div class="section-content">
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">📡</span> Full Request Lifecycle
+            <span class="tag">HTTP</span>
+          </div>
+          <div class="ascii-diagram">
+┌──────┐  ┌─────────┐  ┌───────────┐  ┌──────────┐  ┌─────────┐  ┌─────────┐
+│Client│  │CloudFront│  │  S3/EC2   │  │ Backend  │  │  Cache  │  │ MariaDB │
+└──┬───┘  └────┬─────┘  └─────┬─────┘  └────┬─────┘  └────┬────┘  └────┬────┘
+   │           │              │             │             │            │
+   │ 1. HTTPS  │              │             │             │            │
+   │   Request │              │             │             │            │
+   │──────────►│              │             │             │            │
+   │           │              │             │             │            │
+   │           │ 2. Check     │             │             │            │
+   │           │    Cache     │             │             │            │
+   │           │─────────────►│             │             │            │
+   │           │              │             │             │            │
+   │           │ 3a. Static   │             │             │            │
+   │           │     (S3)     │             │             │            │
+   │           │◄─────────────│             │             │            │
+   │           │              │             │             │            │
+   │           │ 3b. API      │             │             │            │
+   │           │     (/api/*) │             │             │            │
+   │           │──────────────│────────────►│             │            │
+   │           │              │             │             │            │
+   │           │              │             │ 4. Check    │            │
+   │           │              │             │    Cache    │            │
+   │           │              │             │────────────►│            │
+   │           │              │             │             │            │
+   │           │              │             │ 5. Query    │            │
+   │           │              │             │    DB       │            │
+   │           │              │             │─────────────│───────────►│
+   │           │              │             │             │            │
+   │           │              │             │◄────────────│────────────│
+   │           │              │             │             │            │
+   │           │◄─────────────│─────────────│             │            │
+   │           │              │             │             │            │
+   │◄──────────│              │             │             │            │
+   │  Response │              │             │             │            │
+          </div>
+        </div>
+        
+        <div class="content-box">
+          <div class="content-box-title">
+            <span class="icon">📋</span> Request Flow Summary
+          </div>
+          <table class="info-table">
+            <tr>
+              <th>Step</th>
+              <th>Component</th>
+              <th>Action</th>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>Client → CloudFront</td>
+              <td>HTTPS request with SSL termination</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>CloudFront</td>
+              <td>Check edge cache for content</td>
+            </tr>
+            <tr>
+              <td>3a</td>
+              <td>CloudFront → S3</td>
+              <td>Fetch static assets (JS, CSS, images)</td>
+            </tr>
+            <tr>
+              <td>3b</td>
+              <td>CloudFront → Backend</td>
+              <td>Forward API requests to EC2</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Backend</td>
+              <td>Check application cache (Redis optional)</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Backend → MariaDB</td>
+              <td>Query database if cache miss</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Response</td>
+              <td>Return through CloudFront to client</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="back-to-top"><a href="#toc">↑ Back to Table of Contents</a></div>
+      </div>
+    </article>
+    
+    <!-- Footer -->
+    <footer class="footer">
+      <h3>📘 Task Manager Pro</h3>
+      <p>Complete Technical Documentation</p>
+      <p style="margin-top: 8px;">© 2025 <a href="https://sriinfosoft
