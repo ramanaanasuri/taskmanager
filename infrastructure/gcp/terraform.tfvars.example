@@ -1,0 +1,21 @@
+# ============================================================
+# terraform.tfvars — Fill in your values
+# ============================================================
+# Copy this file and fill in your actual project ID.
+# Do NOT commit this file to git if it contains secrets.
+# ============================================================
+
+project_id = "YOUR-NEW-GCP-PROJECT-ID"
+
+# Defaults match the old account setup.
+# Change these only if you want different values.
+
+# region           = "us-west1"
+# zone             = "us-west1-b"
+# instance_name    = "gce-for-fullstack-apps-learning"
+# machine_type     = "e2-small"
+# boot_disk_size   = 30
+# boot_disk_image  = "debian-cloud/debian-12"
+# frontend_domain  = "taskmanager.gcp.sriinfosoft.com"
+# backend_domain   = "api-taskmanager.gcp.sriinfosoft.com"
+# ssh_user         = "ranasuri"
