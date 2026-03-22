@@ -1,0 +1,9 @@
+key_pair_name  = "your-key-pair-name"
+admin_ssh_cidr = "x.x.x.x/32"
+
+# Defaults -- change only if needed
+# region          = "us-west-1"
+# instance_type   = "t2.micro"
+# ami_id          = "ami-004374a3d56f732a6"
+# frontend_domain = "tm.sriinfosoft.com"
+# backend_domain  = "api-tm.sriinfosoft.com"

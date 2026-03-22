@@ -1,0 +1,17 @@
+# ============================================================
+# .aws-config - sourced by start-aws.sh and stop-aws.sh
+# Copy to .aws-config and fill in values after terraform apply
+# This file is gitignored -- never commit .aws-config
+# ============================================================
+
+# From: terraform output instance_id
+export TASKMANAGER_INSTANCE_ID="i-XXXXXXXXXXXXXXXXX"
+
+# From: aws cloudfront list-distributions after terraform apply
+export TASKMANAGER_FRONTEND_DIST_ID="EXXXXXXXXXXXXX"
+export TASKMANAGER_BACKEND_DIST_ID="EXXXXXXXXXXXXX"
+
+# Path to your pem key
+export TASKMANAGER_KEY_PATH="~/.ssh/ranasuri-manteca.pem"
+
+export AWS_DEFAULT_REGION="us-west-1"
