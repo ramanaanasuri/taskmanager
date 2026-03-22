@@ -66,7 +66,7 @@ services:
       # ============================================           
       JWT_SECRET: ${JWT_SECRET:-your-secret-key-min-256-bits-change-in-production}
       SERVER_PORT: 8080
-      FRONTEND_URL: ${TASKMANAGER_FRONTEND_URL:-http://taskmanager.gcp.sriinfosoft.com}
+      FRONTEND_URL: ${TASKMANAGER_FRONTEND_URL:-http://taskmanager.sriinfosoft.com}
     depends_on:
       taskmanager-db:
         condition: service_healthy
@@ -84,11 +84,11 @@ services:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
+      args:
+        REACT_APP_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}      
     container_name: taskmanager-frontend
     ports:
       - "80:80"
-    environment:
-      REACT_APP_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
     depends_on:
       - taskmanager-backend
     networks:

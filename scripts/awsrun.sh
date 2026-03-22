@@ -109,7 +109,7 @@ action_logs_status() {
 action_tail_backend() {
   print_header
   echo "📡 Tailing backend logs (Ctrl+C to stop)…"
-  docker logs -f "$BE_CONT"
+  docker logs -f --tail 300 "$BE_CONT"
 }
 
 action_start_backend_only() {

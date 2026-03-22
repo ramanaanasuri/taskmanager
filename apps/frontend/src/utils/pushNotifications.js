@@ -77,7 +77,8 @@ export async function subscribeToPushNotifications(apiBaseUrl, authToken) {
         subscription = null; // Will create new one below
       }
     }
-
+	console.log('VAPID public key:', VAPID_PUBLIC_KEY);
+	console.log('Type of VAPID key:', typeof VAPID_PUBLIC_KEY);
     // Create new subscription (either first time or after removing old one)
     console.log('📝 Creating new push subscription...');
     subscription = await registration.pushManager.subscribe({

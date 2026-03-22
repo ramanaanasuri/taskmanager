@@ -3,6 +3,9 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
+ARG REACT_APP_VAPID_PUBLIC_KEY
+ENV REACT_APP_VAPID_PUBLIC_KEY=$REACT_APP_VAPID_PUBLIC_KEY
+
 COPY package*.json ./
 RUN npm install --production
 
