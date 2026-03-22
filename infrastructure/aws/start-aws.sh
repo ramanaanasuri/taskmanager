@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/../infrastructure/aws/.aws-config"
+CONFIG_FILE="$SCRIPT_DIR/.aws-config"
 [ -f "$CONFIG_FILE" ] && source "$CONFIG_FILE"
 
 INSTANCE_ID="${TASKMANAGER_INSTANCE_ID:-}"

@@ -34,3 +34,11 @@ echo "Setup complete! You are ready to run:"
 echo "  terraform plan"
 echo "  terraform apply"
 echo "  terraform destroy"
+
+# Auto-source .aws-config if it exists
+if [ -f ~/taskmanager/infrastructure/aws/.aws-config ]; then
+  source ~/taskmanager/infrastructure/aws/.aws-config
+  echo "AWS config loaded: Instance=$TASKMANAGER_INSTANCE_ID"
+else
+  echo "WARNING: .aws-config not found -- run after terraform apply to populate"
+fi
