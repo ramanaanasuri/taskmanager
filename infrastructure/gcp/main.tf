@@ -162,12 +162,19 @@ resource "google_compute_instance" "taskmanager_vm" {
     ]
   }
 
-  # Install Docker on first boot
+  # Install Docker + swap on first boot
   metadata_startup_script = <<-EOF
     #!/bin/bash
     set -e
 
-    # Install Docker
+    # Add 2GB swap (helps during Docker build on e2-small)
+    dd if=/dev/zero of=/swapfile bs=128M count=16
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
+    # Install Docker from official Docker repo (Debian)
     apt-get update
     apt-get install -y ca-certificates curl gnupg
     install -m 0755 -d /etc/apt/keyrings

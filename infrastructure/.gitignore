@@ -1,3 +1,4 @@
+# Terraform state and secrets
 *.tfstate
 *.tfstate.backup
 *.tfvars
@@ -5,3 +6,11 @@
 .terraform/
 .terraform.lock.hcl
 crash.log
+
+# AWS config with real IDs
+.aws-config
+!.aws-config.example
+
+# GCP config with real IDs
+.gcp-config
+!.gcp-config.example

@@ -1,0 +1,21 @@
+# ============================================================
+# .gcp-config - sourced by start-gcp.sh and stop-gcp.sh
+# Copy to .gcp-config and fill in values after terraform apply
+# This file is gitignored -- never commit .gcp-config
+# ============================================================
+
+# From: terraform output instance_name
+export GCP_INSTANCE_NAME="gce-for-fullstack-apps-learning"
+
+# From: terraform output instance_zone
+export GCP_ZONE="us-west1-b"
+
+# From: terraform output -- your GCP project ID
+export GCP_PROJECT_ID="YOUR-GCP-PROJECT-ID"
+
+# SSH user (matches var.ssh_user in variables.tf)
+export GCP_SSH_USER="ranasuri"
+
+# App domains
+export GCP_FRONTEND_URL="https://taskmanager.gcp.sriinfosoft.com"
+export GCP_BACKEND_URL="https://api-taskmanager.gcp.sriinfosoft.com"
