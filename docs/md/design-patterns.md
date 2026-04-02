@@ -1,16 +1,25 @@
-# Architecture Documentation
+# Design Patterns Reference
 
-This folder contains architecture and design reference documents for Task Manager Pro.
+A complete walkthrough of every design pattern found in the Task Manager Pro codebase — with visual diagrams, exact source code with syntax highlighting, and interview-ready explanations.
 
 ---
 
-## Design Patterns Reference
+## Visual reference document
 
-**File:** [`design-patterns.html`](./design-patterns.html)
+**File:** [`taskmanager-design-patterns.html`](../html-docs/taskmanager-design-patterns.html)
 
-A complete walkthrough of every design pattern found in the Task Manager Pro codebase. Covers all 8 patterns across 4 categories with visual diagrams, exact source code with syntax highlighting, and interview-ready explanations.
+Covers all 8 patterns across 4 categories. Open it locally in any browser — self-contained, no build step, no dependencies required.
 
-### Patterns covered
+```bash
+# From the repo root
+start docs\html-docs\taskmanager-design-patterns.html       # Windows
+open docs/html-docs/taskmanager-design-patterns.html        # Mac
+xdg-open docs/html-docs/taskmanager-design-patterns.html   # Linux
+```
+
+---
+
+## Patterns covered
 
 | # | Pattern | Category | Files |
 |---|---------|----------|-------|
@@ -22,19 +31,6 @@ A complete walkthrough of every design pattern found in the Task Manager Pro cod
 | 06 | Singleton | Structural | `JwtTokenProvider.java`, all `@Component` beans |
 | 07 | Dependency Injection | Structural | `SecurityConfig.java`, `TaskController.java` |
 | 08 | JWT + OAuth2 Token | Security | `JwtTokenProvider.java`, `OAuth2AuthenticationSuccessHandler.java` |
-
-### How to view
-
-Open `design-patterns.html` directly in any browser. The file is self-contained — no build step, no dependencies, no server required.
-
-```bash
-# From the repo root
-open docs/architecture/design-patterns.html        # Mac
-xdg-open docs/architecture/design-patterns.html   # Linux
-start docs/architecture/design-patterns.html       # Windows
-```
-
-GitHub does not render HTML files inline. To view on GitHub, clone the repo and open the file locally, or enable GitHub Pages on the `docs/` folder under **Settings → Pages → Source → Deploy from branch → `/docs`**.
 
 ---
 
@@ -51,13 +47,13 @@ GitHub does not render HTML files inline. To view on GitHub, clone the repo and 
 
 ---
 
-## Folder structure
+## Docs folder structure
 
 ```
 docs/
-└── architecture/
-    ├── README.md                  ← this file
-    └── design-patterns.html       ← full pattern reference
+├── md/
+│   └── design-patterns.md              ← this file
+├── html-docs/
+│   └── taskmanager-design-patterns.html ← full visual reference
+└── pdfs/
 ```
-
-Add future architecture documents here — API design decisions, database schema, deployment diagrams, ADRs (Architecture Decision Records).
