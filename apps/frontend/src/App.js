@@ -762,6 +762,20 @@ const toggleTask = async (id) => {
               
               <div className="header-text">
                 <h1>Task Manager Pro</h1>
+                <a
+                  href="https://sriinfosoft.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="parent-link"
+                  title="Visit SriInfoSoft"
+                >
+                  by SriInfoSoft
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                       aria-hidden="true">
+                    <path d="M15 3h6v6" /><path d="M10 14L21 3" />
+                  </svg>
+                </a>
               </div>
             </div>
             <div className="user-info">
@@ -1346,7 +1360,21 @@ const toggleTask = async (id) => {
         <div className="footer-content">
           <div className="footer-powered">
             <div>
-              Powered by <span className="footer-company">SriInfosoft Inc<sup className="footer-trademark">®</sup></span>
+              Powered by{' '}
+              <a
+                href="https://sriinfosoft.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-company-link"
+                title="Visit SriInfoSoft"
+              >
+                <span className="footer-company">SriInfosoft Inc<sup className="footer-trademark">®</sup></span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                     aria-hidden="true">
+                  <path d="M15 3h6v6" /><path d="M10 14L21 3" />
+                </svg>
+              </a>
             </div>
             <div className="footer-copyright">
               © {new Date().getFullYear()} All rights reserved
