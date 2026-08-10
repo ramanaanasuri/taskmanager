@@ -1,0 +1,73 @@
+# Caddy configuration for Task Manager
+#
+# Caddy obtains and renews Let's Encrypt certificates automatically. It needs
+# two things to succeed:
+#   1. DNS for both hostnames must already point at this VM
+#   2. Ports 80 and 443 must be reachable from the internet
+#
+# Certificates are stored in the caddy_data volume, so they survive restarts
+# and rebuilds. Let's Encrypt rate-limits to 5 failures per hostname per hour —
+# see the staging note at the bottom before experimenting.
+
+{
+	email {$ACME_EMAIL}
+}
+
+# ---------------------------------------------------------------- frontend
+{$FRONTEND_HOST} {
+	encode gzip zstd
+
+	reverse_proxy taskmanager-frontend:80 {
+		header_up X-Forwarded-Proto https
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options    "nosniff"
+		X-Frame-Options           "SAMEORIGIN"
+		Referrer-Policy           "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# ---------------------------------------------------------------- API
+{$API_HOST} {
+	encode gzip zstd
+
+	reverse_proxy taskmanager-backend:8080 {
+		header_up X-Forwarded-Proto https
+
+		# Spring Boot can be slow to respond on a shared-core e2-micro,
+		# particularly just after a restart.
+		transport http {
+			dial_timeout      10s
+			response_header_timeout 60s
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options    "nosniff"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Testing against Let's Encrypt staging
+#
+# If you need to retry certificate issuance repeatedly, add this inside the
+# global block at the top to avoid burning the production rate limit. The
+# certificates will not be trusted by browsers — remove it once it works.
+#
+#   acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+# ---------------------------------------------------------------------------

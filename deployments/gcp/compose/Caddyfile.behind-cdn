@@ -1,0 +1,83 @@
+# Caddyfile.behind-cdn
+#
+# Use this when something in front of Caddy already terminates TLS —
+# CloudFront, a GCP HTTPS load balancer, or Cloudflare.
+#
+# Select it by setting this in .env, then restarting:
+#     CADDY_CONFIG=Caddyfile.behind-cdn
+#
+# Caddy still does the useful part — routing by hostname to the frontend or
+# the backend — but stops trying to obtain certificates. Leaving auto_https on
+# behind a CDN causes repeated failed ACME challenges, because Let's Encrypt
+# reaches the CDN rather than this machine.
+
+{
+	# Do not attempt Let's Encrypt. The edge holds the certificate.
+	auto_https off
+
+	# Trust the forwarded headers from the edge, so the app sees the real
+	# client IP and the original scheme rather than the proxy's.
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+# ---------------------------------------------------------------- frontend
+http://{$FRONTEND_HOST} {
+	encode gzip zstd
+
+	reverse_proxy taskmanager-frontend:80 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options        "SAMEORIGIN"
+		Referrer-Policy        "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# ---------------------------------------------------------------- API
+http://{$API_HOST} {
+	encode gzip zstd
+
+	reverse_proxy taskmanager-backend:8080 {
+		header_up X-Forwarded-Proto {scheme}
+
+		transport http {
+			dial_timeout            10s
+			response_header_timeout 60s
+		}
+	}
+
+	header {
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Health checks
+#
+# A GCP HTTPS load balancer probes from 130.211.0.0/22 and 35.191.0.0/16 and
+# sends no Host header matching your domains, so it would otherwise get a 404.
+# This block answers those probes on the raw IP.
+#
+# The firewall must also allow those two ranges on port 80, or the backend
+# shows as unhealthy with no other clue as to why.
+# ---------------------------------------------------------------------------
+:80 {
+	respond /healthz "ok" 200
+	reverse_proxy taskmanager-frontend:80
+}

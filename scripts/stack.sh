@@ -13,7 +13,7 @@ case "$CLOUD" in
     OVERLAY="deployments/gcp/compose/docker-compose.gcp.yml"
     ;;
   aws)
-    OVERLAY="deployments/aws/compose/docker-compose.yml"
+    OVERLAY="deployments/aws/compose/docker-compose.aws.yml"
     ;;
   *)
     echo "Unknown cloud: $CLOUD (use gcp|aws)" >&2; exit 2;;
@@ -42,9 +42,9 @@ case "$CMD" in
     show_ctx
     if [[ "$EXTRA" == "--rebuild" ]]; then
       shift 3 || true
-      COMPOSE up -d --build taskmanager-db taskmanager-backend taskmanager-frontend
+      COMPOSE up -d --build
     else
-      COMPOSE up -d taskmanager-db taskmanager-backend taskmanager-frontend
+      COMPOSE up -d
     fi
     ;;
 

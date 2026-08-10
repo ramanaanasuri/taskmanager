@@ -1,8 +1,75 @@
+# GCP overlay — merged on top of ./docker-compose.yml by scripts/stack.sh
+#
+#   docker compose -p taskmanager -f docker-compose.yml \
+#     -f deployments/gcp/compose/docker-compose.gcp.yml up -d
+#
+# Adds Caddy as a reverse proxy with automatic Let's Encrypt certificates,
+# replacing what CloudFront does on the AWS side.
+#
+# NOTE on !override: Compose MERGES list values across files, so without it the
+# base "80:80" would survive alongside Caddy's and the two would collide on
+# port 80. !override replaces the list instead of appending to it.
+# Requires Docker Compose v2.24 or later.
+#
+# NOTE on relative paths: Compose resolves them against the directory of the
+# FIRST compose file (the project root), not this file — hence the full path
+# to the Caddyfile below.
+#
+# TWO MODES, chosen by CADDY_CONFIG in .env:
+#
+#   CADDY_CONFIG=Caddyfile              (default)
+#     Caddy obtains Let's Encrypt certificates and serves HTTPS directly.
+#     Nothing else in front. Costs nothing.
+#
+#   CADDY_CONFIG=Caddyfile.behind-cdn
+#     CloudFront or a GCP HTTPS load balancer terminates TLS. Caddy serves
+#     plain HTTP and only routes by hostname. Also answers load balancer
+#     health checks on the raw IP.
+#
+# Switching is one line in .env plus a restart — no compose or script change.
+
 services:
+  # Reverse proxy + automatic HTTPS. Only this service faces the internet.
+  caddy:
+    image: caddy:2-alpine
+    container_name: taskmanager-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"          # HTTP/3
+    volumes:
+      # CADDY_CONFIG selects the mode, set in .env:
+      #   Caddyfile             — Caddy terminates TLS itself (Let's Encrypt)
+      #   Caddyfile.behind-cdn  — CloudFront or a GCP load balancer does TLS
+      - ./deployments/gcp/compose/${CADDY_CONFIG:-Caddyfile}:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # certificates — must persist across rebuilds
+      - caddy_config:/config
+    environment:
+      FRONTEND_HOST: ${CADDY_FRONTEND_HOST:-taskmanager.gcp.sriinfosoft.com}
+      API_HOST: ${CADDY_API_HOST:-api-taskmanager.gcp.sriinfosoft.com}
+      ACME_EMAIL: ${ACME_EMAIL:-ranasuri@sriinfosoft.com}
+    depends_on:
+      - taskmanager-frontend
+      - taskmanager-backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
   taskmanager-backend:
+    # Localhost only — Caddy fronts the public side. Kept published so you can
+    # still curl it from the host when debugging.
+    ports: !override
+      - "127.0.0.1:8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=gcp
       - SPA_HOST=${SPA_HOST:-http://localhost:3000}
+
   taskmanager-frontend:
+    ports: !override
+      - "127.0.0.1:8081:80"
     environment:
       - REACT_APP_API_BASE=${REACT_APP_API_BASE:-http://localhost:8080}
+
+volumes:
+  caddy_data:
+  caddy_config:
