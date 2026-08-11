@@ -343,6 +343,8 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
 // ============ Upgrade Button Component ============
 function UpgradeButton({ onClick, subscription }) {
   const isPremium = subscription?.isPremium;
+  const plan = subscription?.subscriptionPlan;
+  const planLabel = isPremium && plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Premium';
   
   return (
     <button 
@@ -350,7 +352,7 @@ function UpgradeButton({ onClick, subscription }) {
       className={`upgrade-btn ${isPremium ? 'premium' : ''}`}
       title={isPremium ? 'Manage subscription' : 'Upgrade to Premium'}
     >
-      {isPremium ? '💎' : '⭐'} {isPremium ? 'Premium' : 'Upgrade'}
+      {isPremium ? '💎' : '⭐'} {isPremium ? planLabel : 'Upgrade'}
     </button>
   );
 }
