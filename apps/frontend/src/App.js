@@ -1347,7 +1347,7 @@ const toggleTask = async (id) => {
       {/* ============================================ */}
       <SubscriptionModal
         isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
+        onClose={() => { setShowSubscriptionModal(false); refreshSubscription(); }}
         authToken={authToken}
         user={user}
       />
