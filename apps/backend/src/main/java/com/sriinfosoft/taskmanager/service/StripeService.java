@@ -581,6 +581,40 @@ public class StripeService {
         System.out.println("✅ [StripeService] Found user: " + user.getEmail());
         System.out.println("📝 [StripeService] Updating subscription for: " + user.getEmail());
         
+        // ============================================================
+        // TERMINAL STATUS GUARD (race condition fix v3)
+        // ============================================================
+        // A canceled subscription still carries its old price ID, so the
+        // plan-from-price logic below would resurrect the paid plan when a
+        // cancel-triggered webhook races with cancelSubscription()'s clean
+        // write (observed result: plan=basic, status=free, limits=10/50).
+        // Route terminal/unpaid states here, BEFORE any entity mutation.
+        // ============================================================
+        String rawStripeStatus = subscription.getStatus();
+        
+        if (rawStripeStatus.equals("incomplete") || rawStripeStatus.equals("incomplete_expired")) {
+            // Payment not completed (or checkout abandoned) — write NOTHING.
+            // The "active" or "deleted" webhook makes the final decision.
+            System.out.println("   - SKIPPED entirely: Stripe status is '" + rawStripeStatus + "' (nothing written until payment resolves)");
+            return;
+        }
+        
+        if (rawStripeStatus.equals("canceled")) {
+            // Converge to free instead of re-deriving the paid plan from the
+            // dead subscription's price ID. Ignore stale events for a
+            // different (older) subscription than the one on record.
+            if (user.getStripeSubscriptionId() == null || subscription.getId().equals(user.getStripeSubscriptionId())) {
+                System.out.println("   - Stripe status 'canceled' → converging to free plan");
+                updateUserToFreePlan(user);
+            } else {
+                System.out.println("   - IGNORED: canceled event for old subscription " + subscription.getId() + " (current: " + user.getStripeSubscriptionId() + ")");
+            }
+            return;
+        }
+        // ============================================================
+        // End terminal status guard v3
+        // ============================================================
+        
         try {
             // Set subscription ID
             user.setStripeSubscriptionId(subscription.getId());
