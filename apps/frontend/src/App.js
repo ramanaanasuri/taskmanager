@@ -3,6 +3,7 @@ import axios from 'axios';
 import API_BASE_URL from './config';
 import './App.css';
 import { subscribeToPushNotifications } from './utils/pushNotifications';
+import AiTaskInput from './AiTaskInput';
 import { convertLocalToUTC } from './utils/dateUtils';  //ADDED - for timezone conversion
 // ============================================
 // ADDED for Stripe Payment Integration
@@ -812,6 +813,21 @@ const toggleTask = async (id) => {
         <div className="task-form-container">
           <h2 className="form-title">Create New Task</h2>
           <p className="form-subtitle">Add a task to get started</p>
+          <AiTaskInput
+            authToken={authToken}
+            onParsed={(t) => {
+              setNewTask(t.title);
+              setNewTaskPriority(t.priority);
+              if (t.scheduledDate) {
+                setTempDueDate(t.scheduledDate);
+                setNewTaskDueDate(t.scheduledDate);
+              }
+              setEnableEmail(!!t.notify?.email);
+              setEnableNotifications(!!t.notify?.push);
+              setEnableSms(!!t.notify?.sms);
+            }}
+            onLimitReached={() => setShowSubscriptionModal(true)}
+          />
           <form onSubmit={addTask} className="task-form">
             <div className="form-group">
               <label htmlFor="task-name" className="form-label">Task Name *</label>
@@ -1091,7 +1107,7 @@ const toggleTask = async (id) => {
                           console.log("Phone Number:", task.phoneNumber);
                           console.log("Full Task:", JSON.stringify(task, null, 2));
                           setEditingTask(task);
-                          setTempEditDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : '');
+                          setTempEditDate(task.dueDate ? new Date(new Date(task.dueDate).getTime() - new Date(task.dueDate).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '');
                         }}
                         className="edit-btn"
                         title="Edit task"
