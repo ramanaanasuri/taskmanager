@@ -97,6 +97,22 @@ public class AiService {
         return validateParsedTask(node);
     }
 
+    /**
+     * Tier 1b: phrase a daily digest. The facts block is produced by
+     * deterministic queries — SQL decides, the model only phrases.
+     * Returns 2 short plain-text paragraphs.
+     */
+    public String summarizeTasks(String factsBlock) {
+        String system = String.join("\n",
+            "You write a short, friendly morning summary of a person's tasks.",
+            "Input is a factual list. Rules:",
+            "- 2 short paragraphs of plain text, no markdown, no bullet points",
+            "- lead with anything overdue, then today, then the high-priority week ahead",
+            "- do not invent tasks, dates, or counts; use only the facts given",
+            "- warm but brief; no greetings like 'Dear' and no sign-off");
+        return chatCompletion(system, factsBlock, 300).trim();
+    }
+
     // ============ OpenAI-compatible chat completions call ============
 
     private String chatCompletion(String system, String userText, int maxTokens) {

@@ -198,4 +198,21 @@ public class EmailService {
         mailSender.send(message);
         logger.info("✅ Test email sent to {}", toEmail);
     }
+
+    /**
+     * Send the AI daily digest (Tier 1b).
+     * Generic HTML sender following the same MimeMessage pattern as
+     * sendTaskDueNotification.
+     */
+    public void sendDigestEmail(String toEmail, String subject, String htmlBody) throws MessagingException {
+        logger.info("\ud83d\udcec Sending daily digest to {}", toEmail);
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setFrom(fromEmail);
+        helper.setTo(toEmail);
+        helper.setSubject(subject);
+        helper.setText(htmlBody, true);
+        mailSender.send(message);
+        logger.info("\u2705 Daily digest sent to {}", toEmail);
+    }
 }
