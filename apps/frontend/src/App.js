@@ -4,6 +4,7 @@ import API_BASE_URL from './config';
 import './App.css';
 import { subscribeToPushNotifications } from './utils/pushNotifications';
 import AiTaskInput from './AiTaskInput';
+import AgentChat from './AgentChat';
 import { convertLocalToUTC } from './utils/dateUtils';  //ADDED - for timezone conversion
 // ============================================
 // ADDED for Stripe Payment Integration
@@ -1361,6 +1362,14 @@ const toggleTask = async (id) => {
       {/* ADDED for Stripe Payment Integration */}
       {/* Subscription Modal - displays pricing plans and handles checkout */}
       {/* ============================================ */}
+      {authToken && (
+        <AgentChat
+          authToken={authToken}
+          onActionsApplied={() => fetchTasks()}
+          onLimitReached={() => setShowSubscriptionModal(true)}
+        />
+      )}
+
       <SubscriptionModal
         isOpen={showSubscriptionModal}
         onClose={() => { setShowSubscriptionModal(false); refreshSubscription(); }}
