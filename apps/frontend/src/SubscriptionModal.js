@@ -20,7 +20,8 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
   const [plans, setPlans] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
+  const [processingPlan, setProcessingPlan] = useState(null); // which plan's checkout is in flight
+  const [billingLoading, setBillingLoading] = useState(false); // customer-portal redirect in flight
   const [error, setError] = useState(null);
   
   //Added: State for cancel confirmation dialog
@@ -31,7 +32,8 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
   useEffect(() => {
     if (isOpen && authToken) {
       // Reset processing states when modal opens (fixes stuck state after browser back)
-      setProcessing(false);
+      setProcessingPlan(null);
+      setBillingLoading(false);
       setCancelProcessing(false);
       setError(null);
       fetchData();
@@ -72,7 +74,7 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
       return;
     }
     
-    setProcessing(true);
+    setProcessingPlan(planKey);
     setError(null);
     
     try {
@@ -91,7 +93,7 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
     } catch (err) {
       console.error('❌ [Subscription] Checkout error:', err);
       setError(err.response?.data?.error || 'Failed to start checkout');
-      setProcessing(false);
+      setProcessingPlan(null);
     }
   };
 
@@ -135,7 +137,7 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
 
   // Handle manage subscription (open customer portal - for payment method updates)
   const handleManageSubscription = async () => {
-    setProcessing(true);
+    setBillingLoading(true);
     setError(null);
     
     try {
@@ -154,7 +156,7 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
     } catch (err) {
       console.error('❌ [Subscription] Portal error:', err);
       setError(err.response?.data?.error || 'Failed to open subscription management');
-      setProcessing(false);
+      setBillingLoading(false);
     }
   };
 
@@ -164,7 +166,8 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
     const canCancel = subscription?.canCancel;
     const isFreePlan = planKey === 'free';
     
-    let disabled = processing || cancelProcessing;
+    const anyBusy = processingPlan !== null || billingLoading || cancelProcessing;
+    let disabled = anyBusy;
     let buttonText = 'Select Plan';
     let buttonClass = '';
     
@@ -223,10 +226,10 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
                     <button 
                       onClick={handleManageSubscription} 
                       className="manage-btn"
-                      disabled={processing || cancelProcessing}
+                      disabled={processingPlan !== null || billingLoading || cancelProcessing}
                       title="Update payment method, view invoices"
                     >
-                      {processing ? 'Loading...' : '💳 Billing'}
+                      {billingLoading ? 'Loading...' : '💳 Billing'}
                     </button>
                   </div>
                 )}
@@ -282,7 +285,7 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
                       onClick={() => handleSelectPlan(key)}
                       disabled={btnProps.disabled}
                     >
-                      {processing || cancelProcessing ? 'Processing...' : btnProps.buttonText}
+                      {processingPlan === key || (cancelProcessing && key === 'free') ? 'Processing...' : btnProps.buttonText}
                     </button>
                   </div>
                 );
