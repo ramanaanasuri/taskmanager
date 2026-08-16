@@ -113,6 +113,55 @@ public class AiService {
         return chatCompletion(system, factsBlock, 300).trim();
     }
 
+    /**
+     * Generic tool-calling chat turn (REUSABLE CORE). Sends the full message
+     * list plus tool definitions; returns the raw choices[0].message node
+     * (which either has "content" or "tool_calls"). Used by AgentService.
+     */
+    public com.fasterxml.jackson.databind.JsonNode chatWithTools(
+            java.util.List<Object> messages, java.util.List<Object> tools) {
+        if (!isConfigured()) {
+            throw new AiUnavailableException("AI_API_KEY is not configured");
+        }
+        try {
+            java.util.Map<String, Object> body = new HashMap<>();
+            body.put("model", model);
+            body.put("max_tokens", 1000);
+            body.put("messages", messages);
+            if (tools != null && !tools.isEmpty()) {
+                body.put("tools", tools);
+                body.put("tool_choice", "auto");
+            }
+            String url = baseUrl.endsWith("/") ? baseUrl + "chat/completions"
+                                               : baseUrl + "/chat/completions";
+            String response;
+            try {
+                response = postChat(url, body);
+            } catch (Exception first) {
+                // Some providers (e.g. Groq+Llama) occasionally emit malformed
+                // tool-call text and reject their own generation. One retry
+                // usually lands a clean generation.
+                if (String.valueOf(first.getMessage()).contains("tool_use_failed")) {
+                    System.out.println("\u26a0\ufe0f [AiService] tool_use_failed - retrying once");
+                    response = postChat(url, body);
+                } else {
+                    throw first;
+                }
+            }
+            JsonNode root = mapper.readTree(response);
+            JsonNode choices = root.path("choices");
+            if (!choices.isArray() || choices.isEmpty()) {
+                throw new AiUnavailableException("Unexpected API response shape");
+            }
+            return choices.get(0).path("message");
+        } catch (AiUnavailableException e) {
+            throw e;
+        } catch (Exception e) {
+            System.out.println("\u274c [AiService] tool chat failed: " + e.getMessage());
+            throw new AiUnavailableException("AI service call failed", e);
+        }
+    }
+
     // ============ OpenAI-compatible chat completions call ============
 
     private String chatCompletion(String system, String userText, int maxTokens) {
@@ -131,14 +180,7 @@ public class AiService {
 
             String url = baseUrl.endsWith("/") ? baseUrl + "chat/completions"
                                                : baseUrl + "/chat/completions";
-            String response = RestClient.create()
-                    .post()
-                    .uri(url)
-                    .header("Authorization", "Bearer " + apiKey)
-                    .header("content-type", "application/json")
-                    .body(body)
-                    .retrieve()
-                    .body(String.class);
+            String response = postChat(url, body);
 
             JsonNode root = mapper.readTree(response);
             JsonNode choices = root.path("choices");
@@ -152,6 +194,42 @@ public class AiService {
             // 429 (free-tier quota exhausted) lands here too — degrade, never charge
             System.out.println("❌ [AiService] model call failed: " + e.getMessage());
             throw new AiUnavailableException("AI service call failed", e);
+        }
+    }
+
+    /**
+     * One provider POST with rate-limit resilience: on 429 (tokens/requests
+     * per minute), wait and retry up to 3 times. Free-tier TPM budgets are
+     * small (Groq: 8k/min) and a multi-step agent turn alone can exceed
+     * them mid-loop — the provider's own guidance is "try again in ~2s",
+     * so waiting IS the correct behavior, not an error.
+     */
+    private String postChat(String url, java.util.Map<String, Object> body) {
+        int rateLimitWaits = 0;
+        while (true) {
+            try {
+                return RestClient.create()
+                        .post()
+                        .uri(url)
+                        .header("Authorization", "Bearer " + apiKey)
+                        .header("content-type", "application/json")
+                        .body(body)
+                        .retrieve()
+                        .body(String.class);
+            } catch (Exception e) {
+                String msg = String.valueOf(e.getMessage());
+                boolean rateLimited = msg.contains("rate_limit_exceeded")
+                        || msg.contains("429") || msg.contains("Too Many Requests");
+                if (rateLimited && rateLimitWaits < 3) {
+                    rateLimitWaits++;
+                    System.out.println("⏳ [AiService] provider rate limit — waiting 5s (retry "
+                            + rateLimitWaits + "/3)");
+                    try { Thread.sleep(5000); }
+                    catch (InterruptedException ie) { Thread.currentThread().interrupt(); throw e; }
+                    continue;
+                }
+                throw e;
+            }
         }
     }
 
