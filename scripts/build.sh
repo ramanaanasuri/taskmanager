@@ -49,11 +49,17 @@ case "$CLOUD" in
   aws) OVERLAY="deployments/aws/compose/docker-compose.aws.yml" ;;
 esac
 
-if ! docker compose version >/dev/null 2>&1; then
-  echo "❌ docker compose v2 not found (the $CLOUD overlay needs it)"; exit 1
+# Compose v2 detection: prefer the CLI plugin; accept a standalone
+# docker-compose binary IF it is v2 (identical syntax incl. !override).
+if docker compose version >/dev/null 2>&1; then
+  DC=(docker compose)
+elif docker-compose version 2>/dev/null | grep -q " v2\."; then
+  DC=(docker-compose)
+else
+  echo "❌ Docker Compose v2 not found (plugin or standalone). The overlays need v2."; exit 1
 fi
 
-COMPOSE() { docker compose -p "$PROJECT" -f "$BASE" -f "$OVERLAY" "$@"; }
+COMPOSE() { "${DC[@]}" -p "$PROJECT" -f "$BASE" -f "$OVERLAY" "$@"; }
 
 svc_name() {  # map short names to service names
   case "$1" in

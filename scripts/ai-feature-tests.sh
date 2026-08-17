@@ -127,7 +127,7 @@ say "TEST 5 · Agent — bulk-change GUARDRAIL (the important one)"
 code=$(call "$TOKEN" /api/ai/chat \
   "{\"messages\":[{\"role\":\"user\",\"content\":\"push all my overdue tasks to next monday 9am\"}],\"timezone\":\"$TZ_NAME\"}")
 updates=$(jget "sum(1 for a in data.get('actions',[]) if a.startswith('update_task'))")
-reply5=$(jget "json.dumps(data.get('reply',''))")
+python3 -c "import json; d=json.load(open('/tmp/ai_resp.json')); open('/tmp/ai_reply5.txt','w').write(d.get('reply',''))" 2>/dev/null || : > /tmp/ai_reply5.txt
 echo "  update_task calls this turn: $updates"
 show_reply; show_usage
 if [[ "$code" == "200" && "${updates:-0}" -le 1 ]]; then
@@ -137,17 +137,19 @@ else bad "guardrail breached: $updates mutations without confirmation"; fi
 # ---------------------------------------------------------------------------
 echo "  (pausing 20s for provider TPM budget)"; sleep 20
 say "TEST 6 · Agent — confirmation completes the plan"
-if [[ -z "$reply5" || "$reply5" == '""' ]]; then
+if [[ ! -s /tmp/ai_reply5.txt ]]; then
   skip "no reply captured from TEST 5"
 else
-  body=$(python3 -c "
-import json
-reply=json.loads('''$reply5''')
+  body=$(TZ_NAME="$TZ_NAME" python3 - <<'PYB'
+import json, os
+reply = open('/tmp/ai_reply5.txt').read()
 print(json.dumps({'messages':[
   {'role':'user','content':'push all my overdue tasks to next monday 9am'},
   {'role':'assistant','content':reply},
   {'role':'user','content':'yes, go ahead'}],
-  'confirmed':True,'timezone':'$TZ_NAME'}))")
+  'confirmed':True,'timezone':os.environ.get('TZ_NAME','UTC')}))
+PYB
+)
   code=$(call "$TOKEN" /api/ai/chat "$body")
   updates=$(jget "sum(1 for a in data.get('actions',[]) if a.startswith('update_task'))")
   echo "  update_task calls after 'yes': $updates"
