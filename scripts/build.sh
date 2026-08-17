@@ -34,7 +34,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 OPT="${1:-}"
-CLOUD="${2:-gcp}"
+# Default cloud by HOST detection (prevents running the wrong overlay):
+#   Amazon Linux -> aws, everything else -> gcp. Explicit 2nd arg still wins.
+DEFAULT_CLOUD="gcp"
+grep -qi "amazon linux" /etc/os-release 2>/dev/null && DEFAULT_CLOUD="aws"
+CLOUD="${2:-$DEFAULT_CLOUD}"
 SVC_ARG="${3:-}"
 
 # allow "./build.sh 7 backend" (service as 2nd arg when it's not a cloud)
