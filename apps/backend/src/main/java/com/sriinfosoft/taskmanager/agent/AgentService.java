@@ -56,6 +56,11 @@ public class AgentService {
         Map<String, AgentTool> byName = new HashMap<>();
         tools.forEach(t -> byName.put(t.name(), t));
 
+        ZoneId zone;
+        try { zone = ZoneId.of(timezone == null ? "UTC" : timezone); }
+        catch (Exception e) { zone = ZoneId.of("UTC"); }
+        AgentTool.AgentContext ctx = new AgentTool.AgentContext(userEmail, zone);
+
         List<String> actions = new ArrayList<>();
         int mutations = 0;
 
@@ -89,7 +94,7 @@ public class AgentService {
                                    + "Do NOT make further changes now. Instead, summarize the full plan "
                                    + "of remaining changes for the user and ask them to reply 'yes' to proceed.";
                         } else {
-                            result = tool.execute(userEmail, args);
+                            result = tool.execute(ctx, args);
                             if (tool.mutatesExistingData()) mutations++;
                             actions.add(name + " " + argsRaw);
                             System.out.println("🤖 [Agent] " + userEmail + " -> " + name + " " + argsRaw);
@@ -121,9 +126,14 @@ public class AgentService {
         ZoneId zone;
         try { zone = ZoneId.of(timezone == null ? "UTC" : timezone); }
         catch (Exception e) { zone = ZoneId.of("UTC"); }
+        String now = java.time.LocalDateTime.now(zone)
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+        String dayName = LocalDate.now(zone).getDayOfWeek()
+                .getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH);
         return String.join("\n",
-            "You are the task assistant inside Task Manager Pro. Today is "
-                + LocalDate.now(zone) + ", timezone " + zone + ".",
+            "You are the task assistant inside Task Manager Pro. The current local date-time is "
+                + now + " (" + dayName + "), timezone " + zone + ".",
+            "Use it to resolve relative times like 'in 10 minutes' or 'tonight' yourself - never ask the user what time it is.",
             "You help the user manage THEIR tasks using the provided tools.",
             "Rules:",
             "- Use tools for any facts about tasks; never invent tasks, ids, or dates.",

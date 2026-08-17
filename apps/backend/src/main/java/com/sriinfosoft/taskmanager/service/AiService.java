@@ -80,9 +80,12 @@ public class AiService {
         }
         LocalDate today = LocalDate.now(zone);
         String dayOfWeek = today.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+        String nowStr = LocalDateTime.now(zone)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
 
         String system = String.join("\n",
-            "You convert task descriptions into JSON. Today is " + today + " (" + dayOfWeek + "),",
+            "You convert task descriptions into JSON. The current local date-time is "
+                + nowStr + " (" + dayOfWeek + "),",
             "timezone " + zone + ". Respond with ONLY a JSON object - no markdown, no prose:",
             "{",
             "  \"title\": string,            // short imperative, e.g. \"Renew car insurance\"",

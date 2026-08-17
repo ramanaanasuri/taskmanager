@@ -15,6 +15,15 @@ import com.fasterxml.jackson.databind.JsonNode;
  */
 public interface AgentTool {
 
+    /**
+     * Per-turn execution context. userEmail scopes all data access; zone is
+     * the caller's IANA timezone so tools can convert between the user's
+     * wall-clock (what the model speaks) and UTC (what the database stores).
+     * Future applications extend reuse by adding fields here, not by
+     * changing tool signatures again.
+     */
+    record AgentContext(String userEmail, java.time.ZoneId zone) {}
+
     /** Tool name the model calls, e.g. "list_tasks". */
     String name();
 
@@ -32,9 +41,13 @@ public interface AgentTool {
     boolean mutatesExistingData();
 
     /**
-     * Execute for the given user. Return a plain-text/JSON result string for
+     * Execute in the given context. Return a plain-text/JSON result string for
      * the model. Never throw for expected conditions (not found, not owned) —
      * return an explanatory string so the model can react conversationally.
+     *
+     * TIME CONVENTION: dates in args are USER-LOCAL (ctx.zone) and must be
+     * converted to UTC before persisting; dates rendered into results must be
+     * converted UTC -> user-local so the model always speaks the user's clock.
      */
-    String execute(String userEmail, JsonNode args) throws Exception;
+    String execute(AgentContext ctx, JsonNode args) throws Exception;
 }
