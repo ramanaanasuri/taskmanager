@@ -16,7 +16,7 @@ import axios from 'axios';
 import API_BASE_URL from './config';
 
 // ============ Subscription Modal Component ============
-function SubscriptionModal({ isOpen, onClose, authToken, user }) {
+function SubscriptionModal({ isOpen, onClose, authToken, user, promptReason }) {
   const [plans, setPlans] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -201,6 +201,17 @@ function SubscriptionModal({ isOpen, onClose, authToken, user }) {
           <button className="modal-close-btn" onClick={onClose}>×</button>
         </div>
 
+        {promptReason === 'ai-limit' && (
+          <div style={{
+            background: '#FFF7E6', border: '1px solid #F0C36D', color: '#7A5A1E',
+            borderRadius: 8, padding: '10px 14px', margin: '10px 16px 0',
+            fontSize: 14, lineHeight: 1.45
+          }}>
+            {subscription && (subscription.aiRequestsLimit ?? 0) > 0
+              ? <>🤖 <strong>You've used all {subscription.aiRequestsLimit} AI requests in your plan this month.</strong> Upgrade for a higher monthly limit — or your counter resets on the 1st.</>
+              : <>🤖 <strong>AI features aren't included in the Free plan.</strong> Upgrade to unlock AI task creation and the AI assistant.</>}
+          </div>
+        )}
         {loading ? (
           <div className="subscription-loading">
             <div className="loading-spinner"></div>

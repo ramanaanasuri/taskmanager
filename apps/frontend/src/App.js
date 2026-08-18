@@ -33,6 +33,7 @@ function App() {
   // ADDED for Stripe Payment Integration
   // ============================================
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);  // Controls subscription modal visibility
+  const [subscriptionPromptReason, setSubscriptionPromptReason] = useState(null); // why it opened: 'ai-limit' | null (manual)
   // ============================================
   // END Stripe State
   // ============================================  
@@ -787,7 +788,7 @@ const toggleTask = async (id) => {
               {/* Upgrade/Premium button - opens subscription modal */}
               {/* ============================================ */}
               <UpgradeButton 
-                onClick={() => setShowSubscriptionModal(true)} 
+                onClick={() => { setSubscriptionPromptReason(null); setShowSubscriptionModal(true); }} 
                 subscription={subscription} 
               />
               {/* ============================================ */}
@@ -827,7 +828,7 @@ const toggleTask = async (id) => {
               setEnableNotifications(!!t.notify?.push);
               setEnableSms(!!t.notify?.sms);
             }}
-            onLimitReached={() => setShowSubscriptionModal(true)}
+            onLimitReached={() => { setSubscriptionPromptReason('ai-limit'); setShowSubscriptionModal(true); }}
           />
           <form onSubmit={addTask} className="task-form">
             <div className="form-group">
@@ -1366,13 +1367,14 @@ const toggleTask = async (id) => {
         <AgentChat
           authToken={authToken}
           onActionsApplied={() => fetchTasks()}
-          onLimitReached={() => setShowSubscriptionModal(true)}
+          onLimitReached={() => { setSubscriptionPromptReason('ai-limit'); setShowSubscriptionModal(true); }}
         />
       )}
 
       <SubscriptionModal
         isOpen={showSubscriptionModal}
-        onClose={() => { setShowSubscriptionModal(false); refreshSubscription(); }}
+        promptReason={subscriptionPromptReason}
+        onClose={() => { setShowSubscriptionModal(false); setSubscriptionPromptReason(null); refreshSubscription(); }}
         authToken={authToken}
         user={user}
       />
