@@ -3,7 +3,9 @@ package com.sriinfosoft.taskmanager.service;
 import com.sriinfosoft.taskmanager.model.User;
 import com.sriinfosoft.taskmanager.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -63,5 +65,17 @@ public class AiUsageService {
                         u.getAiRequestsUsed() == null ? 0 : u.getAiRequestsUsed(),
                         u.getAiRequestsLimit() == null ? 0 : u.getAiRequestsLimit()})
                 .orElse(new int[]{0, 0});
+    }
+
+    /**
+     * Monthly reset - makes "N requests per month" literally true.
+     * Runs on the 1st at 00:05 in the configured zone (defaults match the
+     * digest's zone). Cron/zone overridable via AI_RESET_CRON / DIGEST_ZONE.
+     */
+    @Scheduled(cron = "${ai.reset.cron:0 5 0 1 * *}", zone = "${ai.digest.zone:America/Los_Angeles}")
+    @Transactional
+    public void resetMonthlyCounters() {
+        int users = userRepository.resetMonthlyUsageCounters();
+        System.out.println("🔄 [AiUsage] Monthly reset: AI + SMS counters zeroed for " + users + " users");
     }
 }

@@ -45,6 +45,7 @@ services:
       DIGEST_ENABLED: ${DIGEST_ENABLED:-false}
       DIGEST_CRON: ${DIGEST_CRON:-0 0 8 * * *}
       DIGEST_ZONE: ${DIGEST_ZONE:-America/Los_Angeles}
+      AI_RESET_CRON: ${AI_RESET_CRON:-0 5 0 1 * *}
       AI_BASE_URL: ${AI_BASE_URL:-https://generativelanguage.googleapis.com/v1beta/openai}
       AI_MODEL: ${AI_MODEL:-gemini-2.5-flash}
       EMAIL_USERNAME: ${EMAIL_USERNAME}
