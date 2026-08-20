@@ -66,12 +66,24 @@ function App() {
         console.warn('Could not write token to localStorage:', e);
       }
       setAuthToken(tokenFromUrl);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        subscribeToPushNotifications(API_BASE_URL, tokenFromUrl)
+          .then(() => console.log('🔔 Push subscription verified/restored at login'))
+          .catch(err => console.warn('🔔 Push re-subscribe at login failed (non-fatal):', err));
+      }
       window.history.replaceState({}, document.title, window.location.pathname);
     } else {
       const existing = localStorage.getItem('jwt_token');
       if (existing) {
         console.log('🎫 Token loaded from localStorage.');
         setAuthToken(existing);
+        // Self-heal push subscription: if this browser already granted permission,
+        // silently re-subscribe (restores service after ownership eviction / browser revocation).
+        if ('Notification' in window && Notification.permission === 'granted') {
+          subscribeToPushNotifications(API_BASE_URL, existing)
+            .then(() => console.log('🔔 Push subscription verified/restored at login'))
+            .catch(err => console.warn('🔔 Push re-subscribe at login failed (non-fatal):', err));
+        }
       } else {
         console.log('❌ No token found in URL or localStorage.');
         setLoading(false);
@@ -475,6 +487,20 @@ const updateTask = async (id, updates) => {
       console.log('Input dueDate:', formattedDueDate);
       formattedDueDate = convertLocalToUTC(formattedDueDate);
       console.log('Converted to UTC:', formattedDueDate);
+    }
+
+    // Subscribe to push when the edit is enabling notifications (parity with create path)
+    const enablingPush = updates.notificationsEnabled === true && task.notificationsEnabled !== true;
+    if (enablingPush) {
+      console.log('📞 Edit enables notifications - ensuring push subscription...');
+      try {
+        await subscribeToPushNotifications(API_BASE_URL, token);
+        console.log('✅ Push subscription ensured for this browser');
+      } catch (error) {
+        console.error('❌ Failed to subscribe to push notifications:', error);
+        alert('Failed to enable notifications. Please check browser permissions and try again.');
+        return; // Same contract as create: do not save a flag we cannot honor
+      }
     }
 
     // Build payload EXPLICITLY

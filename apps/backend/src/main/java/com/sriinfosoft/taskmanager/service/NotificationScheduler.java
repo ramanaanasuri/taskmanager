@@ -141,17 +141,23 @@ public class NotificationScheduler {
         );
         
         try {
-            // Send the push notification
-            pushNotificationService.sendNotificationToUser(
+            // Send the push notification (returns how many subscriptions were actually delivered to)
+            int delivered = pushNotificationService.sendNotificationToUser(
                 task.getUserEmail(),
                 title,
                 body,
                 task.getId()
             );
             
-            //MODIFIED for Email Integration - Updated logging parameter to specify "push"
-            logNotificationSuccess(task, "push", null);
-            logger.info("✅ Push notification sent for task {}", task.getId());
+            if (delivered == 0) {
+                // Honest outcome: nothing was sent — record it as such, never as success
+                logger.warn("⏭️ Push SKIPPED for task {} — no active subscriptions for {}",
+                        task.getId(), task.getUserEmail());
+                logNotificationFailure(task, "push", "skipped - no active push subscriptions");
+            } else {
+                logNotificationSuccess(task, "push", null);
+                logger.info("✅ Push notification sent for task {} to {} subscription(s)", task.getId(), delivered);
+            }
             
         } catch (Exception e) {
             logger.error("❌ Failed to send push notification for task {}: {}", task.getId(), e.getMessage());

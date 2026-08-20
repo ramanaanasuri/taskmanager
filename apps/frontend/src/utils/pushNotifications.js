@@ -118,11 +118,15 @@ async function checkSubscriptionOwnership(subscription, apiBaseUrl, authToken) {
       const data = await response.json();
       return data.belongsToUser === true;
     }
-    
-    return false;
+
+    // Non-OK (server hiccup, expired token mid-check): UNKNOWN, not "someone else's".
+    // Fail open - keep the existing subscription; only an authoritative
+    // belongsToUser:false may evict it. Prevents healthy-subscription churn.
+    console.warn('⚠️ Ownership check inconclusive (HTTP ' + response.status + ') - keeping existing subscription');
+    return true;
   } catch (error) {
-    console.error('❌ Error checking subscription ownership:', error);
-    return false;
+    console.error('❌ Error checking subscription ownership (keeping existing subscription):', error);
+    return true;
   }
 }
 

@@ -143,10 +143,10 @@ public class PushNotificationService {
      * @param body The notification body text
      * @param taskId The ID of the task this notification is about
      */
-    public void sendNotificationToUser(String userEmail, String title, String body, Long taskId) {
+    public int sendNotificationToUser(String userEmail, String title, String body, Long taskId) {
         if (pushService == null) {
             logger.error("❌ Push service not initialized. Cannot send notification.");
-            return;
+            return 0;
         }
 
         try {
@@ -157,22 +157,26 @@ public class PushNotificationService {
             
             if (subscriptions.isEmpty()) {
                 logger.warn("⚠️ No push subscriptions found for user: {}", userEmail);
-                return;
+                return 0;
             }
 
             logger.info("📤 Sending notification with task ID {} to {} subscription(s) for user: {}", 
                        taskId, subscriptions.size(), userEmail);
 
+            int delivered = 0;
             for (PushSubscription subscription : subscriptions) {
                 try {
                     //ADDED - Call the new method that includes task ID
                     sendNotificationWithTaskId(subscription, title, body, taskId);
+                    delivered++;
                 } catch (Exception e) {
                     logger.error("❌ Failed to send to subscription {}: {}", subscription.getId(), e.getMessage());
                 }
             }
+            return delivered;
         } catch (Exception e) {
             logger.error("❌ Error sending notification with task ID to user {}: {}", userEmail, e.getMessage(), e);
+            return 0;
         }
     }
 
