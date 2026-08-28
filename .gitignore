@@ -18,3 +18,4 @@ backup_*
 backups/
 *~
 ai-test-results-*.txt
+apps/backend/target/

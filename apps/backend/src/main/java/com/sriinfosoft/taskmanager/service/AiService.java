@@ -117,6 +117,36 @@ public class AiService {
     }
 
     /**
+     * Learning Circle: draft an educational answer to a member's question,
+     * grounded ONLY in the supplied KB passages. Like summarizeTasks, the
+     * model phrases from given material and must not invent — and here it may
+     * decline outright: if the passages do not support an answer it returns
+     * exactly INSUFFICIENT_GROUNDING, which the caller turns into an escalation
+     * to the mentor rather than a fabricated reply. This is a second guardrail
+     * behind the retrieval threshold: the model itself can refuse to ground.
+     *
+     * @param question       the member's question
+     * @param passagesBlock  numbered source passages (built by the caller)
+     * @return the draft answer text, or the literal string INSUFFICIENT_GROUNDING
+     */
+    public String draftAnswer(String question, String passagesBlock) {
+        String system = String.join("\n",
+            "You are an investing EDUCATOR drafting an answer for a mentor to review before it",
+            "reaches a family member. You are teaching how to think, not giving personalized",
+            "financial advice. A human mentor will review and edit your draft before it is sent,",
+            "so aim for a helpful, grounded starting draft. Rules:",
+            "- Ground your answer in the SOURCE PASSAGES: rely on them for the specifics, and",
+            "  you may add widely-accepted general background to explain the concept clearly.",
+            "- Only if the passages are essentially unrelated to the question (a different topic",
+            "  entirely) reply with EXACTLY this token and nothing else: INSUFFICIENT_GROUNDING",
+            "- Do NOT give specific buy/sell/allocation directives; keep it educational.",
+            "- 2-4 short paragraphs of plain text, no markdown, no greeting, no sign-off.",
+            "- End with a line 'Sources:' listing the titles of the passages you used.");
+        String user = "QUESTION:\n" + question + "\n\nSOURCE PASSAGES:\n" + passagesBlock;
+        return chatCompletion(system, user, 600).trim();
+    }
+
+    /**
      * Generic tool-calling chat turn (REUSABLE CORE). Sends the full message
      * list plus tool definitions; returns the raw choices[0].message node
      * (which either has "content" or "tool_calls"). Used by AgentService.
