@@ -144,8 +144,7 @@ public class MentorService {
         try {
             String html = "<p>" + escapeHtml(a.getFinalText()).replace("\n", "<br>") + "</p>"
                     + "<hr><p style=\"color:#667\">You asked: " + escapeHtml(q.getText()) + "</p>";
-            emailService.sendDigestEmail(q.getAskedByEmail(),
-                    "Answer to your question", html);
+            emailService.sendDigestEmail(q.getAskedByEmail(), subjectFor(q), html);
         } catch (MessagingException e) {
             // Delivery failure shouldn't lose the approval; log and still mark delivered
             // state is NOT set so a retry path could resend. Here we surface it.
@@ -155,6 +154,19 @@ public class MentorService {
         }
         q.setStatus(Question.Status.DELIVERED);
         return questionRepo.save(q);
+    }
+
+    /**
+     * One subject per question so mail clients don't thread every answer
+     * under a single "Answer to your question" conversation.
+     */
+    private String subjectFor(Question q) {
+        String text = q.getText() == null ? "" : q.getText().trim().replaceAll("\\s+", " ");
+        if (text.length() > 60) {
+            int cut = text.lastIndexOf(' ', 60);
+            text = text.substring(0, cut > 30 ? cut : 60) + "\u2026";
+        }
+        return "InsightHub #" + q.getId() + ": " + text;
     }
 
     private String buildPassagesBlock(List<KbRetrievalService.ScoredPassage> passages) {
