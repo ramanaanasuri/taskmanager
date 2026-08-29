@@ -189,6 +189,74 @@ action_list_notification_logs() {
 }
 
 # ------------------------------
+# Actions: InsightHub (Mentor) tables
+# ------------------------------
+# The mentor feature adds four tables:
+#   insight_hubs, insight_hub_members, insight_hub_questions, insight_hub_answers
+# Column names are not hard-coded here: describe first to confirm your schema,
+# then list. SELECT * keeps these views correct without guessing column names.
+insight_describe() { # $1 = table name
+  echo "Describing table: $1"
+  pretty -e "USE \`$DB_NAME\`; DESCRIBE \`$1\`;"
+}
+
+insight_list() { # $1 = table name
+  echo "Latest rows in $1 (newest first):"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT * FROM \`$1\`
+    ORDER BY id DESC
+    LIMIT 25;"
+}
+
+action_show_insight_tables() {
+  echo "InsightHub-related tables in $DB_NAME:"
+  pretty -e "SHOW TABLES FROM \`$DB_NAME\` LIKE '%insight%';"
+}
+
+# insight_hub_answers holds long TEXT (draft_text/final_text/sources); a plain
+# SELECT * is unreadable, so this view names columns and previews the long ones
+# (newlines flattened so rows stay aligned), matching the other list views.
+action_list_insight_hub_answers() {
+  echo "Latest insight_hub_answers (newest first):"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT
+      id,
+      question_id,
+      origin,
+      LEFT(REPLACE(REPLACE(draft_text, '\n', ' '), '\r', ' '), 50) AS draft_preview,
+      LEFT(REPLACE(REPLACE(final_text, '\n', ' '), '\r', ' '), 50) AS final_preview,
+      approved_by_email,
+      DATE_FORMAT(approved_at, '%Y-%m-%d %H:%i') AS approved_at,
+      DATE_FORMAT(created_at,  '%Y-%m-%d %H:%i') AS created_at
+    FROM \`insight_hub_answers\`
+    ORDER BY id DESC
+    LIMIT 25;"
+}
+
+# Mentor approval queue: the questions actually needing mentor action
+# (DRAFTED = has an agent draft to approve/edit; NEEDS_MENTOR = answer directly).
+# Joins the answer row so you see the question and its draft side by side —
+# the analog of the overdue-tasks view. Oldest first (FIFO work order).
+action_mentor_queue() {
+  echo "Mentor approval queue (DRAFTED + NEEDS_MENTOR, oldest first):"
+  pretty -e "USE \`$DB_NAME\`;
+    SELECT
+      q.insight_hub_id AS hub,
+      q.id             AS question_id,
+      q.status,
+      q.asked_by_email,
+      LEFT(REPLACE(REPLACE(q.text, '\n', ' '), '\r', ' '), 45) AS question,
+      a.origin,
+      LEFT(REPLACE(REPLACE(a.draft_text, '\n', ' '), '\r', ' '), 45) AS draft_preview,
+      DATE_FORMAT(q.created_at, '%Y-%m-%d %H:%i') AS asked_at
+    FROM \`insight_hub_questions\` q
+    LEFT JOIN \`insight_hub_answers\` a ON a.question_id = q.id
+    WHERE q.status IN ('DRAFTED','NEEDS_MENTOR')
+    ORDER BY q.created_at ASC
+    LIMIT 100;"
+}
+
+# ------------------------------
 # Actions: tasks – extra views
 # ------------------------------
 action_list_tasks_with_priority() {
@@ -416,6 +484,18 @@ TaskManager DB Tool  (container: $CONTAINER, db: $DB_NAME)
 12) Describe notification_logs table
 13) List latest 50 notification_logs
 
+=== InsightHub (Mentor) Tables ===
+20) Show InsightHub tables (discover real names)
+21) Describe insight_hubs
+22) Describe insight_hub_members
+23) Describe insight_hub_questions
+24) Describe insight_hub_answers
+25) List insight_hubs
+26) List insight_hub_members
+27) List insight_hub_questions
+28) List insight_hub_answers
+29) Mentor approval queue (DRAFTED + NEEDS_MENTOR)
+
 === Task Mutations ===
 5) Insert test task
 6) Mark task complete by id
@@ -445,6 +525,17 @@ EOF
     11) action_list_push_subscriptions; pause;;
     12) action_describe_notification_logs; pause;;
     13) action_list_notification_logs; pause;;
+
+    20) action_show_insight_tables; pause;;
+    21) insight_describe "insight_hubs"; pause;;
+    22) insight_describe "insight_hub_members"; pause;;
+    23) insight_describe "insight_hub_questions"; pause;;
+    24) insight_describe "insight_hub_answers"; pause;;
+    25) insight_list "insight_hubs"; pause;;
+    26) insight_list "insight_hub_members"; pause;;
+    27) insight_list "insight_hub_questions"; pause;;
+    28) action_list_insight_hub_answers; pause;;
+    29) action_mentor_queue; pause;;
 
     5) action_insert_task; pause;;
     6) action_update_complete; pause;;
