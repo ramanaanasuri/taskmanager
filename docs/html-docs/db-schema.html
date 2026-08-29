@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Manager Pro — Database Schema</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+:root{--bg:#0a0e14;--panel:#0f141b;--panel2:#131b25;--border:#1e2732;--text:#d4dbe6;--muted:#8b95a5;--orange:#ff6b35;--teal:#00d4aa;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55}
+.wrap{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+h1{font-size:30px;margin:6px 0 8px}
+.lead{color:var(--muted);max-width:760px;margin:0 0 28px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+.toc a{font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;border:1px solid var(--border);border-radius:999px;padding:4px 12px;background:var(--panel)}
+.toc a:hover{border-color:var(--orange)}
+.section-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin:36px 0 12px}
+.rel{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--teal);border-radius:8px;padding:14px 18px;font-size:14px}
+.rel code{font-family:var(--mono);font-size:12.5px;color:var(--teal)}
+.sch-card{min-width:0;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin:0 0 18px}
+.sch-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sch-icon{font-size:22px}.sch-head h4{margin:0;font-family:var(--mono);font-size:16px;color:var(--orange)}
+.sch-group{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sch-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sch-desc{color:var(--muted);font-size:14px;margin:0 0 12px}
+.sch-wrap{overflow-x:auto}
+.sch-table{width:100%;border-collapse:collapse;font-size:13px}
+.sch-table th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--border)}
+.sch-table td{padding:6px 10px;border-bottom:1px solid #151c26;vertical-align:top}
+.sch-col{font-family:var(--mono);color:var(--text)}.sch-type{font-family:var(--mono);color:var(--teal);font-size:12px}
+.sch-pk{color:var(--orange);font-weight:600}.sch-fk{color:#c4b5fd}
+.sch-notes{margin:12px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
+.sch-notes li{margin:3px 0}
+footer{margin-top:48px;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Task Manager Pro · Engineering reference</div>
+  <h1>Database Schema</h1>
+  <p class="lead">The eight MariaDB tables behind Task Manager Pro, as reported by <code>DESCRIBE</code> on the production database (Aug 2026). Tables are created and evolved by Hibernate (<code>ddl-auto=update</code>); the <code>db/migrations</code> SQL files mirror them for reference. Ownership is by email value on each row — there are no foreign-key constraints in the database, so the relationships below are enforced in the service layer.</p>
+  <div class="toc"><a href="#sch-users">users</a><a href="#sch-tasks">tasks</a><a href="#sch-push_subscriptions">push_subscriptions</a><a href="#sch-notification_logs">notification_logs</a><a href="#sch-insight_hubs">insight_hubs</a><a href="#sch-insight_hub_members">insight_hub_members</a><a href="#sch-insight_hub_questions">insight_hub_questions</a><a href="#sch-insight_hub_answers">insight_hub_answers</a></div>
+
+  <div class="section-label">Relationships</div>
+  <div class="rel">
+    <code>users.email</code> ← <code>tasks.user_email</code>, <code>push_subscriptions.user_email</code>, <code>notification_logs.user_email</code>, <code>insight_hubs.mentor_email</code>, <code>insight_hub_members.member_email</code>, <code>insight_hub_questions.asked_by_email</code><br>
+    <code>tasks.id</code> ← <code>notification_logs.task_id</code><br>
+    <code>insight_hubs.id</code> ← <code>insight_hub_members.insight_hub_id</code>, <code>insight_hub_questions.insight_hub_id</code><br>
+    <code>insight_hub_questions.id</code> ← <code>insight_hub_answers.question_id</code> (one answer per question)
+  </div>
+
+  <div class="section-label">Core</div>
+<div class="sch-card" id="sch-users">
+<div class="sch-head"><span class="sch-icon">👤</span><div><h4>users</h4><span class="sch-group">Core</span></div><span class="sch-count">16 columns</span></div>
+<p class="sch-desc">One row per signed-in account (Google / Facebook OAuth). Carries the Stripe subscription state and the two metered counters (SMS, AI) that the plan limits gate. Counters reset on the 1st by a scheduled job; limits are plan-owned.</p>
+<div class="sch-wrap"><table class="sch-table"><thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Extra</th></tr></thead><tbody>
+<tr><td class="sch-col">id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-pk">PRI</td><td>auto_increment</td></tr>
+<tr><td class="sch-col">email</td><td class="sch-type">varchar(255)</td><td>NO</td><td class="sch-fk">UNI</td><td></td></tr>
+<tr><td class="sch-col">name</td><td class="sch-type">varchar(255)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">picture</td><td class="sch-type">varchar(500)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">stripe_customer_id</td><td class="sch-type">varchar(255)</td><td>YES</td><td class="sch-fk">UNI</td><td></td></tr>
+<tr><td class="sch-col">stripe_subscription_id</td><td class="sch-type">varchar(255)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">subscription_status</td><td class="sch-type">enum(&#x27;free&#x27;,&#x27;active&#x27;,&#x27;canceled&#x27;,&#x27;past_due&#x27;,&#x27;trialing&#x27;)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">subscription_plan</td><td class="sch-type">enum(&#x27;free&#x27;,&#x27;basic&#x27;,&#x27;pro&#x27;,&#x27;enterprise&#x27;)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">subscription_start_date</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">subscription_end_date</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">sms_credits_used</td><td class="sch-type">int(11)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">sms_credits_limit</td><td class="sch-type">int(11)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">ai_requests_used</td><td class="sch-type">int(11)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">ai_requests_limit</td><td class="sch-type">int(11)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">created_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">updated_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+</tbody></table></div>
+<ul class="sch-notes"><li>tasks.user_email, push_subscriptions.user_email, notification_logs.user_email, insight_hubs.mentor_email, insight_hub_members.member_email and insight_hub_questions.asked_by_email all reference users.email (by value, no FK constraint).</li></ul>
+</div>
+<div class="sch-card" id="sch-tasks">
+<div class="sch-head"><span class="sch-icon">📋</span><div><h4>tasks</h4><span class="sch-group">Core</span></div><span class="sch-count">17 columns</span></div>
+<p class="sch-desc">A task owned by a user. due_date is stored as UTC; the UI and agent tools convert to the user&#x27;s zone. notifications_enabled is the master selection flag for the scheduler; email/sms/push flags refine the channel.</p>
+<div class="sch-wrap"><table class="sch-table"><thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Extra</th></tr></thead><tbody>
+<tr><td class="sch-col">id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-pk">PRI</td><td>auto_increment</td></tr>
+<tr><td class="sch-col">completed</td><td class="sch-type">bit(1)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">created_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">created_from_device</td><td class="sch-type">varchar(50)</td><td>YES</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">created_from_ip</td><td class="sch-type">varchar(45)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">due_date</td><td class="sch-type">datetime(6)</td><td>YES</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">email_enabled</td><td class="sch-type">bit(1)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">notifications_enabled</td><td class="sch-type">bit(1)</td><td>YES</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">phone_number</td><td class="sch-type">varchar(20)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">priority</td><td class="sch-type">enum(&#x27;LOW&#x27;,&#x27;MEDIUM&#x27;,&#x27;HIGH&#x27;)</td><td>NO</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">push_endpoint</td><td class="sch-type">text</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">reminder_sent</td><td class="sch-type">bit(1)</td><td>YES</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">sms_enabled</td><td class="sch-type">bit(1)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">title</td><td class="sch-type">varchar(255)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">updated_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">user_agent</td><td class="sch-type">text</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">user_email</td><td class="sch-type">varchar(255)</td><td>NO</td><td></td><td></td></tr>
+</tbody></table></div>
+<ul class="sch-notes"><li>priority: LOW / MEDIUM / HIGH</li><li>reminder_sent flips once the scheduler has notified for this task</li><li>created_from_device / created_from_ip / user_agent are capture metadata</li></ul>
+</div>
+  <div class="section-label">Notifications</div>
+<div class="sch-card" id="sch-push_subscriptions">
+<div class="sch-head"><span class="sch-icon">🔔</span><div><h4>push_subscriptions</h4><span class="sch-group">Notifications</span></div><span class="sch-count">13 columns</span></div>
+<p class="sch-desc">One row per user-per-browser Web Push subscription (FCM on Chrome, web.push.apple.com on iOS PWA). Deleted automatically when the push service answers 410 Gone; re-created at login when permission is already granted.</p>
+<div class="sch-wrap"><table class="sch-table"><thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Extra</th></tr></thead><tbody>
+<tr><td class="sch-col">id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-pk">PRI</td><td>auto_increment</td></tr>
+<tr><td class="sch-col">auth</td><td class="sch-type">text</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">browser</td><td class="sch-type">varchar(255)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">created_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">created_from_ip</td><td class="sch-type">varchar(255)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">device_name</td><td class="sch-type">varchar(255)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">device_type</td><td class="sch-type">varchar(255)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">endpoint</td><td class="sch-type">text</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">last_used_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">os</td><td class="sch-type">varchar(255)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">p256dh</td><td class="sch-type">text</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">updated_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">user_email</td><td class="sch-type">varchar(255)</td><td>NO</td><td></td><td></td></tr>
+</tbody></table></div>
+<ul class="sch-notes"><li>endpoint + p256dh + auth are the Web Push credentials — never expose them</li><li>device_type: web / mobile</li></ul>
+</div>
+<div class="sch-card" id="sch-notification_logs">
+<div class="sch-head"><span class="sch-icon">📜</span><div><h4>notification_logs</h4><span class="sch-group">Notifications</span></div><span class="sch-count">9 columns</span></div>
+<p class="sch-desc">Audit trail of every notification attempt the scheduler makes, one row per channel per task.</p>
+<div class="sch-wrap"><table class="sch-table"><thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Extra</th></tr></thead><tbody>
+<tr><td class="sch-col">id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-pk">PRI</td><td>auto_increment</td></tr>
+<tr><td class="sch-col">created_at</td><td class="sch-type">datetime(6)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">device_type</td><td class="sch-type">varchar(50)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">error_message</td><td class="sch-type">text</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">notification_type</td><td class="sch-type">varchar(255)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">sent_to_endpoint</td><td class="sch-type">text</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">status</td><td class="sch-type">varchar(255)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">task_id</td><td class="sch-type">bigint(20)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">user_email</td><td class="sch-type">varchar(255)</td><td>NO</td><td></td><td></td></tr>
+</tbody></table></div>
+<ul class="sch-notes"><li>notification_type: email / sms / push</li><li>status: sent / failed / skipped (skipped = no active push subscriptions)</li><li>sent_to_endpoint is NULL for email/SMS</li></ul>
+</div>
+  <div class="section-label">InsightHub (Mentor Agent)</div>
+<div class="sch-card" id="sch-insight_hubs">
+<div class="sch-head"><span class="sch-icon">🧭</span><div><h4>insight_hubs</h4><span class="sch-group">InsightHub</span></div><span class="sch-count">4 columns</span></div>
+<p class="sch-desc">A mentoring group. The creator is the mentor; role in API responses is derived per caller (owner → MENTOR, else MEMBER).</p>
+<div class="sch-wrap"><table class="sch-table"><thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Extra</th></tr></thead><tbody>
+<tr><td class="sch-col">id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-pk">PRI</td><td>auto_increment</td></tr>
+<tr><td class="sch-col">created_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">mentor_email</td><td class="sch-type">varchar(255)</td><td>NO</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">name</td><td class="sch-type">varchar(255)</td><td>NO</td><td></td><td></td></tr>
+</tbody></table></div>
+<ul class="sch-notes"><li>One mentor per hub</li></ul>
+</div>
+<div class="sch-card" id="sch-insight_hub_members">
+<div class="sch-head"><span class="sch-icon">👥</span><div><h4>insight_hub_members</h4><span class="sch-group">InsightHub</span></div><span class="sch-count">5 columns</span></div>
+<p class="sch-desc">Membership rows. Members are existing users added by email; unknown emails are rejected (no invite flow).</p>
+<div class="sch-wrap"><table class="sch-table"><thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Extra</th></tr></thead><tbody>
+<tr><td class="sch-col">id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-pk">PRI</td><td>auto_increment</td></tr>
+<tr><td class="sch-col">insight_hub_id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">joined_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">member_email</td><td class="sch-type">varchar(255)</td><td>NO</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">role</td><td class="sch-type">enum(&#x27;MENTOR&#x27;,&#x27;MEMBER&#x27;)</td><td>NO</td><td></td><td></td></tr>
+</tbody></table></div>
+<ul class="sch-notes"><li>role: MENTOR / MEMBER</li><li>insight_hub_id → insight_hubs.id</li></ul>
+</div>
+<div class="sch-card" id="sch-insight_hub_questions">
+<div class="sch-head"><span class="sch-icon">❓</span><div><h4>insight_hub_questions</h4><span class="sch-group">InsightHub</span></div><span class="sch-count">6 columns</span></div>
+<p class="sch-desc">A question a member asked inside a hub, with its lifecycle status.</p>
+<div class="sch-wrap"><table class="sch-table"><thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Extra</th></tr></thead><tbody>
+<tr><td class="sch-col">id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-pk">PRI</td><td>auto_increment</td></tr>
+<tr><td class="sch-col">asked_by_email</td><td class="sch-type">varchar(255)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">created_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">insight_hub_id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">status</td><td class="sch-type">enum(&#x27;NEW&#x27;,&#x27;DRAFTED&#x27;,&#x27;NEEDS_MENTOR&#x27;,&#x27;APPROVED&#x27;,&#x27;DELIVERED&#x27;,&#x27;REJECTED&#x27;)</td><td>NO</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">text</td><td class="sch-type">varchar(2000)</td><td>NO</td><td></td><td></td></tr>
+</tbody></table></div>
+<ul class="sch-notes"><li>status: NEW → DRAFTED (agent grounded a draft) | NEEDS_MENTOR (escalated, no draft) → APPROVED → DELIVERED, or REJECTED</li><li>text is capped at 2000 chars</li><li>insight_hub_id → insight_hubs.id</li></ul>
+</div>
+<div class="sch-card" id="sch-insight_hub_answers">
+<div class="sch-head"><span class="sch-icon">💬</span><div><h4>insight_hub_answers</h4><span class="sch-group">InsightHub</span></div><span class="sch-count">9 columns</span></div>
+<p class="sch-desc">The single answer record for a question: the agent&#x27;s draft, the final text the mentor approved or wrote, and the KB passages it was grounded in.</p>
+<div class="sch-wrap"><table class="sch-table"><thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Extra</th></tr></thead><tbody>
+<tr><td class="sch-col">id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-pk">PRI</td><td>auto_increment</td></tr>
+<tr><td class="sch-col">approved_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">approved_by_email</td><td class="sch-type">varchar(255)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">created_at</td><td class="sch-type">datetime(6)</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">draft_text</td><td class="sch-type">text</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">final_text</td><td class="sch-type">text</td><td>YES</td><td></td><td></td></tr>
+<tr><td class="sch-col">origin</td><td class="sch-type">enum(&#x27;AGENT&#x27;,&#x27;MENTOR&#x27;)</td><td>NO</td><td></td><td></td></tr>
+<tr><td class="sch-col">question_id</td><td class="sch-type">bigint(20)</td><td>NO</td><td class="sch-fk">MUL</td><td></td></tr>
+<tr><td class="sch-col">sources</td><td class="sch-type">text</td><td>YES</td><td></td><td></td></tr>
+</tbody></table></div>
+<ul class="sch-notes"><li>origin: AGENT / MENTOR</li><li>sources: newline-separated &quot;Title|url&quot; lines</li><li>question_id → insight_hub_questions.id</li><li>draft_text is visible to the mentor only; members see final_text once DELIVERED</li></ul>
+</div>
+  <footer>Generated from DESCRIBE output · schema only, no row data</footer>
+</div>
+</body>
+</html>
