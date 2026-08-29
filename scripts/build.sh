@@ -103,8 +103,12 @@ case "$OPT" in
     ;;
   2|frontend)
     banner "BUILD FRONTEND"
-    timed COMPOSE up -d --build taskmanager-frontend
-    echo "✅ Frontend deployed. Now HARD-REFRESH the browser (Ctrl+Shift+R)."
+    # --no-deps: build & recreate ONLY the frontend. Without it,
+    # depends_on:taskmanager-backend pulls the backend into scope and
+    # --build can rebuild it too (the 650s Maven step) on a UI-only change.
+    timed COMPOSE build taskmanager-frontend
+    COMPOSE up -d --no-deps taskmanager-frontend
+    echo "✅ Frontend deployed (backend untouched). Now HARD-REFRESH the browser (Ctrl+Shift+R)."
     ;;
   3|both)
     banner "BUILD BOTH"

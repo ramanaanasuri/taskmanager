@@ -5,6 +5,7 @@ import './App.css';
 import { subscribeToPushNotifications } from './utils/pushNotifications';
 import AiTaskInput from './AiTaskInput';
 import AgentChat from './AgentChat';
+import InsightHub from './InsightHub';
 import { convertLocalToUTC } from './utils/dateUtils';  //ADDED - for timezone conversion
 // ============================================
 // ADDED for Stripe Payment Integration
@@ -19,6 +20,10 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authToken, setAuthToken] = useState(null);
+  const [activeTab, setActiveTab] = useState('tasks');   // 'tasks' | 'insighthub'
+  const [hasInsightHub, setHasInsightHub] = useState(false); // gates the InsightHub tab
+  const [hubRole, setHubRole] = useState(null);          // 'MENTOR' when the user mentors a hub
+  const [hubQueueCount, setHubQueueCount] = useState(0); // pending-approval count (mentor badge)
   const [newTaskPriority, setNewTaskPriority] = useState('MEDIUM');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [tempDueDate, setTempDueDate] = useState('');
@@ -116,6 +121,20 @@ function App() {
   useEffect(() => {
     if (!authToken) return;
     checkAuth(authToken);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken]);
+
+  // Gate the InsightHub tab on hub membership: GET /api/insight-hubs returns
+  // the hubs this user belongs to (as mentor or learner). Empty => no tab.
+  useEffect(() => {
+    if (!authToken) { setHasInsightHub(false); return; }
+    axios.get(`${API_BASE_URL}/api/insight-hubs`, { headers: { Authorization: `Bearer ${authToken}` } })
+      .then((res) => {
+        const hubs = res.data || [];
+        setHasInsightHub(hubs.length > 0);
+        setHubRole(hubs[0]?.role || null);
+      })
+      .catch(() => { setHasInsightHub(false); setHubRole(null); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken]);
 
@@ -828,6 +847,34 @@ const toggleTask = async (id) => {
         </div>
       </header>
 
+      {/* ===================== Tab bar: Tasks | InsightHub ===================== */}
+      {/* Inline styles only (no App.css changes), matching feature-component convention. */}
+      {authToken && (
+        <div style={{ display: 'flex', gap: '2px', padding: '0 16px', background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
+          {[{ id: 'tasks', label: 'Tasks' },
+            ...(hasInsightHub ? [{ id: 'insighthub', label: 'InsightHub' }] : [])
+          ].map((t) => {
+            const on = activeTab === t.id;
+            return (
+              <button key={t.id} onClick={() => setActiveTab(t.id)}
+                style={{
+                  padding: '12px 18px', fontSize: '.9rem', fontWeight: on ? 700 : 500,
+                  color: on ? '#5b21b6' : '#6b7280', background: 'transparent', border: 'none', cursor: 'pointer',
+                  borderBottom: on ? '2px solid #6d28d9' : '2px solid transparent', marginBottom: '-1px',
+                }}>
+                {t.label}
+                {t.id === 'insighthub' && hubRole === 'MENTOR' && hubQueueCount > 0 && (
+                  <span style={{ marginLeft: '7px', background: '#ede9fe', color: '#5b21b6', fontSize: '.72rem', fontWeight: 700, padding: '1px 7px', borderRadius: '10px' }}>{hubQueueCount}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ===================== Tasks tab ===================== */}
+      {activeTab === 'tasks' && (
+      <>
       {/* Hero Section */}
       <div className="app-hero">
         <div className="hero-content">
@@ -1157,6 +1204,18 @@ const toggleTask = async (id) => {
           )}
         </div>
       </main>
+      </>
+      )}
+
+      {/* ===================== InsightHub tab ===================== */}
+      {activeTab === 'insighthub' && hasInsightHub && (
+        <div style={{ padding: '24px 16px', background: '#faf9ff', minHeight: '60vh' }}>
+          <InsightHub
+            authToken={authToken}
+            onLimitReached={() => { setSubscriptionPromptReason('ai-limit'); setShowSubscriptionModal(true); }}
+          />
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingTask && (
