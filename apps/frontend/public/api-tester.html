@@ -1240,6 +1240,14 @@
             TESTER_AUTH_ENDPOINT: '/api/tester/auth'
         };
 
+        function testerAuthUrl() {
+            const h = window.location.hostname;
+            if (h.startsWith('taskmanager.')) {
+                return `${window.location.protocol}//api-${h}${CONFIG.TESTER_AUTH_ENDPOINT}`;
+            }
+            return CONFIG.TESTER_AUTH_ENDPOINT;   // localhost / dev: same-origin
+        }
+
         // ============ STATE ============
         let currentTasks = [];
         let logEntries = [];
@@ -1277,8 +1285,10 @@
             const password = document.getElementById('loginPassword').value;
             
             try {
-                // Authenticate against backend endpoint
-                const response = await fetch(CONFIG.TESTER_AUTH_ENDPOINT, {
+                // Authenticate against backend endpoint. Post to the API host
+                // (taskmanager.X -> api-taskmanager.X) rather than a relative path:
+                // on AWS the frontend host (CloudFront -> nginx) does not proxy /api.
+                const response = await fetch(testerAuthUrl(), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
