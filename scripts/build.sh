@@ -16,6 +16,7 @@
 #   7 | logs       Follow logs [service: backend|frontend|db, default all]
 #   8 | clean      Full --no-cache rebuild [service: backend|frontend|both]
 #   9 | down       Stop & remove containers (volumes/DB PRESERVED)
+#  10 | start      Start STOPPED containers, NO build [service: backend|frontend|both|all, default all]
 #
 # Cloud defaults to gcp. For AWS:  ./scripts/build.sh 1 aws
 #
@@ -89,6 +90,7 @@ menu() {
   7) logs      - follow logs [backend|frontend|db]
   8) clean     - full no-cache rebuild [backend|frontend|both]
   9) down      - stop & remove (DB volumes preserved)
+ 10) start     - start stopped containers, no build [backend|frontend|both|all]
 EOF
   read -rp "Choose option: " OPT
 }
@@ -148,6 +150,14 @@ case "$OPT" in
     banner "DOWN (volumes preserved)"
     COMPOSE down --remove-orphans
     echo "🔒 Containers removed; DB data kept. Bring back: ./scripts/build.sh 4"
+    ;;
+  10|start)
+    # Start containers you previously stopped (e.g. to free RAM for a build).
+    # Plain start via compose - no build, no recreate. Default: all.
+    S="$(svc_name "${SVC_ARG:-all}")"
+    banner "START (no build): $S"
+    COMPOSE start $S
+    echo "✅ Started: $S. Check: ./scripts/build.sh 6"
     ;;
   *)
     echo "Unknown option: $OPT (run with no args for the menu)"; exit 2 ;;
