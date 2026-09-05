@@ -2004,3 +2004,9 @@ input[type="tel"].form-input:focus {
 
 
 
+
+/* Voice input (useSpeechInput mic button) */
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35); }
+  50%      { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+}

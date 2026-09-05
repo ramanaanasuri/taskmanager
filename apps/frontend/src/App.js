@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import API_BASE_URL from './config';
 import './App.css';
@@ -17,6 +17,15 @@ import { SubscriptionModal, UpgradeButton, useSubscription } from './Subscriptio
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
+  const [voiceAutoAdd, setVoiceAutoAdd] = useState(false); // spoken "add task" pending
+  const [highlightTaskId, setHighlightTaskId] = useState(null); // notification-clicked task
+  const highlightTimerRef = useRef(null);
+  const highlightTask = (id) => {
+    if (!id) return;
+    clearTimeout(highlightTimerRef.current);
+    setHighlightTaskId(String(id));
+    highlightTimerRef.current = setTimeout(() => setHighlightTaskId(null), 60000);
+  };
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authToken, setAuthToken] = useState(null);
@@ -162,14 +171,10 @@ function App() {
             console.log('[APP DEBUG] 10. ✅ NOTIFICATION_CLICK detected');
             const taskId = event.data.taskId;
             console.log('[APP DEBUG] 11. Task ID:', taskId);
-            
-            console.log('[APP DEBUG] 12. Current location:', window.location.href);
-            console.log('[APP DEBUG] 13. Document readyState:', document.readyState);
-            console.log('[APP DEBUG] 14. Loading state before reload:', loading);
-            
-            console.log('[APP DEBUG] 15. Calling window.location.reload()...');
-            window.location.reload();
-            console.log('[APP DEBUG] 16. Reload called (may not execute due to reload)');
+            // No reload: refresh the list in place and highlight via state,
+            // so the already-open tab is reused with its SPA state intact.
+            fetchTasks();
+            highlightTask(taskId);
           } else {
             console.log('[APP DEBUG] 10. ⚠️ Unknown message type:', event.data.type);
           }
@@ -222,56 +227,27 @@ function App() {
     }
   }, [loading]);
 
-// ============ ADDED: Handle taskId from Notification Click ============
-// When user clicks notification, sw.js navigates to /?taskId=123
-// This effect detects that taskId and highlights the corresponding task
+// ============ Handle taskId from Notification Click ============
+// Closed-app path: sw.js opens /?taskId=123. Highlighting is state-driven
+// (highlightTaskId) so re-renders of the task list can't wipe it.
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
   const taskIdFromNotification = params.get('taskId');
-  
   if (taskIdFromNotification) {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('[APP DEBUG - NOTIFICATION] 📌 Task ID from URL:', taskIdFromNotification);
-    console.log('[APP DEBUG - NOTIFICATION] Current tasks loaded:', tasks.length);
-    
-    // Wait for tasks to load, then scroll to and highlight the task
-    if (tasks.length > 0) {
-      setTimeout(() => {
-        const taskElement = document.querySelector(`[data-task-id="${taskIdFromNotification}"]`);
-        
-        if (taskElement) {
-          console.log('[APP DEBUG - NOTIFICATION] ✅ Task element found, highlighting...');
-          
-          // Scroll to task
-          taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          
-          // Highlight with yellow background
-          taskElement.style.backgroundColor = '#a8d8ff';
-          taskElement.style.transition = 'background-color 0.3s ease';
-          
-          console.log('[APP DEBUG - NOTIFICATION] ✅ Task highlighted:', taskIdFromNotification);
-          
-          // Remove highlight after 3 seconds
-          setTimeout(() => {
-            taskElement.style.backgroundColor = '';
-            console.log('[APP DEBUG - NOTIFICATION] 🔄 Highlight removed');
-          }, 60000);
-        } else {
-          console.warn('[APP DEBUG - NOTIFICATION] ⚠️ Task element not found in DOM');
-          console.log('[APP DEBUG - NOTIFICATION] Available task IDs:', 
-            Array.from(document.querySelectorAll('[data-task-id]')).map(el => el.getAttribute('data-task-id'))
-          );
-        }
-      }, 500); // Wait 500ms for DOM to be ready
-      
-      // Clean URL - remove taskId parameter to keep URL clean
-      window.history.replaceState({}, document.title, '/');
-      console.log('[APP DEBUG - NOTIFICATION] 🔄 URL cleaned (taskId parameter removed)');
-    }
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    highlightTask(taskIdFromNotification);
+    // Clean URL - remove taskId parameter to keep URL clean
+    window.history.replaceState({}, document.title, '/');
   }
-}, [tasks]); // Re-run when tasks array changes (after fetch completes)
-// ============ End TaskId Handler ============  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+// Scroll the highlighted task into view once it exists in the rendered list.
+useEffect(() => {
+  if (!highlightTaskId) return;
+  const el = document.querySelector(`[data-task-id="${highlightTaskId}"]`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}, [highlightTaskId, tasks]);
+// ============ End TaskId Handler ============
 /*   // Register Service Worker on App Mount
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -380,6 +356,16 @@ useEffect(() => {
   };
 
 // REPLACE YOUR addTask FUNCTION WITH THIS DEBUG VERSION
+
+useEffect(() => {
+  // Voice command "add task": fields were just prefetched into state by
+  // onParsed; submit on the render where they've landed.
+  if (voiceAutoAdd && newTask.trim()) {
+    setVoiceAutoAdd(false);
+    addTask({ preventDefault: () => {} });
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [voiceAutoAdd, newTask]);
 
 const addTask = async (e) => {
   e.preventDefault();
@@ -890,7 +876,7 @@ const toggleTask = async (id) => {
           <p className="form-subtitle">Add a task to get started</p>
           <AiTaskInput
             authToken={authToken}
-            onParsed={(t) => {
+            onParsed={(t, opts) => {
               setNewTask(t.title);
               setNewTaskPriority(t.priority);
               if (t.scheduledDate) {
@@ -900,6 +886,7 @@ const toggleTask = async (id) => {
               setEnableEmail(!!t.notify?.email);
               setEnableNotifications(!!t.notify?.push);
               setEnableSms(!!t.notify?.sms);
+              if (opts && opts.autoAdd) setVoiceAutoAdd(true); // spoken "add task"
             }}
             onLimitReached={() => { setSubscriptionPromptReason('ai-limit'); setShowSubscriptionModal(true); }}
           />
@@ -1124,6 +1111,9 @@ const toggleTask = async (id) => {
                       key={task.id} 
                       className={`task-row ${task.completed ? 'completed-task' : ''}`}
                       data-task-id={task.id}
+                      style={String(task.id) === highlightTaskId
+                        ? { backgroundColor: '#a8d8ff', transition: 'background-color 0.3s ease' }
+                        : { transition: 'background-color 0.3s ease' }}
                     >
                     {/* Main Info Row: Checkbox + Task Name */}
                     <div className="task-main-info">

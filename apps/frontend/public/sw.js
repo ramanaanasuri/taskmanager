@@ -124,40 +124,18 @@ self.addEventListener('notificationclick', async (event) => {
           if (clientUrl.origin === targetUrlObj.origin) {
             console.log('[SW DEBUG] 12. ✅ Found matching client!');
 
-            // Focus the window
-            console.log('[SW DEBUG] 13. Attempting to focus window...');
+            // Focus the window and message the app. We deliberately do NOT
+            // client.navigate(): navigating reloads the SPA (losing state) and
+            // was the flaky path — when it failed, the old fallback reloaded
+            // without the taskId and the highlight never fired. postMessage +
+            // in-app state is deterministic and reuses the open tab as-is.
             await client.focus();
-            console.log('[SW DEBUG] 14. ✅ Window focused');
-
-            // Try navigate
-            if ('navigate' in client) {
-              console.log('[SW DEBUG] 15. client.navigate() is available');
-              try {
-                console.log('[SW DEBUG] 16. Calling client.navigate()...');
-                const result = await client.navigate(targetUrl);
-                console.log('[SW DEBUG] 17. ✅ Navigate result:', result);
-                console.log('[SW DEBUG] 18. 🎉 SUCCESS - Used client.navigate()');
-                return;
-              } catch (navError) {
-                console.warn('[SW DEBUG] 19. ❌ client.navigate() failed:', navError);
-                console.warn('[SW DEBUG] 19a. Error name:', navError.name);
-                console.warn('[SW DEBUG] 19b. Error message:', navError.message);
-              }
-            } else {
-              console.log('[SW DEBUG] 15. ❌ client.navigate() NOT available');
-            }
-
-            // Fallback to postMessage
-            console.log('[SW DEBUG] 20. Using postMessage fallback');
-            const message = {
+            client.postMessage({
               type: 'NOTIFICATION_CLICK',
               taskId: taskId,
               timestamp: Date.now()
-            };
-            console.log('[SW DEBUG] 21. Sending message:', message);
-            client.postMessage(message);
-            console.log('[SW DEBUG] 22. ✅ Message sent');
-            console.log('[SW DEBUG] 23. 🎉 SUCCESS - Used postMessage');
+            });
+            console.log('[SW DEBUG] 13. ✅ Focused existing tab and sent NOTIFICATION_CLICK for task', taskId);
             return;
           }
         }

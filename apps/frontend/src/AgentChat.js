@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import API_BASE_URL from './config';
+import useSpeechInput, { micButtonStyle } from './useSpeechInput';
+import VoiceHelp, { CHAT_VOICE_HELP } from './VoiceHelp';
 
 /**
  * Tier 2: conversational agent panel.
@@ -38,6 +40,26 @@ function AgentChat({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const bottomRef = useRef(null);
+  const autoSendRef = useRef(false);
+  const speech = useSpeechInput((finalText) => {
+    // Trailing voice command: "... send" / "send it" / "send message" submits the turn.
+    const m = finalText.match(/(.*?)[,.!]?\s*\bsend(\s+it|\s+message)?\b[.!]?\s*$/i);
+    const spoken = m ? m[1].trim() : finalText;
+    setInput((prev) => {
+      const next = (prev ? prev + ' ' : '') + spoken;
+      if (m && next.trim()) autoSendRef.current = true;
+      return next.trim() ? next : prev;
+    });
+  });
+  useEffect(() => {
+    // Runs after the voice command committed its text: submit the turn.
+    if (autoSendRef.current && input.trim() && !busy) {
+      autoSendRef.current = false;
+      if (speech.listening) speech.toggle();
+      send();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [input]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -151,7 +173,10 @@ function AgentChat({
         <div style={S.panel}>
           <div style={S.header}>
             <span>🤖 {title}</span>
-            <span style={{ fontSize: '.72rem', fontWeight: 400, opacity: .85 }}>AI · plan-metered</span>
+            <span style={{ fontSize: '.72rem', fontWeight: 400, opacity: .85, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              AI · plan-metered
+              {speech.supported && <VoiceHelp title="Voice commands — Task Assistant" items={CHAT_VOICE_HELP} />}
+            </span>
           </div>
 
           <div style={S.body}>
@@ -175,10 +200,38 @@ function AgentChat({
           {error && <div style={S.error}>{error}</div>}
 
           <div style={S.inputRow}>
+            {input && (
+              <button
+                type="button"
+                onClick={() => { if (speech.listening) speech.toggle(); setInput(''); }}
+                disabled={busy}
+                title="Clear"
+                aria-label="Clear text"
+                style={{
+                  width: '42px', minWidth: '42px', height: '42px', borderRadius: '50%',
+                  border: '1px solid #ddd', background: '#fff', color: '#555',
+                  fontSize: '1rem', lineHeight: 1, cursor: busy ? 'not-allowed' : 'pointer'
+                }}
+              >
+                ✕
+              </button>
+            )}
+            {speech.supported && (
+              <button
+                type="button"
+                onClick={speech.toggle}
+                disabled={busy}
+                title={speech.listening ? 'Stop listening' : 'Speak your message'}
+                aria-label={speech.listening ? 'Stop voice input' : 'Start voice input'}
+                style={micButtonStyle(speech.listening, busy)}
+              >
+                {speech.listening ? '🔴' : '🎤'}
+              </button>
+            )}
             <textarea
               rows={1}
               style={S.input}
-              value={input}
+              value={speech.listening && speech.interim ? (input ? input + ' ' : '') + speech.interim : input}
               placeholder={placeholder}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
