@@ -20,7 +20,7 @@ MVN_ARGS="test"
 NET=""
 case "$MODE" in
   unit)   MVN_ARGS="test" ;;
-  karate) MVN_ARGS="test -Dtest=KarateApiTest -Dsurefire.failIfNoSpecifiedTests=false -Dkarate.api=true -Dkarate.env=$KENV -Dtester.password=\$TP" ;;
+  karate) MVN_ARGS="test -Dtest=KarateApiTest -Dsurefire.failIfNoSpecifiedTests=false -Dkarate.api=true -Dkarate.env=$KENV -Dtester.password=\$TP -DargLine=-Xmx256m" ;;
   all)    MVN_ARGS="test -Dkarate.api=true -Dkarate.env=$KENV -Dtester.password=\$TP" ;;
   *) echo "usage: $0 unit|karate|all [local|gcp|aws]"; exit 1 ;;
 esac

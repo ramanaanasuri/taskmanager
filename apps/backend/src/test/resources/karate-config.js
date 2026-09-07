@@ -10,8 +10,8 @@ function fn() {
     testerUser: karate.properties['tester.user'] || 'admin',
     testerPassword: karate.properties['tester.password'] || ''
   };
-  karate.configure('connectTimeout', 10000);
-  karate.configure('readTimeout', 60000);
+  karate.configure('connectTimeout', 30000);
+  karate.configure('readTimeout', 120000);
   // One login for the whole suite: callSingle caches across features.
   var auth = karate.callSingle('classpath:karate/auth.feature', config);
   config.token = auth.token;

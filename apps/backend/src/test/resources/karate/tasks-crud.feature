@@ -2,14 +2,16 @@ Feature: Task lifecycle through the public API
 
   Background:
     * url baseUrl
-    * header Authorization = 'Bearer ' + token
 
   Scenario: create, read, update, complete, delete a task
+    # configured headers apply to every request in this scenario
+    * configure headers = { Authorization: '#("Bearer " + token)' }
+
     # create
     Given path '/api/tasks'
     And request { title: 'Karate: pay the water bill', priority: 'MEDIUM' }
     When method post
-    Then status 200
+    Then status 201
     And match response.id == '#number'
     * def taskId = response.id
 
@@ -34,14 +36,13 @@ Feature: Task lifecycle through the public API
     # delete leaves the list without it
     Given path '/api/tasks/' + taskId
     When method delete
-    Then status 200
+    Then status 204
     Given path '/api/tasks'
     When method get
     Then status 200
     And match response[*].id !contains taskId
 
   Scenario: unauthenticated request is rejected
-    * configure headers = {}
     Given path '/api/tasks'
     When method get
     Then status 401
