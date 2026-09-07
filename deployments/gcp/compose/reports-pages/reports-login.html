@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — Sign In · Task Manager Pro</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; padding: 20px;
+  }
+  .login-card {
+    background: white; border-radius: 24px; padding: 48px; width: 100%; max-width: 420px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); text-align: center;
+  }
+  .badge { font-size: 2rem; }
+  h1 { font-size: 1.35rem; margin: 10px 0 4px; color: #1f2430; }
+  p.sub { color: #6b7280; font-size: .9rem; margin-bottom: 26px; }
+  label { display: block; text-align: left; font-size: .8rem; font-weight: 600; color: #4b5563; margin: 14px 0 6px; }
+  input {
+    width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 10px;
+    font-size: .95rem; outline: none;
+  }
+  input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.18); }
+  button {
+    width: 100%; margin-top: 22px; padding: 13px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #8b5cf6 100%); color: white;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: .6; cursor: wait; }
+  .err { color: #dc2626; font-size: .85rem; margin-top: 12px; min-height: 1.2em; }
+  .hint { color: #9ca3af; font-size: .75rem; margin-top: 18px; }
+</style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="badge">📊</div>
+    <h1>Engineering Reports</h1>
+    <p class="sub">Coverage &amp; test reports · same credentials as the API Tester</p>
+    <label for="u">Username</label>
+    <input id="u" autocomplete="username" value="admin">
+    <label for="p">Password</label>
+    <input id="p" type="password" autocomplete="current-password">
+    <button id="go" onclick="signIn()">Sign In</button>
+    <div class="err" id="err"></div>
+    <div class="hint">A signed session cookie is set for this host only.</div>
+  </div>
+<script>
+  function apiBase() {
+    const h = window.location.hostname;
+    if (h.startsWith('taskmanager.')) return window.location.protocol + '//api-' + h;
+    return ''; // localhost/dev: same origin
+  }
+  async function signIn() {
+    const btn = document.getElementById('go'), err = document.getElementById('err');
+    btn.disabled = true; err.textContent = '';
+    try {
+      const res = await fetch(apiBase() + '/api/tester/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('u').value.trim(),
+          password: document.getElementById('p').value
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.token) {
+        err.textContent = data.error || ('Sign in failed (' + res.status + ')');
+        return;
+      }
+      // Cookie on THIS host (the app host serving /reports/*), 8h, HTTPS-only.
+      document.cookie = 'tester_token=' + data.token +
+        '; Path=/; Max-Age=28800; Secure; SameSite=Lax';
+      const next = new URLSearchParams(window.location.search).get('next') || '/reports/';
+      window.location.assign(next.startsWith('/') ? next : '/reports/');
+    } catch (e) {
+      err.textContent = 'Could not reach the API: ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  document.getElementById('p').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
+</script>
+</body>
+</html>

@@ -17,7 +17,29 @@
 {$FRONTEND_HOST} {
 	encode gzip zstd
 
-	reverse_proxy taskmanager-frontend:80 {
+	# ---- Engineering reports (tester-session gated) --------------------
+	# Login page is public; everything under /reports/ requires the tester
+	# JWT cookie, checked by the backend on every request (forward_auth).
+	handle /reports-login.html {
+		root * /reports-pages
+		rewrite * /reports-login.html
+		file_server
+	}
+	handle /reports {
+		redir /reports/ 308
+	}
+	handle /reports/* {
+		forward_auth taskmanager-backend:8080 {
+			uri /api/tester/verify
+		}
+		uri strip_prefix /reports
+		root * /reports
+		file_server {
+			index reports-index.html index.html
+		}
+	}
+
+		reverse_proxy taskmanager-frontend:80 {
 		header_up X-Forwarded-Proto https
 	}
 

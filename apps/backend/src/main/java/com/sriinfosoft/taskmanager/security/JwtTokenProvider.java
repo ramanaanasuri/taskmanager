@@ -61,6 +61,23 @@ public class JwtTokenProvider {
     }
 
 
+    /**
+     * Mint a token for a non-OAuth principal (the API tester / reports login).
+     * Same key, same validation path as user tokens; the subject identifies
+     * the pseudo-user so its data stays separate from real accounts.
+     */
+    public String generateTokenForSubject(String subject) {
+        Date now = new Date();
+        return Jwts.builder()
+                .subject(subject)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + jwtExpiration))
+                .claim("email", subject)
+                .claim("name", "API Tester")
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
+                .compact();
+    }
+
     public String getEmailFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         return claims.getSubject(); // subject was the email

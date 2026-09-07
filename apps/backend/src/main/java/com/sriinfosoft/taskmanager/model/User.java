@@ -154,7 +154,21 @@ public class User {
     /**
      * Check if user can make AI requests (has credits remaining)
      */
+    @Column(name = "ai_blocked", nullable = false)
+    private Boolean aiBlocked = false;
+
+    @Column(name = "blocked_reason")
+    private String blockedReason;
+
+    public Boolean getAiBlocked() { return aiBlocked; }
+    public void setAiBlocked(Boolean aiBlocked) { this.aiBlocked = aiBlocked; }
+    public String getBlockedReason() { return blockedReason; }
+    public void setBlockedReason(String blockedReason) { this.blockedReason = blockedReason; }
+
     public boolean canMakeAiRequest() {
+        if (Boolean.TRUE.equals(aiBlocked)) {
+            return false; // guardrail block wins over any plan
+        }
         if (subscriptionPlan == SubscriptionPlan.enterprise) {
             return true; // Unlimited for enterprise
         }

@@ -1,5 +1,10 @@
 package com.sriinfosoft.taskmanager.controller;
 
+import com.sriinfosoft.taskmanager.security.JwtTokenProvider;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.net.URI;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +42,12 @@ public class ApiTesterController {
     @Value("${api.tester.enabled:true}")
     private boolean testerEnabled;
 
+    /** Pseudo-user owning tester/automation data; never a real account. */
+    public static final String TESTER_SUBJECT = "api-tester@sriinfosoft.local";
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     @Value("${api.base.url:}")
     private String apiBaseUrl;
 
@@ -65,6 +76,9 @@ public class ApiTesterController {
             response.put("success", true);
             response.put("username", request.getUsername());
             response.put("apiUrl", apiBaseUrl.isEmpty() ? null : apiBaseUrl);
+            // Real, scoped JWT: same signing/validation as user tokens, but a
+            // pseudo-user subject so tester/automation data stays separate.
+            response.put("token", jwtTokenProvider.generateTokenForSubject(TESTER_SUBJECT));
             response.put("message", "Authentication successful");
             
             return ResponseEntity.ok(response);
@@ -72,6 +86,36 @@ public class ApiTesterController {
 
         return ResponseEntity.status(401)
             .body(Map.of("error", "Invalid username or password"));
+    }
+
+    /**
+     * Gate for Caddy forward_auth in front of /reports/* (coverage, Karate).
+     * Accepts the tester JWT from a cookie (browser flow via
+     * reports-login.html) or a Bearer header (curl). On failure, redirects
+     * to the login page with the originally requested path so the browser
+     * lands back where it was heading.
+     */
+    @GetMapping("/verify")
+    public ResponseEntity<?> verify(HttpServletRequest request,
+            @CookieValue(value = "tester_token", required = false) String cookieToken,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestHeader(value = "X-Forwarded-Uri", required = false) String forwardedUri) {
+
+        String token = cookieToken;
+        if (token == null && authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+        boolean ok = testerEnabled
+                && token != null
+                && jwtTokenProvider.validateToken(token)
+                && TESTER_SUBJECT.equals(jwtTokenProvider.getEmailFromToken(token));
+        if (ok) {
+            return ResponseEntity.ok().build();
+        }
+        String next = forwardedUri == null ? "/reports/" : forwardedUri;
+        return ResponseEntity.status(302)
+                .location(URI.create("/reports-login.html?next=" + next))
+                .build();
     }
 
     /**

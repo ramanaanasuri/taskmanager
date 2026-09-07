@@ -2,7 +2,10 @@ package com.sriinfosoft.taskmanager.service;
 
 import com.sriinfosoft.taskmanager.model.User;
 import com.sriinfosoft.taskmanager.repository.UserRepository;
+import com.sriinfosoft.taskmanager.model.UserActivity;
+import com.sriinfosoft.taskmanager.repository.UserActivityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,24 @@ public class AiUsageService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserActivityRepository activityRepository;
+
+    @Autowired
+    private ActivityService activityService;
+
+    /** Daily per-user AI-call ceiling for non-exempt users; crossing it sets a sticky block. */
+    @Value("${admin.ai.block.threshold:10}")
+    private int dailyBlockThreshold;
+
+    /** Comma-separated emails that are never throttled (you, family, invited testers). */
+    @Value("${admin.exempt.emails:}")
+    private String exemptEmails;
+
+    /** While Stripe runs test keys, "paid" is demo money: plans exempt nobody. */
+    @Value("${billing.live:false}")
+    private boolean billingLive;
 
     /** Read-only check used before calling the model. */
     public boolean hasCredit(String email) {
@@ -55,6 +76,9 @@ public class AiUsageService {
         userRepository.save(user);
         System.out.println("🤖 [AiUsage] " + email + " used AI credit: "
                 + user.getAiRequestsUsed() + "/" + user.getAiRequestsLimit());
+        activityService.record(email, UserActivity.AI_CALL,
+                user.getAiRequestsUsed() + "/" + user.getAiRequestsLimit(), null);
+        applyVelocityGuardrail(user);
         return true;
     }
 
@@ -65,6 +89,51 @@ public class AiUsageService {
                         u.getAiRequestsUsed() == null ? 0 : u.getAiRequestsUsed(),
                         u.getAiRequestsLimit() == null ? 0 : u.getAiRequestsLimit()})
                 .orElse(new int[]{0, 0});
+    }
+
+
+    /** True when this account is never throttled by the velocity guardrail. */
+    boolean isExempt(User user) {
+        String email = user.getEmail();
+        if (exemptEmails != null && !exemptEmails.isBlank()) {
+            for (String e : exemptEmails.split(",")) {
+                if (e.trim().equalsIgnoreCase(email)) return true;
+            }
+        }
+        // Real paying customers are exempt only when billing is live money.
+        return billingLive && user.getSubscriptionPlan() != User.SubscriptionPlan.free;
+    }
+
+    /**
+     * Velocity brake: a non-exempt user crossing the daily AI-call ceiling is
+     * blocked (sticky, survives the monthly reset) and the admin is alerted
+     * exactly once. Deterministic and cheap: one indexed count per AI call.
+     */
+    void applyVelocityGuardrail(User user) {
+        try {
+            if (Boolean.TRUE.equals(user.getAiBlocked()) || isExempt(user)) return;
+            java.time.LocalDateTime midnight = java.time.LocalDate.now().atStartOfDay();
+            long today = activityRepository.countByEmailAndEventTypeAndCreatedAtAfter(
+                    user.getEmail(), UserActivity.AI_CALL, midnight);
+            if (today >= dailyBlockThreshold) {
+                user.setAiBlocked(true);
+                user.setBlockedReason("guardrail: " + today + " AI calls on "
+                        + java.time.LocalDate.now() + " (threshold " + dailyBlockThreshold + ")");
+                userRepository.save(user);
+                System.out.println("🛑 [AiUsage] BLOCKED " + user.getEmail()
+                        + " — " + user.getBlockedReason());
+                activityService.alertAdmin("AI guardrail blocked " + user.getEmail(),
+                        "<h3>🛑 AI guardrail tripped</h3>"
+                        + "<p><b>User:</b> " + user.getEmail() + "<br>"
+                        + "<b>Reason:</b> " + user.getBlockedReason() + "<br>"
+                        + "<b>Plan:</b> " + user.getSubscriptionPlan() + "</p>"
+                        + "<p>AI features are now refused for this account; tasks still work. "
+                        + "Unblock via dbtools: <code>UPDATE users SET ai_blocked=0, blocked_reason=NULL "
+                        + "WHERE email='" + user.getEmail() + "';</code></p>");
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ [AiUsage] guardrail check failed: " + e.getMessage());
+        }
     }
 
     /**
