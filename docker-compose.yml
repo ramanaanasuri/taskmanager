@@ -48,6 +48,12 @@ services:
       AI_RESET_CRON: ${AI_RESET_CRON:-0 5 0 1 * *}
       AI_BASE_URL: ${AI_BASE_URL:-https://generativelanguage.googleapis.com/v1beta/openai}
       AI_MODEL: ${AI_MODEL:-gemini-2.5-flash}
+      # ADDED for Admin Activity Trail + AI Velocity Guardrail
+      ADMIN_ALERT_EMAIL: ${ADMIN_ALERT_EMAIL:-}
+      ADMIN_AI_BLOCK_THRESHOLD: ${ADMIN_AI_BLOCK_THRESHOLD:-10}
+      ADMIN_EXEMPT_EMAILS: ${ADMIN_EXEMPT_EMAILS:-}
+      BILLING_LIVE: ${BILLING_LIVE:-false}
+      # END Admin Guardrail Addition
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       # ADDED for SMS Integration - AWS SNS environment variables

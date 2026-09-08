@@ -59,6 +59,40 @@ class AiGuardrailTest {
     }
 
     @Test
+    void exemptList_acceptsMixedSeparators() {
+        // comma, semicolon, and whitespace must all delimit the whitelist
+        ReflectionTestUtils.setField(service, "exemptEmails",
+                "me@example.com, family@example.com;friend@example.com  extra@example.com");
+        for (String email : new String[]{
+                "family@example.com", "friend@example.com", "extra@example.com"}) {
+            User u = freeUser(email, 1, 200);
+            service.applyVelocityGuardrail(u);
+            assertThat(u.getAiBlocked()).as(email + " should be exempt").isFalse();
+        }
+        verifyNoInteractions(activityRepository);
+    }
+
+    @Test
+    void exemptMatch_isCaseInsensitive() {
+        ReflectionTestUtils.setField(service, "exemptEmails", "family@example.com");
+        User u = freeUser("Family@Example.COM", 1, 200);
+        service.applyVelocityGuardrail(u);
+        assertThat(u.getAiBlocked()).isFalse();
+        verifyNoInteractions(activityRepository);
+    }
+
+    @Test
+    void blankExemptList_exemptsNobody() {
+        ReflectionTestUtils.setField(service, "exemptEmails", "");
+        User u = freeUser("anyone@example.com", 1, 200);
+        when(activityRepository.countByEmailAndEventTypeAndCreatedAtAfter(
+                eq("anyone@example.com"), eq(UserActivity.AI_CALL), any(LocalDateTime.class)))
+                .thenReturn(10L);
+        service.applyVelocityGuardrail(u);
+        assertThat(u.getAiBlocked()).isTrue();
+    }
+
+    @Test
     void testModePaidPlan_isNotExempt_whileBillingIsNotLive() {
         User u = freeUser("stranger@x", 1, 200);
         u.setSubscriptionPlan(User.SubscriptionPlan.pro); // clicked through test checkout

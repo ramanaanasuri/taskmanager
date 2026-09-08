@@ -41,7 +41,7 @@ public class AiUsageService {
     @Value("${admin.ai.block.threshold:10}")
     private int dailyBlockThreshold;
 
-    /** Comma-separated emails that are never throttled (you, family, invited testers). */
+    /** Emails never throttled (you, family, invited testers). Separate with comma, semicolon, or spaces. */
     @Value("${admin.exempt.emails:}")
     private String exemptEmails;
 
@@ -96,7 +96,8 @@ public class AiUsageService {
     boolean isExempt(User user) {
         String email = user.getEmail();
         if (exemptEmails != null && !exemptEmails.isBlank()) {
-            for (String e : exemptEmails.split(",")) {
+            // Accept comma, semicolon, or whitespace as separators, in any mix.
+            for (String e : exemptEmails.split("[,;\\s]+")) {
                 if (e.trim().equalsIgnoreCase(email)) return true;
             }
         }

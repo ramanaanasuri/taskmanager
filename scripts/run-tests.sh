@@ -27,6 +27,29 @@ esac
 # local env talks to the backend's host-published port — needs host networking.
 [ "$KENV" = "local" ] && NET="--network host"
 
+# Karate tests a LIVE backend. Gate on health before spending a run — a cold
+# Spring Boot start after build.sh 1 can take minutes on a small VM, and a
+# timed-out callSingle poisons every scenario (learned 2026-09-08).
+if [ "$MODE" != "unit" ]; then
+  case "$KENV" in
+    gcp) HURL="https://api-taskmanager.gcp.sriinfosoft.com/actuator/health" ;;
+    aws) HURL="https://api-taskmanager.sriinfosoft.com/actuator/health" ;;
+    *)   HURL="http://localhost:8080/actuator/health" ;;
+  esac
+  echo "═══ waiting for backend health at $HURL (up to 5 min)"
+  HEALTHY=0
+  for i in $(seq 1 30); do
+    if curl -sf -o /dev/null --max-time 8 "$HURL"; then HEALTHY=1; break; fi
+    sleep 10
+  done
+  if [ "$HEALTHY" -eq 1 ]; then
+    echo "═══ backend healthy — starting tests"
+  else
+    echo "═══ backend NOT healthy after 5 min — aborting so no run is wasted"
+    exit 1
+  fi
+fi
+
 echo "═══ run-tests: mode=$MODE env=$KENV → $LOG"
 docker run --rm $NET \
   -v "$(pwd)/apps/backend":/app -w /app \
