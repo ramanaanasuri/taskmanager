@@ -19,3 +19,8 @@ backups/
 *~
 ai-test-results-*.txt
 apps/backend/target/
+# Playwright e2e artifacts
+apps/frontend/e2e/node_modules/
+apps/frontend/e2e/report/
+apps/frontend/e2e/test-results/
+apps/frontend/e2e/e2e-run-*.log
