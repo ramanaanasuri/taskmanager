@@ -28,6 +28,16 @@ async function apiTasks(request, token) {
   return res.json();
 }
 
+/** Create a task directly via the API — fast seeding for specs that test other actions. */
+async function apiCreateTask(request, token, title) {
+  const res = await request.post(`${API}/api/tasks`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { title, priority: 'MEDIUM', completed: false },
+  });
+  if (!res.ok()) throw new Error(`create failed: ${res.status()}`);
+  return res.json();
+}
+
 /** Delete every task whose title contains the marker (self-cleaning suites). */
 async function apiDeleteByTitle(request, token, marker) {
   const tasks = await apiTasks(request, token);
@@ -38,4 +48,4 @@ async function apiDeleteByTitle(request, token, marker) {
   }
 }
 
-module.exports = { API, getTesterToken, signInAsTester, apiTasks, apiDeleteByTitle };
+module.exports = { API, getTesterToken, signInAsTester, apiTasks, apiCreateTask, apiDeleteByTitle };

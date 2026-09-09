@@ -17,6 +17,10 @@ import { SubscriptionModal, UpgradeButton, useSubscription } from './Subscriptio
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
+  // ADDED for double-submit guard: ref blocks same-tick re-entry (state alone is async);
+  // state drives the disabled button so the user sees the in-flight status.
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const addingTaskRef = useRef(false);
   const [voiceAutoAdd, setVoiceAutoAdd] = useState(false); // spoken "add task" pending
   const [highlightTaskId, setHighlightTaskId] = useState(null); // notification-clicked task
   const highlightTimerRef = useRef(null);
@@ -378,6 +382,14 @@ const addTask = async (e) => {
     return;
   }
 
+  // ADDED for double-submit guard: ignore clicks while a create is in flight
+  if (addingTaskRef.current) {
+    console.log('⏳ addTask ignored — a create is already in flight');
+    return;
+  }
+  addingTaskRef.current = true;
+  setIsAddingTask(true);
+
   const token = authToken || localStorage.getItem('jwt_token');
   
   console.log('📝 newTaskDueDate STATE:', newTaskDueDate);
@@ -400,6 +412,8 @@ const addTask = async (e) => {
     } catch (error) {
       console.error('❌ Failed to subscribe to push notifications:', error);
       alert('Failed to enable notifications. Please check browser permissions and try again.');
+      addingTaskRef.current = false;   // ADDED: release the double-submit guard
+      setIsAddingTask(false);
       return; // Don't create task if subscription fails
     }
   }  
@@ -456,6 +470,9 @@ const addTask = async (e) => {
       console.error('❌ Response data:', error.response.data);
     }
     console.error('❌ ═══════════════════════════════════════');
+  } finally {
+    addingTaskRef.current = false;   // ADDED: release the double-submit guard
+    setIsAddingTask(false);
   }
 };
 
@@ -1078,8 +1095,8 @@ const toggleTask = async (id) => {
               </small>
             </div>
           )}
-            <button type="submit" className="add-btn">
-              <span className="btn-icon">+</span> Add Task
+            <button type="submit" className="add-btn" disabled={isAddingTask}>
+              <span className="btn-icon">+</span> {isAddingTask ? 'Adding…' : 'Add Task'}
             </button>
           </form>
         </div>

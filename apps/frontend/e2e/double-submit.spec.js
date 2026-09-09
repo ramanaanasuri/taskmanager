@@ -18,8 +18,14 @@ test('two rapid clicks on Add Task create exactly one task', async ({ page, requ
   await btn.click();
   await btn.click({ force: true }); // second click lands before any UI reaction
 
-  // Give both requests time to land, then judge by the API (authoritative).
-  await page.waitForTimeout(4000);
+  // First: wait for the create to land at all (slow backends get up to 20s).
+  await expect.poll(async () =>
+    (await apiTasks(request, token)).filter(t => t.title.includes(MARK)).length,
+    { timeout: 20_000 }
+  ).toBeGreaterThan(0);
+
+  // Then: a settle window for any would-be duplicate, and the real assertion.
+  await page.waitForTimeout(3000);
   const mine = (await apiTasks(request, token)).filter(t => t.title.includes(MARK));
   expect(mine, 'a double-click must not create duplicate tasks').toHaveLength(1);
 });
