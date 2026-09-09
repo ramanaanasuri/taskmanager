@@ -73,6 +73,16 @@ class AiGuardrailTest {
     }
 
     @Test
+    void exemptEmail_bypassesMonthlyCap() {
+        ReflectionTestUtils.setField(service, "exemptEmails", "family@example.com");
+        // hasCredit is true for a whitelisted email even with no users row at all
+        assertThat(service.hasCredit("family@example.com")).isTrue();
+        assertThat(service.hasCredit("Family@Example.COM")).isTrue();
+        // and a non-listed email still depends on the plan limit
+        assertThat(service.hasCredit("stranger@example.com")).isFalse();
+    }
+
+    @Test
     void exemptMatch_isCaseInsensitive() {
         ReflectionTestUtils.setField(service, "exemptEmails", "family@example.com");
         User u = freeUser("Family@Example.COM", 1, 200);

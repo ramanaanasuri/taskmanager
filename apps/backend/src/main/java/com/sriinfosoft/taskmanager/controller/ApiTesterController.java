@@ -36,7 +36,7 @@ public class ApiTesterController {
     @Value("${api.tester.username:admin}")
     private String testerUsername;
 
-    @Value("${api.tester.password:taskmanager2025}")
+    @Value("${api.tester.password:}")
     private String testerPassword;
 
     @Value("${api.tester.enabled:true}")
@@ -63,11 +63,11 @@ public class ApiTesterController {
             return ResponseEntity.status(403)
                 .body(Map.of("error", "API Tester is disabled"));
         }
-        // DEBUG - remove after testing!
-        System.out.println("Expected username: " + testerUsername);
-        System.out.println("Expected password length: " + testerPassword.length());
-        System.out.println("Received username: " + request.getUsername());
-        System.out.println("Received password length: " + request.getPassword().length());
+        // No password configured -> the tester door is disabled, never open.
+        if (testerPassword == null || testerPassword.isBlank()) {
+            return ResponseEntity.status(403)
+                .body(Map.of("error", "API Tester is not configured"));
+        }
         // Validate credentials
         if (testerUsername.equals(request.getUsername()) && 
             testerPassword.equals(request.getPassword())) {

@@ -51,6 +51,7 @@ public class AiUsageService {
 
     /** Read-only check used before calling the model. */
     public boolean hasCredit(String email) {
+        if (isExemptEmail(email)) return true;   // whitelist: no monthly cap
         return userRepository.findByEmail(email)
                 .map(User::canMakeAiRequest)
                 .orElse(false);
@@ -69,7 +70,7 @@ public class AiUsageService {
             return false;
         }
         User user = userOpt.get();
-        if (!user.canMakeAiRequest()) {
+        if (!isExemptEmail(email) && !user.canMakeAiRequest()) {
             return false;
         }
         user.useAiCredit();
@@ -92,15 +93,19 @@ public class AiUsageService {
     }
 
 
+    /** True when this email is on the configured exempt list (family, friends, admin). */
+    boolean isExemptEmail(String email) {
+        if (email == null || exemptEmails == null || exemptEmails.isBlank()) return false;
+        // Accept comma, semicolon, or whitespace as separators, in any mix.
+        for (String e : exemptEmails.split("[,;\\s]+")) {
+            if (e.trim().equalsIgnoreCase(email)) return true;
+        }
+        return false;
+    }
+
     /** True when this account is never throttled by the velocity guardrail. */
     boolean isExempt(User user) {
-        String email = user.getEmail();
-        if (exemptEmails != null && !exemptEmails.isBlank()) {
-            // Accept comma, semicolon, or whitespace as separators, in any mix.
-            for (String e : exemptEmails.split("[,;\\s]+")) {
-                if (e.trim().equalsIgnoreCase(email)) return true;
-            }
-        }
+        if (isExemptEmail(user.getEmail())) return true;
         // Real paying customers are exempt only when billing is live money.
         return billingLive && user.getSubscriptionPlan() != User.SubscriptionPlan.free;
     }
