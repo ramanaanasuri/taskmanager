@@ -73,7 +73,9 @@
       // Cookie on THIS host (the app host serving /reports/*), 8h, HTTPS-only.
       document.cookie = 'tester_token=' + data.token +
         '; Path=/; Max-Age=28800; Secure; SameSite=Lax';
-      const next = new URLSearchParams(window.location.search).get('next') || '/reports/';
+      const raw = new URLSearchParams(window.location.search).get('next');
+      // '/' or missing both mean "no meaningful origin" — land on the console.
+      const next = (!raw || raw === '/') ? '/reports/' : raw;
       window.location.assign(next.startsWith('/') ? next : '/reports/');
     } catch (e) {
       err.textContent = 'Could not reach the API: ' + e.message;

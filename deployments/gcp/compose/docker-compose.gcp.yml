@@ -49,6 +49,7 @@ services:
       - ./deployments/gcp/compose/reports-pages/reports-index.html:/reports/reports-index.html:ro
       - ./apps/backend/target/site/jacoco:/reports/coverage:ro
       - ./apps/backend/target/karate-reports:/reports/karate:ro
+      - ./apps/frontend/e2e/report:/reports/e2e:ro
     environment:
       FRONTEND_HOST: ${CADDY_FRONTEND_HOST:-taskmanager.gcp.sriinfosoft.com}
       API_HOST: ${CADDY_API_HOST:-api-taskmanager.gcp.sriinfosoft.com}

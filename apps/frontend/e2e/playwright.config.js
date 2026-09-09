@@ -13,7 +13,7 @@ module.exports = defineConfig({
   use: {
     baseURL: process.env.PW_BASE_URL || 'https://taskmanager.gcp.sriinfosoft.com',
     navigationTimeout: 90_000,
-    screenshot: 'only-on-failure',
-    trace: 'off',
+    screenshot: 'on',      // final-state screenshot for every test, pass or fail
+    trace: 'on',           // full film strip per test: every action with before/after screens
   },
 });
