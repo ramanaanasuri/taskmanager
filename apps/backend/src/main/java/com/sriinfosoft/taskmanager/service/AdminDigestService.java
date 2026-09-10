@@ -31,6 +31,15 @@ public class AdminDigestService {
     @Value("${admin.alert.email:}")
     private String adminAlertEmail;
 
+    // ADDED for SMS Cost Guard — digest visibility into SMS volume and cost
+    @Value("${sms.provider:sns}")
+    private String smsProvider;
+
+    @Value("${sms.daily.cap:20}")
+    private int smsDailyCap;
+
+    private static final double SMS_COST_PER_MSG = 0.0123; // blended US estimate
+
     @Scheduled(cron = "${admin.digest.cron:0 0 7 * * *}", zone = "${ai.digest.zone:America/Los_Angeles}")
     public void sendDailyAdminDigest() {
         if (adminAlertEmail == null || adminAlertEmail.isBlank()) return;
@@ -42,6 +51,7 @@ public class AdminDigestService {
         StringBuilder signups = new StringBuilder();
         TreeSet<String> active = new TreeSet<>();
         Map<String, Integer> aiCalls = new LinkedHashMap<>();
+        int smsYesterday = 0; // ADDED for SMS Cost Guard
         for (UserActivity e : events) {
             active.add(e.getEmail());
             if (UserActivity.SIGNUP.equals(e.getEventType())) {
@@ -51,8 +61,14 @@ public class AdminDigestService {
                        .append("</li>");
             } else if (UserActivity.AI_CALL.equals(e.getEventType())) {
                 aiCalls.merge(e.getEmail(), 1, Integer::sum);
+            } else if (UserActivity.SMS_SENT.equals(e.getEventType())) { // ADDED for SMS Cost Guard
+                smsYesterday++;
             }
         }
+
+        // ADDED for SMS Cost Guard — month-to-date volume via the global count query
+        long smsMonth = activityRepository.countByEventTypeAndCreatedAtAfter(
+                UserActivity.SMS_SENT, LocalDate.now().withDayOfMonth(1).atStartOfDay());
 
         StringBuilder aiRows = new StringBuilder();
         for (Map.Entry<String, Integer> en : aiCalls.entrySet()) {
@@ -82,6 +98,13 @@ public class AdminDigestService {
                         + "<table border='1' cellpadding='6' cellspacing='0'>"
                         + "<tr><th>User</th><th>Calls yesterday</th><th>Plan</th><th>Month used/limit</th></tr>"
                         + aiRows + "</table>")
+                // ADDED for SMS Cost Guard — yesterday + month-to-date volume with cost estimate
+                + "<h3>📱 SMS</h3><p><b>Yesterday:</b> " + smsYesterday
+                + " (~$" + String.format("%.2f", smsYesterday * SMS_COST_PER_MSG) + ")"
+                + " · <b>Month-to-date:</b> " + smsMonth
+                + " (~$" + String.format("%.2f", smsMonth * SMS_COST_PER_MSG) + ")"
+                + " · <b>Daily cap:</b> " + smsDailyCap + "</p>"
+                + "<p style='color:#888'>SMS sends cost real money — provider: " + smsProvider + ".</p>"
                 + (blocked.length() == 0 ? "" : "<h3>🛑 Currently blocked</h3><ul>" + blocked + "</ul>")
                 + "<p style='color:#888'>Guardrail and alerts are active; reply to nobody — this is a machine.</p>";
 

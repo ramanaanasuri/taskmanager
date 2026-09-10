@@ -10,5 +10,8 @@ public interface UserActivityRepository extends JpaRepository<UserActivity, Long
 
     long countByEmailAndEventTypeAndCreatedAtAfter(String email, String eventType, LocalDateTime after);
 
+    // ADDED for SMS Cost Guard — global daily count, not scoped to one user
+    long countByEventTypeAndCreatedAtAfter(String eventType, LocalDateTime after);
+
     List<UserActivity> findByCreatedAtBetweenOrderByCreatedAtAsc(LocalDateTime from, LocalDateTime to);
 }

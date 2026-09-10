@@ -14,6 +14,7 @@ public class UserActivity {
     public static final String SIGNUP = "signup";
     public static final String LOGIN = "login";
     public static final String AI_CALL = "ai_call";
+    public static final String SMS_SENT = "sms_sent"; // ADDED for SMS Cost Guard
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

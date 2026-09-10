@@ -8,12 +8,24 @@ import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 import com.sriinfosoft.taskmanager.model.Task;
+import com.sriinfosoft.taskmanager.model.UserActivity;
+import com.sriinfosoft.taskmanager.repository.UserActivityRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,8 +50,40 @@ public class SmsService {
     @Value("${aws.sns.secret-key}")
     private String awsSecretKey;
 
+    // ADDED for SMS provider switch: "sns" (default) or "twilio" (trial-friendly test rail)
+    @Value("${sms.provider:sns}")
+    private String smsProvider;
+
+    @Value("${twilio.account-sid:}")
+    private String twilioSid;
+
+    @Value("${twilio.auth-token:}")
+    private String twilioToken;
+
+    @Value("${twilio.from-number:}")
+    private String twilioFrom;
+
+    // ADDED for Twilio trial — when set (e.g. sms_appointment_reminders), sent as the
+    // Body instead of the real message: trial accounts only accept template names.
+    // Leave empty after upgrading to send real task text.
+    @Value("${twilio.trial-template:}")
+    private String twilioTrialTemplate;
+
     @Value("${frontend.url}")
     private String frontendUrl;
+
+    // ADDED for SMS Cost Guard — global daily cap (0 disables sending entirely)
+    @Value("${sms.daily.cap:20}")
+    private int smsDailyCap;
+
+    @Autowired
+    private UserActivityRepository userActivityRepository;
+
+    @Autowired
+    private ActivityService activityService;
+
+    // ADDED for SMS Cost Guard — remembers which day the cap alert already went out
+    private LocalDate capAlertDate;
 
     private AmazonSNS snsClient;
 
@@ -51,7 +95,11 @@ public class SmsService {
      */
     @PostConstruct
     public void init() {
-        logger.info("🔧 Initializing SMS Notification Service...");
+        logger.info("🔧 Initializing SMS Notification Service (provider: {})...", smsProvider);
+        if ("twilio".equalsIgnoreCase(smsProvider)) {
+            logger.info("✅ SMS provider is Twilio — SNS client not built.");
+            return;
+        }
         logger.debug("DEBUG: AWS SNS Region: {}", awsRegion); //ADDED for SMS Integration
 
         try {
@@ -100,7 +148,7 @@ public class SmsService {
 
         try {
             // Send SMS via AWS SNS
-            sendSms(phoneNumber, message);
+            sendSms(phoneNumber, message, task.getUserEmail()); // ADDED for SMS Cost Guard — owner email for the activity trail
             logger.info("✅ SMS sent successfully to {}", maskPhoneNumber(phoneNumber));
 
         } catch (Exception e) {
@@ -114,7 +162,17 @@ public class SmsService {
      * 
      * ADDED for SMS Integration - Core AWS SNS send method
      */
-    private void sendSms(String phoneNumber, String message) throws Exception {
+    private void sendSms(String phoneNumber, String message, String userEmail) throws Exception {
+        // ADDED for SMS Cost Guard — enforce global daily cap BEFORE any provider send
+        if (dailyCapReached(phoneNumber)) {
+            return; // skip silently; scheduler marks the task notified, no retry storm
+        }
+        // ADDED for SMS provider switch
+        if ("twilio".equalsIgnoreCase(smsProvider)) {
+            sendViaTwilio(phoneNumber, message);
+            recordSmsSent(userEmail, phoneNumber); // ADDED for SMS Cost Guard
+            return;
+        }
         logger.debug("DEBUG: Sending SMS via AWS SNS..."); //ADDED for SMS Integration
         logger.debug("DEBUG: SNS Client initialized: {}", (snsClient != null)); //ADDED for SMS Integration
 
@@ -155,10 +213,81 @@ public class SmsService {
                 result.getMessageId(), 
                 result.getSdkHttpMetadata().getHttpStatusCode()); //ADDED for SMS Integration
 
+            recordSmsSent(userEmail, phoneNumber); // ADDED for SMS Cost Guard
+
         } catch (Exception e) {
             logger.error("❌ AWS SNS publish failed: {}", e.getMessage(), e);
             logger.debug("DEBUG: Exception type: {}", e.getClass().getName()); //ADDED for SMS Integration
             throw e;
+        }
+    }
+
+    /**
+     * ADDED for SMS Cost Guard — true when today's global send count has hit the cap.
+     * Alerts the admin once per day (in-memory marker; a restart re-alerts once, harmless).
+     */
+    private boolean dailyCapReached(String phoneNumber) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        long sentToday = userActivityRepository.countByEventTypeAndCreatedAtAfter(UserActivity.SMS_SENT, startOfDay);
+        if (sentToday < smsDailyCap) {
+            return false;
+        }
+        logger.warn("⚠️ SMS daily cap reached ({}/{}) — skipping send to {}",
+                sentToday, smsDailyCap, maskPhoneNumber(phoneNumber));
+        LocalDate today = LocalDate.now();
+        if (!today.equals(capAlertDate)) {
+            capAlertDate = today;
+            activityService.alertAdmin("SMS daily cap reached (" + smsDailyCap + ")",
+                    "<h3>📱 SMS daily cap reached</h3>"
+                    + "<p>" + smsDailyCap + " SMS have been sent today; further sends are skipped until midnight.</p>"
+                    + "<p>Provider: " + smsProvider + " · raise SMS_DAILY_CAP in .env if this is expected.</p>");
+        }
+        return true;
+    }
+
+    /**
+     * ADDED for SMS Cost Guard — one activity row per successful send, both rails.
+     * Uses ActivityService so a failed log write never breaks the send itself.
+     */
+    private void recordSmsSent(String userEmail, String phoneNumber) {
+        activityService.record(userEmail, UserActivity.SMS_SENT,
+                "to " + maskPhoneNumber(phoneNumber) + " via " + smsProvider, null);
+    }
+
+    /**
+     * ADDED for SMS provider switch — Twilio Messages API via plain HTTP.
+     * One form-encoded POST with Basic auth: no SDK dependency required.
+     * Trial accounts send only to verified caller IDs and prefix the body
+     * with a trial notice — both fine for end-to-end feature testing.
+     */
+    private void sendViaTwilio(String phoneNumber, String message) throws Exception {
+        if (twilioSid.isBlank() || twilioToken.isBlank() || twilioFrom.isBlank()) {
+            throw new IllegalStateException("Twilio provider selected but TWILIO_* env is incomplete");
+        }
+        // ADDED for Twilio trial — trial API rejects free-form bodies (error 572006);
+        // substitute the configured predefined template name when one is set.
+        if (twilioTrialTemplate != null && !twilioTrialTemplate.isBlank()) {
+            logger.info("ℹ️ Twilio trial template '{}' used in place of task text (upgrade + unset TWILIO_TRIAL_TEMPLATE for real bodies)", twilioTrialTemplate);
+            message = twilioTrialTemplate;
+        }
+        String form = "To=" + URLEncoder.encode(phoneNumber, StandardCharsets.UTF_8)
+                + "&From=" + URLEncoder.encode(twilioFrom, StandardCharsets.UTF_8)
+                + "&Body=" + URLEncoder.encode(message, StandardCharsets.UTF_8);
+        String auth = Base64.getEncoder().encodeToString(
+                (twilioSid + ":" + twilioToken).getBytes(StandardCharsets.UTF_8));
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.twilio.com/2010-04-01/Accounts/" + twilioSid + "/Messages.json"))
+                .header("Authorization", "Basic " + auth)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(form))
+                .build();
+        HttpResponse<String> res = HttpClient.newHttpClient()
+                .send(req, HttpResponse.BodyHandlers.ofString());
+        if (res.statusCode() >= 200 && res.statusCode() < 300) {
+            logger.info("✅ SMS sent via Twilio to {} (status {})", phoneNumber, res.statusCode());
+        } else {
+            logger.error("❌ Twilio send failed: status {} body {}", res.statusCode(), res.body());
+            throw new IllegalStateException("Twilio send failed: " + res.statusCode());
         }
     }
 
@@ -265,7 +394,8 @@ public class SmsService {
         String testMessage = "Test SMS from Task Manager. SMS service is working correctly! ✅";
         
         try {
-            sendSms(phoneNumber, testMessage);
+            // ADDED for SMS Cost Guard — test sends cost money too, so they count toward the cap
+            sendSms(phoneNumber, testMessage, "sms-test@sriinfosoft.local");
             logger.info("✅ Test SMS sent to {}", maskPhoneNumber(phoneNumber));
         } catch (Exception e) {
             logger.error("❌ Test SMS failed: {}", e.getMessage(), e);

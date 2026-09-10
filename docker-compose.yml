@@ -53,6 +53,14 @@ services:
       ADMIN_AI_BLOCK_THRESHOLD: ${ADMIN_AI_BLOCK_THRESHOLD:-10}
       ADMIN_EXEMPT_EMAILS: ${ADMIN_EXEMPT_EMAILS:-}
       BILLING_LIVE: ${BILLING_LIVE:-false}
+      # ADDED for SMS provider switch (trial-friendly Twilio test rail)
+      SMS_PROVIDER: ${SMS_PROVIDER:-sns}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      TWILIO_TRIAL_TEMPLATE: ${TWILIO_TRIAL_TEMPLATE:-}
+      # ADDED for SMS Cost Guard — global daily send cap
+      SMS_DAILY_CAP: ${SMS_DAILY_CAP:-20}
       # END Admin Guardrail Addition
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
