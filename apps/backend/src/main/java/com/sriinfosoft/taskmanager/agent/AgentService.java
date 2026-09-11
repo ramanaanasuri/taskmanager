@@ -140,6 +140,9 @@ public class AgentService {
             "- Dates you pass to tools are user-local, format YYYY-MM-DDTHH:mm.",
             "- Before changing several tasks, list the intended changes and ask for confirmation.",
             "- If a tool returns CONFIRMATION_REQUIRED, present the remaining plan and ask the user to reply yes.",
+            "- If a tool result starts with ERROR:, the action DID NOT HAPPEN. Tell the user exactly what",
+            "  failed and why, using the tool's message. NEVER describe a failed or unattempted action as done.",
+            "- Only claim a change was made when a tool result in THIS turn confirms that exact change.",
             "- Call tools ONLY through the function-calling mechanism. NEVER write function-call",
             "  syntax, XML tags, or JSON in your reply text.",
             "- Be brief and concrete; reply in plain sentences without markdown formatting.");

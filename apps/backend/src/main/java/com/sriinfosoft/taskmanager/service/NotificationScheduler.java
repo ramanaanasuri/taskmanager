@@ -11,7 +11,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -130,14 +129,27 @@ public class NotificationScheduler {
      * Send push notification for a task AND log the result
      * MODIFIED for Email Integration - Updated logging to distinguish between push and email
      */
+    /**
+     * ADDED for notification formatting — "HIGH" → "High" for readable bodies.
+     */
+    private String prettyPriority(Object priority) {
+        if (priority == null) {
+            return "Normal";
+        }
+        String p = priority.toString();
+        return p.isEmpty() ? "Normal" : p.charAt(0) + p.substring(1).toLowerCase();
+    }
+
     private void sendPushNotificationWithLogging(Task task) {
         logger.debug("DEBUG: Preparing PUSH notification for task {}", task.getId()); //ADDED for Email Integration
         
         String title = "⏰ Task Due: " + task.getTitle();
+        // MODIFIED for notification formatting — friendly local time via SmsService's
+        // shared formatter (was a raw UTC ISO timestamp, misleading and unpolished)
         String body = String.format(
-            "Priority: %s | Due: %s",
-            task.getPriority(),
-            task.getDueDate().truncatedTo(ChronoUnit.MINUTES)
+            "Due %s · %s priority",
+            smsService.formatDueTime(task.getDueDate()),
+            prettyPriority(task.getPriority())
         );
         
         try {

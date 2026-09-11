@@ -209,14 +209,17 @@ public class TaskAgentTools {
 
         public String name() { return "schedule_notification"; }
         public String description() {
-            return "Enable or disable a notification channel (email, push, sms) for one task by id.";
+            return "Enable or disable a notification channel (email, push, sms) for one task by id. "
+                 + "For sms, optionally pass phoneNumber (E.164, e.g. +15551234567) to set or replace "
+                 + "the task's SMS number in the same call.";
         }
         public String parametersSchema() {
             return """
                 {"type":"object","properties":{
                    "id":{"type":"integer"},
                    "channel":{"type":"string","enum":["email","push","sms"]},
-                   "enabled":{"type":"boolean"}
+                   "enabled":{"type":"boolean"},
+                   "phoneNumber":{"type":"string","description":"E.164 number for sms, e.g. +15551234567; only with channel=sms"}
                  },"required":["id","channel","enabled"]}""";
         }
         public boolean mutatesExistingData() { return true; }
@@ -232,8 +235,16 @@ public class TaskAgentTools {
                 case "email" -> t.setEmailEnabled(enabled);
                 case "push"  -> t.setNotificationsEnabled(enabled);
                 case "sms"   -> {
+                    String phone = args.path("phoneNumber").asText("").trim();
+                    if (enabled && !phone.isEmpty()) {
+                        if (!phone.matches("^\\+[1-9]\\d{1,14}$")) {
+                            return "ERROR: phone number must be E.164 format like +15551234567; SMS was NOT enabled.";
+                        }
+                        t.setPhoneNumber(phone);
+                    }
                     if (enabled && (t.getPhoneNumber() == null || t.getPhoneNumber().isBlank())) {
-                        return "ERROR: this task has no phone number on file; SMS must be set up in the task form first.";
+                        return "ERROR: this task has no phone number on file; ask the user for an E.164 number "
+                             + "(e.g. +15551234567) and call this tool again with phoneNumber, or they can use the task form.";
                     }
                     t.setSmsEnabled(enabled);
                 }

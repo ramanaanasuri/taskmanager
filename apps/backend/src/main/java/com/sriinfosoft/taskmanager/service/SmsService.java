@@ -26,6 +26,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,6 +71,11 @@ public class SmsService {
     // Leave empty after upgrading to send real task text.
     @Value("${twilio.trial-template:}")
     private String twilioTrialTemplate;
+
+    // ADDED for notification formatting — user-facing times render in this zone
+    // (reuses the digest zone property; overridable via DIGEST_ZONE)
+    @Value("${ai.digest.zone:America/Los_Angeles}")
+    private String displayZone;
 
     @Value("${frontend.url}")
     private String frontendUrl;
@@ -293,30 +301,51 @@ public class SmsService {
 
     /**
      * Build SMS message content
-     * Similar to EmailService.buildEmailContent() but for SMS (160 character limit consideration)
-     * 
-     * ADDED for SMS Integration - Message formatting
+     * MODIFIED for notification formatting — professional transactional style:
+     * brand prefix, quoted title, friendly local time, CTIA opt-out line.
+     * No emoji (keeps GSM-7 encoding → 160 chars/segment instead of UCS-2's 70).
      */
     private String buildSmsMessage(Task task) {
         logger.debug("DEBUG: Building SMS message for task {}", task.getId()); //ADDED for SMS Integration
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a");
-        String formattedDate = task.getDueDate() != null 
-            ? task.getDueDate().format(formatter) 
-            : "Not set";
+        String prioritySuffix = task.getPriority() != null
+                && "HIGH".equals(task.getPriority().toString()) ? " (HIGH priority)" : "";
 
-        // Build concise SMS message (considering 160 character SMS limit)
-        // Format: ⏰ Task Due: Title | Priority: HIGH | Due: Dec 25 at 3:00 PM
         String message = String.format(
-            "⏰ Task Due: %s | Priority: %s | Due: %s",
-            truncateText(task.getTitle(), 40),  // Limit title length
-            task.getPriority().toString(),
-            formattedDate
+            "TaskManager: \"%s\" is due %s%s. Reply STOP to opt out.",
+            truncateText(task.getTitle(), 40),
+            formatDueTime(task.getDueDate()),
+            prioritySuffix
         );
 
         logger.debug("DEBUG: SMS message built - Length: {} chars", message.length()); //ADDED for SMS Integration
         
         return message;
+    }
+
+    /**
+     * ADDED for notification formatting — renders a stored (UTC) due time as a
+     * friendly phrase in the configured display zone: "today at 4:45 PM PDT",
+     * "tomorrow at 9:00 AM PST", or "on Tue, Oct 29 at 3:00 PM PDT".
+     * Shared by SMS and push bodies so both rails always agree.
+     */
+    public String formatDueTime(LocalDateTime dueUtc) {
+        if (dueUtc == null) {
+            return "soon";
+        }
+        ZoneId zone = ZoneId.of(displayZone);
+        ZonedDateTime local = dueUtc.atZone(ZoneOffset.UTC).withZoneSameInstant(zone);
+        LocalDate today = LocalDate.now(zone);
+        String time = local.format(DateTimeFormatter.ofPattern("h:mm a zzz"));
+        LocalDate d = local.toLocalDate();
+        if (d.equals(today)) {
+            return "today at " + time;
+        }
+        if (d.equals(today.plusDays(1))) {
+            return "tomorrow at " + time;
+        }
+        String datePattern = d.getYear() == today.getYear() ? "EEE, MMM d" : "EEE, MMM d, yyyy";
+        return "on " + local.format(DateTimeFormatter.ofPattern(datePattern)) + " at " + time;
     }
 
     /**
@@ -391,7 +420,7 @@ public class SmsService {
             throw new IllegalArgumentException("Invalid phone number format");
         }
 
-        String testMessage = "Test SMS from Task Manager. SMS service is working correctly! ✅";
+        String testMessage = "TaskManager: test message - SMS service is working. Reply STOP to opt out.";
         
         try {
             // ADDED for SMS Cost Guard — test sends cost money too, so they count toward the cap
