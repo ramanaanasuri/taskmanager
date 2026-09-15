@@ -1095,6 +1095,11 @@ const toggleTask = async (id) => {
               }}>
                 📞 Use E.164 format: +[country code][number] (e.g., +15055550006 for USA)
               </small>
+              <small style={{ display: 'block', color: '#64748b', fontSize: '0.8rem', marginTop: '0.6rem', lineHeight: 1.5 }}>
+                By enabling SMS reminders, you agree to receive automated transactional task-reminder texts from SriInfoSoft Task Manager Pro for tasks you select. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe or HELP for help. SMS consent is optional and is not required to use Task Manager Pro.{' '}
+                <a href="https://sriinfosoft.com/privacy.html" target="_blank" rel="noreferrer">Privacy Policy</a>{' | '}
+                <a href="https://sriinfosoft.com/terms.html" target="_blank" rel="noreferrer">Terms of Service</a>
+              </small>
             </div>
           )}
             <button type="submit" className="add-btn" disabled={isAddingTask}>
@@ -1439,6 +1444,11 @@ const toggleTask = async (id) => {
                     marginTop: '0.35rem'
                   }}>
                     📞 Use E.164 format: +[country code][number] (e.g., +15055550006 for USA)
+                  </small>
+                  <small style={{ display: 'block', color: '#64748b', fontSize: '0.8rem', marginTop: '0.6rem', lineHeight: 1.5 }}>
+                    By enabling SMS reminders, you agree to receive automated transactional task-reminder texts from SriInfoSoft Task Manager Pro for tasks you select. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe or HELP for help. SMS consent is optional and is not required to use Task Manager Pro.{' '}
+                    <a href="https://sriinfosoft.com/privacy.html" target="_blank" rel="noreferrer">Privacy Policy</a>{' | '}
+                    <a href="https://sriinfosoft.com/terms.html" target="_blank" rel="noreferrer">Terms of Service</a>
                   </small>
                 </div>
               )}
