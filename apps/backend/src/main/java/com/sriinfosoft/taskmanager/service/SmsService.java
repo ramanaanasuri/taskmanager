@@ -170,6 +170,23 @@ public class SmsService {
      * 
      * ADDED for SMS Integration - Core AWS SNS send method
      */
+    /**
+     * ADDED for reachability — send a one-time verification code, reusing the
+     * same provider path and daily cost guard as every other SMS. Kept minimal:
+     * message wording only; delivery/guard logic is unchanged below.
+     */
+    public void sendOtpSms(String phoneNumber, String code, String userEmail) throws Exception {
+        sendSms(phoneNumber, "Your verification code is " + code, userEmail);
+    }
+
+    /**
+     * ADDED for reachability/reach — send a freeform message (e.g. a lobby nudge),
+     * reusing the same provider path and daily cost guard.
+     */
+    public void sendFreeformSms(String phoneNumber, String message, String userEmail) throws Exception {
+        sendSms(phoneNumber, message, userEmail);
+    }
+
     private void sendSms(String phoneNumber, String message, String userEmail) throws Exception {
         // ADDED for SMS Cost Guard — enforce global daily cap BEFORE any provider send
         if (dailyCapReached(phoneNumber)) {

@@ -6,6 +6,7 @@ import { subscribeToPushNotifications } from './utils/pushNotifications';
 import AiTaskInput from './AiTaskInput';
 import AgentChat from './AgentChat';
 import InsightHub from './InsightHub';
+import LiveSessions from './LiveSessions';
 import { convertLocalToUTC } from './utils/dateUtils';  //ADDED - for timezone conversion
 // ============================================
 // ADDED for Stripe Payment Integration
@@ -855,7 +856,8 @@ const toggleTask = async (id) => {
       {authToken && (
         <div style={{ display: 'flex', gap: '2px', padding: '0 16px', background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
           {[{ id: 'tasks', label: 'Tasks' },
-            ...(hasInsightHub ? [{ id: 'insighthub', label: 'InsightHub' }] : [])
+            ...(hasInsightHub ? [{ id: 'insighthub', label: 'InsightHub' }] : []),
+            { id: 'livesessions', label: 'Live Sessions' }
           ].map((t) => {
             const on = activeTab === t.id;
             return (
@@ -1221,6 +1223,12 @@ const toggleTask = async (id) => {
             authToken={authToken}
             onLimitReached={() => { setSubscriptionPromptReason('ai-limit'); setShowSubscriptionModal(true); }}
           />
+        </div>
+      )}
+
+      {activeTab === 'livesessions' && (
+        <div style={{ padding: '24px 16px', background: '#faf9ff', minHeight: '60vh' }}>
+          <LiveSessions authToken={authToken} />
         </div>
       )}
 
