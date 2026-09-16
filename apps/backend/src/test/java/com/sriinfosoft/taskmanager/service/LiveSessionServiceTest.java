@@ -2,6 +2,7 @@ package com.sriinfosoft.taskmanager.service;
 
 import com.sriinfosoft.taskmanager.model.MentorProfile;
 import com.sriinfosoft.taskmanager.model.SessionOffering;
+import com.sriinfosoft.taskmanager.model.MentorSkill;
 import com.sriinfosoft.taskmanager.model.Skill;
 import com.sriinfosoft.taskmanager.repository.*;
 import com.sriinfosoft.taskmanager.service.LiveSessionService.CreateOfferingRequest;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +38,7 @@ class LiveSessionServiceTest {
     @Mock SessionOfferingRepository offeringRepo;
     @Mock MeetingProvider meetingProvider;
     @Mock ReachabilityService reachability;
+    @Mock SessionParticipantRepository partRepo;
 
     LiveSessionService service;
 
@@ -44,7 +47,7 @@ class LiveSessionServiceTest {
     @BeforeEach
     void setup() {
         service = new LiveSessionService(skillRepo, mentorRepo, mentorSkillRepo,
-                offeringRepo, meetingProvider, reachability);
+                offeringRepo, meetingProvider, reachability, partRepo);
     }
 
     private CreateOfferingRequest validReq() {
@@ -55,6 +58,42 @@ class LiveSessionServiceTest {
     }
     private MentorProfile mentor() { MentorProfile mp = new MentorProfile(MENTOR); mp.setId(7L); return mp; }
     private Skill activeSkill() { Skill s = new Skill("AWS", "aws"); s.setId(1L); s.setActive(true); return s; }
+
+    // ---- public mentor profile (learner views credentials) ----
+
+    @Test
+    void publicMentorProfile_returnsBioSkillsAndOnlyScheduledSessions() {
+        MentorProfile mp = mentor();                 // id 7
+        mp.setBio("20+ years investing");
+        when(mentorRepo.findByMentorEmail(MENTOR)).thenReturn(Optional.of(mp));
+        when(mentorSkillRepo.findByMentorProfileId(7L)).thenReturn(List.of(new MentorSkill(7L, 1L)));
+        when(skillRepo.findAllById(List.of(1L))).thenReturn(List.of(activeSkill()));  // "AWS"
+
+        SessionOffering scheduled = new SessionOffering();
+        scheduled.setId(50L); scheduled.setMentorEmail(MENTOR); scheduled.setTitle("Options 101");
+        scheduled.setStatus(SessionOffering.Status.SCHEDULED); scheduled.setCapacity(3);
+        scheduled.setStartTime(LocalDateTime.now().plusDays(1));
+        SessionOffering draft = new SessionOffering();
+        draft.setId(51L); draft.setMentorEmail(MENTOR); draft.setStatus(SessionOffering.Status.DRAFT);
+        when(offeringRepo.findByMentorEmailOrderByStartTimeDesc(MENTOR)).thenReturn(List.of(scheduled, draft));
+        when(partRepo.countBySessionOfferingId(50L)).thenReturn(1L);  // 1 of 3 taken
+
+        LiveSessionService.PublicMentorView view = service.getPublicMentorProfile(MENTOR);
+
+        assertThat(view.bio()).isEqualTo("20+ years investing");
+        assertThat(view.skills()).containsExactly("AWS");
+        assertThat(view.sessions()).hasSize(1);                       // DRAFT excluded
+        assertThat(view.sessions().get(0).title()).isEqualTo("Options 101");
+        assertThat(view.sessions().get(0).seatsLeft()).isEqualTo(2);  // 3 - 1
+    }
+
+    @Test
+    void publicMentorProfile_notFound_throws404() {
+        when(mentorRepo.findByMentorEmail("ghost@example.com")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.getPublicMentorProfile("ghost@example.com"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Mentor not found");
+    }
 
     @Test
     void createOffering_unverified_isForbidden() {

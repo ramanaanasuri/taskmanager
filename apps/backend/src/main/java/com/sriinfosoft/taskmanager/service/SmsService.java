@@ -329,7 +329,7 @@ public class SmsService {
                 && "HIGH".equals(task.getPriority().toString()) ? " (HIGH priority)" : "";
 
         String message = String.format(
-            "TaskManager: \"%s\" is due %s%s. Reply STOP to opt out.",
+            "Task Manager Pro: \"%s\" is due %s%s. Reply STOP to opt out.",
             truncateText(task.getTitle(), 40),
             formatDueTime(task.getDueDate()),
             prioritySuffix
@@ -437,7 +437,7 @@ public class SmsService {
             throw new IllegalArgumentException("Invalid phone number format");
         }
 
-        String testMessage = "TaskManager: test message - SMS service is working. Reply STOP to opt out.";
+        String testMessage = "Task Manager Pro: test message - SMS service is working. Reply STOP to opt out.";
         
         try {
             // ADDED for SMS Cost Guard — test sends cost money too, so they count toward the cap

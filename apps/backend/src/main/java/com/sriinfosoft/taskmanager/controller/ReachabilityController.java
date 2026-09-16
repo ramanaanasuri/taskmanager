@@ -24,6 +24,14 @@ public class ReachabilityController {
         this.service = service;
     }
 
+    @GetMapping("/phone")
+    public ResponseEntity<?> verifiedPhone() {
+        String email = currentEmail();
+        if (email == null) return unauth();
+        String phone = service.verifiedPhone(email);
+        return ResponseEntity.ok(java.util.Map.of("verified", phone != null, "phone", phone == null ? "" : phone));
+    }
+
     @GetMapping("/self")
     public ResponseEntity<?> self() {
         String email = currentEmail();

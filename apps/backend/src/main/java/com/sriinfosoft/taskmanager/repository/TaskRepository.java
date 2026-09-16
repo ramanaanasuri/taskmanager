@@ -22,7 +22,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * @return list of tasks due for notification
      */
     @Query("SELECT t FROM Task t WHERE " +
-    "t.notificationsEnabled = true AND " +
+    "(t.notificationsEnabled = true OR t.emailEnabled = true OR t.smsEnabled = true) AND " +
     "t.completed = :completed AND " +
     "t.dueDate BETWEEN :start AND :end AND " +
     "(t.reminderSent = false OR t.reminderSent IS NULL) " +

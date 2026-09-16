@@ -41,6 +41,7 @@ public class SessionOffering {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
 

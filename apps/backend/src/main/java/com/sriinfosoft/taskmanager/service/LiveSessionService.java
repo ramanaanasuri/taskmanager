@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,23 +25,50 @@ public class LiveSessionService {
     private final SessionOfferingRepository offeringRepo;
     private final MeetingProvider meetingProvider;
     private final ReachabilityService reachability;
+    private final SessionParticipantRepository partRepo;
 
     public LiveSessionService(SkillRepository skillRepo,
                               MentorProfileRepository mentorRepo,
                               MentorSkillRepository mentorSkillRepo,
                               SessionOfferingRepository offeringRepo,
                               MeetingProvider meetingProvider,
-                              ReachabilityService reachability) {
+                              ReachabilityService reachability,
+                              SessionParticipantRepository partRepo) {
         this.skillRepo = skillRepo;
         this.mentorRepo = mentorRepo;
         this.mentorSkillRepo = mentorSkillRepo;
         this.offeringRepo = offeringRepo;
         this.meetingProvider = meetingProvider;
         this.reachability = reachability;
+        this.partRepo = partRepo;
     }
 
     public List<Skill> listSkills() {
         return skillRepo.findByActiveTrueOrderByName();
+    }
+
+    /**
+     * Public mentor profile a learner sees to evaluate credentials before joining:
+     * bio, skills taught, and the mentor's currently-open (SCHEDULED) sessions.
+     * Read-only, no private data. Not gated (browse-level, any signed-in user).
+     */
+    public PublicMentorView getPublicMentorProfile(String email) {
+        MentorProfile mp = mentorRepo.findByMentorEmail(email).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Mentor not found"));
+        List<Long> skillIds = mentorSkillRepo.findByMentorProfileId(mp.getId())
+                .stream().map(MentorSkill::getSkillId).toList();
+        List<String> skillNames = skillRepo.findAllById(skillIds)
+                .stream().map(Skill::getName).toList();
+        List<PublicOffering> sessions = new ArrayList<>();
+        for (SessionOffering o : offeringRepo.findByMentorEmailOrderByStartTimeDesc(email)) {
+            if (o.getStatus() != SessionOffering.Status.SCHEDULED) continue;
+            long count = partRepo.countBySessionOfferingId(o.getId());
+            int seatsLeft = Math.max(0, o.getCapacity() - (int) count);
+            sessions.add(new PublicOffering(o.getId(), o.getTitle(), o.getDescription(),
+                    o.getStartTime(), o.getDurationMin(), o.getCapacity(), seatsLeft,
+                    o.getStatus().name(), o.getRateCurrency(), o.getRateAmount(), o.getRateDescription()));
+        }
+        return new PublicMentorView(mp.getMentorEmail(), mp.getBio(), mp.isActive(), skillNames, sessions);
     }
 
     public MentorProfileView getMentorProfile(String email) {
@@ -158,6 +186,7 @@ public class LiveSessionService {
         public Long skillId;
         public String title;
         public String description;
+        @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
         public LocalDateTime startTime;
         public int durationMin;
         public int capacity;
@@ -168,4 +197,11 @@ public class LiveSessionService {
 
     public record MentorProfileView(Long id, String mentorEmail, String bio,
                                     boolean active, List<Long> skillIds) {}
+
+    public record PublicMentorView(String mentorEmail, String bio, boolean active,
+                                   List<String> skills, List<PublicOffering> sessions) {}
+
+    public record PublicOffering(Long id, String title, String description, LocalDateTime startTime,
+                                 int durationMin, int capacity, int seatsLeft, String status,
+                                 String rateCurrency, java.math.BigDecimal rateAmount, String rateDescription) {}
 }

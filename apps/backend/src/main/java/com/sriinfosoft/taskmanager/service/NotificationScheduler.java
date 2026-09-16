@@ -42,6 +42,10 @@ public class NotificationScheduler {
     @Autowired
     private NotificationLogRepository notificationLogRepository;
 
+    //ADDED for SMS security — verify the phone belongs to the user before sending
+    @Autowired
+    private ReachabilityService reachabilityService;
+
     /**
      * Runs every minute to check for tasks that are due
      * cron expression: "0 * * * * *" means: at second 0 of every minute
@@ -141,6 +145,11 @@ public class NotificationScheduler {
     }
 
     private void sendPushNotificationWithLogging(Task task) {
+        // Check if push is enabled for this task (was missing — push fired even when the box was unchecked)
+        if (task.getNotificationsEnabled() == null || !task.getNotificationsEnabled()) {
+            logger.debug("⏭️ Push notifications disabled for task {}", task.getId());
+            return;
+        }
         logger.debug("DEBUG: Preparing PUSH notification for task {}", task.getId()); //ADDED for Email Integration
         
         String title = "⏰ Task Due: " + task.getTitle();
@@ -236,6 +245,15 @@ public class NotificationScheduler {
         // Check if phone number is set
         if (task.getPhoneNumber() == null || task.getPhoneNumber().trim().isEmpty()) {
             logger.warn("⚠️ SMS enabled but no phone number set for task {}", task.getId()); //ADDED for SMS Integration
+            return;
+        }
+
+        // SECURITY GATE (#3): only ever text a number the user has VERIFIED as their own.
+        // Protects against texting a stranger's number and satisfies A2P consent.
+        if (!reachabilityService.isVerifiedPhone(task.getUserEmail(), task.getPhoneNumber())) {
+            logger.warn("⏭️ SMS SKIPPED for task {} — phone not verified for {}",
+                    task.getId(), task.getUserEmail());
+            logNotificationFailure(task, "sms", "skipped - phone not verified for user");
             return;
         }
         

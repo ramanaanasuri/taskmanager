@@ -50,6 +50,16 @@ public class ChannelVerification {
     @Column(name = "last_send_failed_at")
     private LocalDateTime lastSendFailedAt;
 
+    /** Failed confirm attempts on the current code — brute-force guard. */
+    @Column(name = "attempts", nullable = false)
+    private int attempts = 0;
+
+    /** The last CONFIRMED value (phone/email). Set only on successful confirm;
+     *  never cleared by requesting a new code — so a re-verify never drops the
+     *  currently-verified number the send-gate relies on. */
+    @Column(name = "verified_value")
+    private String verifiedValue;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -95,4 +105,10 @@ public class ChannelVerification {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public int getAttempts() { return attempts; }
+    public void setAttempts(int attempts) { this.attempts = attempts; }
+
+    public String getVerifiedValue() { return verifiedValue; }
+    public void setVerifiedValue(String verifiedValue) { this.verifiedValue = verifiedValue; }
 }

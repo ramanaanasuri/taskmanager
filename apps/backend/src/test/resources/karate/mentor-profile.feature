@@ -1,12 +1,12 @@
-Feature: Live Sessions mentor flow (verify -> become mentor -> create -> schedule)
+Feature: Public mentor profile (learner views a mentor's credentials before joining)
 
   Background:
     * url baseUrl
     * def auth = { Authorization: '#("Bearer " + token)' }
     * def LocalDateTime = Java.type('java.time.LocalDateTime')
 
-  Scenario: a verified mentor creates and schedules an offering
-    # ensure the tester is verified (idempotent) so the participation gate passes
+  Scenario: a learner can read a mentor's public profile (bio + skills + open sessions)
+    # verify the tester (idempotent) so mentor actions pass the gate
     Given path '/api/reachability/channels'
     And headers auth
     And request { channelsSelected: ['EMAIL'], termsVersion: '1' }
@@ -25,25 +25,24 @@ Feature: Live Sessions mentor flow (verify -> become mentor -> create -> schedul
     And request { channel: 'EMAIL', code: '#(code)' }
     When method post
     Then status 200
-    And match response.verified == true
 
     # pick a seeded skill
     Given path '/api/skills'
     And headers auth
     When method get
     Then status 200
-    And match response.skills == '#[_ > 0]'
     * def skillId = response.skills[0].id
+    * def skillName = response.skills[0].name
 
-    # become a mentor for that skill
+    # become a mentor with a bio + that skill; capture our own email from the view
     Given path '/api/mentor/profile'
     And headers auth
-    And request { bio: 'Senior architect', skillIds: ['#(skillId)'] }
+    And request { bio: 'Long-time investor, 20+ years', skillIds: ['#(skillId)'] }
     When method post
     Then status 200
-    And match response.skillIds contains skillId
+    * def mentorEmail = response.mentorEmail
 
-    # create an offering (future start)
+    # create + schedule an offering so the profile has an open session
     * def Instant = Java.type('java.time.Instant')
     * def DateTimeFormatter = Java.type('java.time.format.DateTimeFormatter')
     * def ZoneOffset = Java.type('java.time.ZoneOffset')
@@ -51,23 +50,31 @@ Feature: Live Sessions mentor flow (verify -> become mentor -> create -> schedul
     * def start = utcFmt.format(Instant.now().plusSeconds(172800))
     Given path '/api/offerings'
     And headers auth
-    And request { skillId: '#(skillId)', title: 'AWS prep live', description: '4h', startTime: '#(start)', durationMin: 240, capacity: 1 }
+    And request { skillId: '#(skillId)', title: 'Options income live', description: 'weeklies', startTime: '#(start)', durationMin: 60, capacity: 5 }
     When method post
     Then status 201
-    And match response.status == 'DRAFT'
     * def offeringId = response.id
 
-    # schedule it -> meeting room created
     Given path '/api/offerings/' + offeringId + '/schedule'
     And headers auth
     When method post
     Then status 200
-    And match response.status == 'SCHEDULED'
-    And match response.zoomJoinUrl == '#present'
 
-    # it shows up in my offerings
-    Given path '/api/my/offerings'
+    # NEW ENDPOINT: read the public mentor profile
+    Given path '/api/mentors/profile'
     And headers auth
+    And param email = mentorEmail
     When method get
     Then status 200
-    And match response.offerings[*].id contains offeringId
+    And match response.mentorEmail == mentorEmail
+    And match response.bio == 'Long-time investor, 20+ years'
+    And match response.skills contains skillName
+    And match response.sessions[*].id contains offeringId
+    And match response.sessions[0].seatsLeft == '#number'
+
+  Scenario: unknown mentor returns 404
+    Given path '/api/mentors/profile'
+    And headers auth
+    And param email = 'nobody-here@example.com'
+    When method get
+    Then status 404

@@ -131,6 +131,91 @@ class ReachabilityServiceTest {
         assertThat(service.isVerified(USER)).isFalse();          // PUSH is best-effort, never counts
     }
 
+    // ---- security hardening ----
+
+    @Test
+    void confirmCode_locksAfterMaxAttempts() {
+        props.setOtpMaxAttempts(3);
+        ChannelVerification cv = pending(Channel.SMS, "123456", LocalDateTime.now().plusMinutes(5));
+        when(cvRepo.findByUserEmailAndChannel(USER, Channel.SMS)).thenReturn(Optional.of(cv));
+
+        assertThat(service.confirmCode(USER, Channel.SMS, "000000")).isFalse();   // 1
+        assertThat(service.confirmCode(USER, Channel.SMS, "000001")).isFalse();   // 2
+        assertThat(service.confirmCode(USER, Channel.SMS, "000002")).isFalse();   // 3 -> lock
+        assertThat(cv.getCode()).isNull();                                        // code burned
+        // even the CORRECT code now fails — brute-force window is closed
+        assertThat(service.confirmCode(USER, Channel.SMS, "123456")).isFalse();
+        assertThat(cv.getStatus()).isEqualTo(Status.PENDING);
+    }
+
+    @Test
+    void confirmCode_promotesVerifiedValue() {
+        ChannelVerification cv = pending(Channel.SMS, "123456", LocalDateTime.now().plusMinutes(5));
+        cv.setValue("+15105551057");
+        when(cvRepo.findByUserEmailAndChannel(USER, Channel.SMS)).thenReturn(Optional.of(cv));
+
+        assertThat(service.confirmCode(USER, Channel.SMS, "123456")).isTrue();
+        assertThat(cv.getVerifiedValue()).isEqualTo("+15105551057");   // send-gate reads this
+    }
+
+    @Test
+    void isVerifiedPhone_trueForConfirmedNumber_ignoringFormatting() {
+        ChannelVerification cv = verified(Channel.SMS);
+        cv.setVerifiedValue("+15105551057");
+        when(cvRepo.findByUserEmailAndChannel(USER, Channel.SMS)).thenReturn(Optional.of(cv));
+
+        assertThat(service.isVerifiedPhone(USER, "+1 510 555 1057")).isTrue();   // normalized match
+        assertThat(service.isVerifiedPhone(USER, "(510) 555-1057")).isFalse();   // missing country code -> not equal
+        assertThat(service.isVerifiedPhone(USER, "+19995551057")).isFalse();     // different number
+    }
+
+    @Test
+    void isVerifiedPhone_falseWhenNoVerifiedValue() {
+        ChannelVerification cv = verified(Channel.SMS);   // status VERIFIED but verifiedValue null
+        when(cvRepo.findByUserEmailAndChannel(USER, Channel.SMS)).thenReturn(Optional.of(cv));
+        assertThat(service.isVerifiedPhone(USER, "+15105551057")).isFalse();
+    }
+
+    @Test
+    void isVerifiedPhone_falseWhenNoSmsRow() {
+        when(cvRepo.findByUserEmailAndChannel(USER, Channel.SMS)).thenReturn(Optional.empty());
+        assertThat(service.isVerifiedPhone(USER, "+15105551057")).isFalse();
+    }
+
+    @Test
+    void requestCode_cooldownBlocksRapidResend() {
+        props.setOtpResendCooldownSec(60);
+        ChannelVerification cv = pending(Channel.SMS, "111111", LocalDateTime.now().plusMinutes(5));
+        cv.setUpdatedAt(LocalDateTime.now());   // just sent a code
+        when(cvRepo.findByUserEmailAndChannel(USER, Channel.SMS)).thenReturn(Optional.of(cv));
+
+        assertThatThrownBy(() -> service.requestCode(USER, Channel.SMS, "+15105551057"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("wait");
+    }
+
+    @Test
+    void normalizePhone_stripsCommonFormatting() {
+        assertThat(ReachabilityService.normalizePhone("+1 510 555 1057")).isEqualTo("+15105551057");
+        assertThat(ReachabilityService.normalizePhone("+1 (510) 555-1057")).isEqualTo("+15105551057");
+        assertThat(ReachabilityService.normalizePhone("  ")).isNull();
+        assertThat(ReachabilityService.normalizePhone(null)).isNull();
+    }
+
+    @Test
+    void verifiedPhone_returnsConfirmedValueOrNull() {
+        ChannelVerification cv = verified(Channel.SMS);
+        cv.setVerifiedValue("+15105551057");
+        when(cvRepo.findByUserEmailAndChannel(USER, Channel.SMS)).thenReturn(Optional.of(cv));
+        assertThat(service.verifiedPhone(USER)).isEqualTo("+15105551057");
+    }
+
+    @Test
+    void verifiedPhone_nullWhenNoSmsRow() {
+        when(cvRepo.findByUserEmailAndChannel(USER, Channel.SMS)).thenReturn(Optional.empty());
+        assertThat(service.verifiedPhone(USER)).isNull();
+    }
+
     // ---- helpers ----
     private ChannelVerification pending(Channel ch, String code, LocalDateTime expiry) {
         ChannelVerification cv = new ChannelVerification(USER, ch);

@@ -6,6 +6,7 @@ import { subscribeToPushNotifications } from './utils/pushNotifications';
 import AiTaskInput from './AiTaskInput';
 import AgentChat from './AgentChat';
 import InsightHub from './InsightHub';
+import PhoneVerification from './PhoneVerification';
 import LiveSessions from './LiveSessions';
 import { convertLocalToUTC } from './utils/dateUtils';  //ADDED - for timezone conversion
 // ============================================
@@ -1075,26 +1076,7 @@ const toggleTask = async (id) => {
               <label htmlFor="task-phone" className="form-label">
                 Phone Number <span style={{color: '#ff4444', fontWeight: 'bold'}}>*</span>
               </label>
-              <div className="phone-input-wrapper">
-                <input
-                  id="task-phone"
-                  type="tel"
-                  className="form-input"
-                  placeholder="+15055550006 (E.164 format)"
-                  value={newTaskPhone}
-                  onChange={(e) => setNewTaskPhone(e.target.value)}
-                  pattern="^\+[1-9]\d{1,14}$"
-                  required={enableSms}
-                />
-              </div>
-              <small style={{
-                display: 'block',
-                color: '#64748b',
-                fontSize: '0.85rem',
-                marginTop: '0.35rem'
-              }}>
-                📞 Use E.164 format: +[country code][number] (e.g., +15055550006 for USA)
-              </small>
+              <PhoneVerification onVerified={setNewTaskPhone} />
               <small style={{ display: 'block', color: '#64748b', fontSize: '0.8rem', marginTop: '0.6rem', lineHeight: 1.5 }}>
                 By enabling SMS reminders, you agree to receive automated transactional task-reminder texts from SriInfoSoft Task Manager Pro for tasks you select. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe or HELP for help. SMS consent is optional and is not required to use Task Manager Pro.{' '}
                 <a href="https://sriinfosoft.com/privacy.html" target="_blank" rel="noreferrer">Privacy Policy</a>{' | '}
@@ -1425,26 +1407,7 @@ const toggleTask = async (id) => {
                   <label htmlFor="edit-task-phone" className="modal-label">
                     Phone Number <span style={{color: '#ff4444', fontWeight: 'bold'}}>*</span>
                   </label>
-                  <div className="phone-input-wrapper">
-                    <input
-                      id="edit-task-phone"
-                      type="tel"
-                      className="form-input"
-                      placeholder="+15055550006 (E.164 format)"
-                      value={editingTask.phoneNumber || ''}
-                      onChange={(e) => setEditingTask({...editingTask, phoneNumber: e.target.value})}
-                      pattern="^\+[1-9]\d{1,14}$"
-                      required={editingTask.smsEnabled}
-                    />
-                  </div>
-                  <small style={{
-                    display: 'block',
-                    color: '#64748b',
-                    fontSize: '0.85rem',
-                    marginTop: '0.35rem'
-                  }}>
-                    📞 Use E.164 format: +[country code][number] (e.g., +15055550006 for USA)
-                  </small>
+                  <PhoneVerification onVerified={(p) => setEditingTask({...editingTask, phoneNumber: p})} />
                   <small style={{ display: 'block', color: '#64748b', fontSize: '0.8rem', marginTop: '0.6rem', lineHeight: 1.5 }}>
                     By enabling SMS reminders, you agree to receive automated transactional task-reminder texts from SriInfoSoft Task Manager Pro for tasks you select. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe or HELP for help. SMS consent is optional and is not required to use Task Manager Pro.{' '}
                     <a href="https://sriinfosoft.com/privacy.html" target="_blank" rel="noreferrer">Privacy Policy</a>{' | '}

@@ -81,22 +81,35 @@ public class ReachabilityService {
         }
         String target = (channel == Channel.EMAIL)
                 ? (value == null || value.isBlank() ? email : value)
-                : value;
+                : normalizePhone(value);
         if (target == null || target.isBlank()) {
             throw new IllegalArgumentException("value required for channel " + channel);
         }
 
+        boolean isTester = ApiTesterController.TESTER_SUBJECT.equals(email);
+
         ChannelVerification cv = cvRepo.findByUserEmailAndChannel(email, channel)
                 .orElseGet(() -> new ChannelVerification(email, channel));
+
+        // Rate limit (#2): enforce a cooldown between sends to a channel — blocks
+        // OTP-SMS bombing / harassment. Testers are exempt so automated flows run.
+        if (!isTester && cv.getStatus() == Status.PENDING && cv.getUpdatedAt() != null) {
+            long since = java.time.Duration.between(cv.getUpdatedAt(), LocalDateTime.now()).getSeconds();
+            if (since < props.getOtpResendCooldownSec()) {
+                throw new IllegalStateException("Please wait before requesting another code.");
+            }
+        }
+
         String code = generateCode(props.getOtpLength());
         cv.setValue(target);
         cv.setStatus(Status.PENDING);
         cv.setCode(code);
+        cv.setAttempts(0);                                  // fresh code -> reset brute-force guard (#1)
         cv.setCodeExpiresAt(LocalDateTime.now().plusMinutes(props.getOtpExpiryMin()));
         cv.setUpdatedAt(LocalDateTime.now());
+        // verifiedValue intentionally untouched (#5): re-verifying never drops the
+        // currently-confirmed number the send-gate relies on.
         cvRepo.save(cv);
-
-        boolean isTester = ApiTesterController.TESTER_SUBJECT.equals(email);
         if (!isTester) {
             try {
                 deliver(channel, target, code, email);
@@ -141,18 +154,67 @@ public class ReachabilityService {
         Optional<ChannelVerification> opt = cvRepo.findByUserEmailAndChannel(email, channel);
         if (opt.isEmpty()) return false;
         ChannelVerification cv = opt.get();
-        boolean ok = cv.getStatus() == Status.PENDING
-                && cv.getCode() != null && cv.getCode().equals(code)
+
+        // Must be an active, unexpired code under the attempt cap (#1 brute-force guard).
+        boolean live = cv.getStatus() == Status.PENDING
+                && cv.getCode() != null
                 && cv.getCodeExpiresAt() != null
-                && cv.getCodeExpiresAt().isAfter(LocalDateTime.now());
-        if (!ok) return false;
+                && cv.getCodeExpiresAt().isAfter(LocalDateTime.now())
+                && cv.getAttempts() < props.getOtpMaxAttempts();
+        if (!live) return false;
+
+        // Constant-time compare (#8) — no timing oracle on the code.
+        boolean match = code != null && java.security.MessageDigest.isEqual(
+                cv.getCode().getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                code.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        if (!match) {
+            cv.setAttempts(cv.getAttempts() + 1);
+            if (cv.getAttempts() >= props.getOtpMaxAttempts()) {
+                cv.setCode(null);                 // burn the code after too many wrong tries
+                cv.setCodeExpiresAt(null);
+            }
+            cv.setUpdatedAt(LocalDateTime.now());
+            cvRepo.save(cv);
+            return false;
+        }
+
         cv.setStatus(Status.VERIFIED);
+        cv.setVerifiedValue(cv.getValue());       // promote confirmed value; send-gate reads this (#5)
         cv.setVerifiedAt(LocalDateTime.now());
         cv.setCode(null);
         cv.setCodeExpiresAt(null);
+        cv.setAttempts(0);
         cv.setUpdatedAt(LocalDateTime.now());
         cvRepo.save(cv);
         return true;
+    }
+
+    /** Canonical phone form for storage + comparison (#4): strip spaces/dashes/parens/dots. */
+    public static String normalizePhone(String phone) {
+        if (phone == null) return null;
+        String p = phone.trim().replaceAll("[\\s\\-().]", "");
+        return p.isEmpty() ? null : p;
+    }
+
+    /**
+     * Send-gate (#3): is this phone the caller's CONFIRMED SMS number? Compares the
+     * normalized number against the user's verifiedValue only — so an in-flight
+     * re-verify never breaks sending to the still-confirmed number.
+     */
+    /** The caller's confirmed SMS number (or null) — for the UI to show verify-vs-use. */
+    public String verifiedPhone(String email) {
+        return cvRepo.findByUserEmailAndChannel(email, Channel.SMS)
+                .map(ChannelVerification::getVerifiedValue)
+                .orElse(null);
+    }
+
+    public boolean isVerifiedPhone(String email, String phone) {
+        String norm = normalizePhone(phone);
+        if (norm == null) return false;
+        return cvRepo.findByUserEmailAndChannel(email, Channel.SMS)
+                .map(cv -> cv.getVerifiedValue() != null
+                        && norm.equals(normalizePhone(cv.getVerifiedValue())))
+                .orElse(false);
     }
 
     /** Reachability snapshot for the user. floorMet = >=1 guaranteed channel VERIFIED. */

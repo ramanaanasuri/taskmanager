@@ -21,6 +21,12 @@ public class ReachabilityProperties {
     @Value("${reachability.otp.length:6}")
     private int otpLength;
 
+    @Value("${reachability.otp.max.attempts:5}")
+    private int otpMaxAttempts;
+
+    @Value("${reachability.otp.resend.cooldown.sec:60}")
+    private int otpResendCooldownSec;
+
     @Value("${reachability.otp.expiry.min:10}")
     private int otpExpiryMin;
 
@@ -57,6 +63,10 @@ public class ReachabilityProperties {
     public void setOtpLength(int otpLength) { this.otpLength = otpLength; }
 
     public int getOtpExpiryMin() { return otpExpiryMin; }
+    public int getOtpMaxAttempts() { return otpMaxAttempts <= 0 ? 5 : otpMaxAttempts; }
+    public int getOtpResendCooldownSec() { return otpResendCooldownSec < 0 ? 60 : otpResendCooldownSec; }
+    public void setOtpMaxAttempts(int v) { this.otpMaxAttempts = v; }
+    public void setOtpResendCooldownSec(int v) { this.otpResendCooldownSec = v; }
     public void setOtpExpiryMin(int otpExpiryMin) { this.otpExpiryMin = otpExpiryMin; }
 
     public String getGuaranteedChannelsRaw() { return guaranteedChannelsRaw; }

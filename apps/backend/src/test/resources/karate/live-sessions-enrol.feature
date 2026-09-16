@@ -32,7 +32,11 @@ Feature: Live Sessions enrolment + lobby (browse -> join -> my sessions -> check
     Then status 200
 
     # create + schedule
-    * def start = LocalDateTime.now().plusDays(3).toString()
+    * def Instant = Java.type('java.time.Instant')
+    * def DateTimeFormatter = Java.type('java.time.format.DateTimeFormatter')
+    * def ZoneOffset = Java.type('java.time.ZoneOffset')
+    * def utcFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
+    * def start = utcFmt.format(Instant.now().plusSeconds(259200))
     Given path '/api/offerings'
     And headers auth
     And request { skillId: '#(skillId)', title: 'Enrol test', startTime: '#(start)', durationMin: 60, capacity: 3 }

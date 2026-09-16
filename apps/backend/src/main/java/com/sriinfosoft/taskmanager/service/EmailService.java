@@ -29,6 +29,14 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Value("${mail.from.name:Task Manager Pro}")
+    private String fromName;
+
+    // Optional: send-as address (requires a verified "Send mail as" alias on the SMTP account).
+    // Leave unset to use the authenticated SMTP account address.
+    @Value("${mail.from.address:}")
+    private String fromAddress;
+
     @Value("${frontend.url}")
     private String frontendUrl;
 
@@ -49,7 +57,7 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        helper.setFrom(fromEmail);
+        applyFrom(helper);
         helper.setTo(userEmail);
         helper.setSubject("⏰ Task Due: " + task.getTitle());
 
@@ -183,6 +191,16 @@ public class EmailService {
      * 
      * ADDED for Email Integration - Testing endpoint
      */
+    /** Sets the From with a friendly display name (falls back to the bare address). */
+    private void applyFrom(MimeMessageHelper helper) throws jakarta.mail.MessagingException {
+        String addr = (fromAddress != null && !fromAddress.isBlank()) ? fromAddress : fromEmail;
+        try {
+            helper.setFrom(addr, fromName);
+        } catch (java.io.UnsupportedEncodingException e) {
+            helper.setFrom(addr);
+        }
+    }
+
     public void sendTestEmail(String toEmail) throws MessagingException {
         logger.info("🧪 Sending test email to {}", toEmail);
         logger.debug("DEBUG: Test email from: {}", fromEmail); //ADDED for Email Integration
@@ -190,7 +208,7 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        helper.setFrom(fromEmail);
+        applyFrom(helper);
         helper.setTo(toEmail);
         helper.setSubject("Test Email from Task Manager");
         helper.setText("<h1>Test Email</h1><p>Email service is working correctly!</p>", true);
@@ -208,7 +226,7 @@ public class EmailService {
         logger.info("\ud83d\udcec Sending daily digest to {}", toEmail);
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        helper.setFrom(fromEmail);
+        applyFrom(helper);
         helper.setTo(toEmail);
         helper.setSubject(subject);
         helper.setText(htmlBody, true);

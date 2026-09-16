@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import API_BASE_URL from './config';
+import { convertLocalToUTC } from './utils/dateUtils';
 
 /**
  * Live Sessions (FE-1 + FE-2): reachability gate, then a role-aware surface with
@@ -43,6 +44,8 @@ function LiveSessions({ authToken }) {
   // lobby
   const [lobbyId, setLobbyId] = useState(null);
   const [lobby, setLobby] = useState(null);
+  const [mentorView, setMentorView] = useState(null);   // email of mentor being viewed
+  const [mentorData, setMentorData] = useState(null);
 
   // ---- loaders ----
   const loadReach = useCallback(async () => {
@@ -144,7 +147,7 @@ function LiveSessions({ authToken }) {
     try {
       await axios.post(`${API_BASE_URL}/api/offerings`, {
         skillId: Number(form.skillId), title: form.title.trim(), description: form.description.trim(),
-        startTime: form.startTime, durationMin: Number(form.durationMin), capacity: Number(form.capacity),
+        startTime: convertLocalToUTC(form.startTime), durationMin: Number(form.durationMin), capacity: Number(form.capacity),
       }, authHeader);
       flash('Session created.'); setForm({ ...form, title: '', description: '', startTime: '' }); setTempStart(''); await loadMentor();
     } catch (e) { setError(errOf(e, 'Could not create session')); } setBusy(false);
@@ -168,6 +171,16 @@ function LiveSessions({ authToken }) {
     }
     setBusy(false);
   };
+
+  // ---- mentor profile (learner views a mentor's credentials) ----
+  const openMentor = async (email) => {
+    setMentorView(email); setMentorData(null); setError(null);
+    try {
+      const r = await axios.get(`${API_BASE_URL}/api/mentors/profile?email=${encodeURIComponent(email)}`, authHeader);
+      setMentorData(r.data);
+    } catch (e) { setError('Could not load mentor profile'); }
+  };
+  const closeMentor = () => { setMentorView(null); setMentorData(null); };
 
   // ---- lobby actions ----
   const openLobby = (id) => { setLobbyId(id); setLobby(null); };
@@ -230,7 +243,7 @@ function LiveSessions({ authToken }) {
       )}
 
       {/* VERIFIED */}
-      {reach?.floorMet && !lobbyId && (
+      {reach?.floorMet && !lobbyId && !mentorView && (
         <>
           <div style={{ display: 'inline-flex', gap: 4, background: '#f3f4f6', borderRadius: 10, padding: 4, marginBottom: 16 }}>
             <button style={seg(view === 'browse')} onClick={() => setView('browse')}>Browse</button>
@@ -253,7 +266,8 @@ function LiveSessions({ authToken }) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                     <div>
                       <div style={{ fontWeight: 600 }}>{o.title}</div>
-                      <div style={{ color: C.mut, fontSize: '.8rem', margin: '3px 0' }}>{o.mentorEmail} · {o.startTime?.replace('T', ' ').slice(0, 16)}</div>
+                      <div style={{ color: C.mut, fontSize: '.8rem', margin: '3px 0' }}>hosted by {o.mentorEmail} · {o.startTime?.replace('T', ' ').slice(0, 16)}</div>
+                      <button onClick={() => openMentor(o.mentorEmail)} style={{ background: 'none', border: 'none', color: C.primary, cursor: 'pointer', padding: 0, margin: '2px 0 4px', fontSize: '.8rem', fontWeight: 600, textDecoration: 'underline' }}>View mentor profile →</button>
                       <span style={pill(o.seatsLeft > 0 ? '#dcfce7' : '#fee2e2', o.seatsLeft > 0 ? '#047857' : '#b91c1c')}>
                         {o.seatsLeft > 0 ? `${o.seatsLeft} seat${o.seatsLeft > 1 ? 's' : ''} left` : 'Full'}{o.capacity === 1 ? ' · 1:1' : ` · Group ${o.capacity}`}
                       </span>
@@ -359,6 +373,35 @@ function LiveSessions({ authToken }) {
       )}
 
       {/* LOBBY */}
+      {reach?.floorMet && mentorView && !lobbyId && (
+        <div style={card}>
+          <button style={{ ...btnGhost, marginBottom: 12 }} onClick={closeMentor}>← Back</button>
+          {!mentorData ? <div style={{ color: C.mut }}>Loading mentor…</div> : (
+            <>
+              <h3 style={{ margin: '0 0 6px', color: C.primaryDark }}>{mentorData.mentorEmail}</h3>
+              {mentorData.bio && <p style={{ fontSize: '.9rem', whiteSpace: 'pre-wrap', marginTop: 0 }}>{mentorData.bio}</p>}
+              {(mentorData.skills || []).length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '10px 0' }}>
+                  {mentorData.skills.map((sk) => <span key={sk} style={pill('#ede9fe', C.primaryDark)}>{sk}</span>)}
+                </div>
+              )}
+              <div style={{ ...label, marginTop: 14 }}>Open sessions ({(mentorData.sessions || []).length})</div>
+              {(mentorData.sessions || []).length === 0 && <p style={{ color: C.mut, fontSize: '.85rem' }}>No open sessions right now.</p>}
+              {(mentorData.sessions || []).map((o) => (
+                <div key={o.id} style={{ borderTop: `1px solid ${C.line}`, padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '.9rem' }}>{o.title}</div>
+                    <div style={{ color: C.mut, fontSize: '.78rem' }}>{o.startTime?.replace('T', ' ').slice(0, 16)} · {o.capacity === 1 ? '1:1' : `Group ${o.capacity}`}</div>
+                    <span style={pill(o.seatsLeft > 0 ? '#dcfce7' : '#fee2e2', o.seatsLeft > 0 ? '#047857' : '#b91c1c')}>{o.seatsLeft > 0 ? `${o.seatsLeft} seat${o.seatsLeft > 1 ? 's' : ''} left` : 'Full'}</span>
+                  </div>
+                  <button style={o.seatsLeft > 0 ? btn : { ...btnGhost, cursor: 'not-allowed' }} disabled={busy || o.seatsLeft === 0} onClick={async () => { await join(o.id); openMentor(mentorView); }}>Join</button>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
       {reach?.floorMet && lobbyId && (
         <div style={card}>
           <button style={{ ...btnGhost, marginBottom: 12 }} onClick={closeLobby}>← Back</button>

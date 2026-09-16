@@ -34,6 +34,12 @@ public class LiveSessionController {
         return ResponseEntity.ok(Map.of("skills", service.listSkills()));
     }
 
+    @GetMapping("/mentors/profile")
+    public ResponseEntity<?> mentorPublicProfile(@RequestParam("email") String email) {
+        if (currentEmail() == null) return unauth();
+        return ResponseEntity.ok(service.getPublicMentorProfile(email));
+    }
+
     @GetMapping("/mentor/profile")
     public ResponseEntity<?> getProfile() {
         String email = currentEmail(); if (email == null) return unauth();
