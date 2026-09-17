@@ -40,12 +40,15 @@ function InsightHub({ authToken, onLimitReached }) {
   const [hubs, setHubs] = useState([]);
   const [hubId, setHubId] = useState(null);
   const [role, setRole] = useState(null);
+  const [topics, setTopics] = useState([]);
+  const [reviewable, setReviewable] = useState([]);
+  const [defaultHubId, setDefaultHubId] = useState(null);
+  const [defaultHubName, setDefaultHubName] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState('');
   const [questions, setQuestions] = useState([]);
   const [loadingHubs, setLoadingHubs] = useState(true);
 
   const [ask, setAsk] = useState('');
-  const [newHub, setNewHub] = useState('');
-  const [memberEmail, setMemberEmail] = useState('');
   const [editingId, setEditingId] = useState(null);   // DRAFTED card in inline-edit
   const [inputs, setInputs] = useState({});            // per-card textarea text {qid: text}
 
@@ -56,7 +59,8 @@ function InsightHub({ authToken, onLimitReached }) {
   const inFlight = useRef(false);                       // guards overlapping polls
 
   const authHeader = { headers: { Authorization: `Bearer ${authToken}` } };
-  const hub = hubs.find((h) => h.id === hubId) || null;
+  const hub = hubs.find((h) => h.id === hubId)
+    || (defaultHubId ? { id: defaultHubId, name: defaultHubName || 'Knowledge Circle', role: role || 'MEMBER' } : null);
 
   // ---------- data ----------
   const loadHubs = async () => {
@@ -92,7 +96,24 @@ function InsightHub({ authToken, onLimitReached }) {
     }
   };
 
-  useEffect(() => { loadHubs(); /* eslint-disable-next-line */ }, []);
+  const loadTopics = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/insight-hubs/topics`, authHeader);
+      setTopics(res.data.topics || []);
+      setReviewable(res.data.reviewable || []);
+      setDefaultHubId(res.data.defaultHubId || null);
+      setDefaultHubName(res.data.defaultHubName || 'Knowledge Circle');
+      const ts = res.data.topics || [];
+      if (ts.length > 0) {
+        const inv = ts.find((t) => t.slug === 'investing');
+        setSelectedTopic(String((inv || ts[0]).id));
+      }
+    } catch (err) { /* topics are non-fatal */ }
+  };
+
+  useEffect(() => { loadHubs(); loadTopics(); /* eslint-disable-next-line */ }, []);
+  // clients who belong to no hub still ask into (and read from) the default hub
+  useEffect(() => { if (!hubId && defaultHubId) setHubId(defaultHubId); /* eslint-disable-next-line */ }, [hubId, defaultHubId]);
 
   // auto-refresh delivery: fetch on hub load, then every 15s while the tab is
   // visible; clean up on unmount / hub change.
@@ -123,20 +144,8 @@ function InsightHub({ authToken, onLimitReached }) {
     finally { setBusy(false); }
   };
 
-  const createHub = () => run(async () => {
-    const res = await axios.post(`${API_BASE_URL}/api/insight-hubs`, { name: newHub.trim() }, authHeader);
-    setNewHub('');
-    setHubs([res.data]); setHubId(res.data.id); setRole(res.data.role);
-  });
-
-  const addMember = () => run(async () => {
-    await axios.post(`${API_BASE_URL}/api/insight-hubs/${hubId}/members`, { email: memberEmail.trim() }, authHeader);
-    setNotice(`Added ${memberEmail.trim()} to the circle.`);
-    setMemberEmail('');
-  });
-
   const submitAsk = () => run(async () => {
-    await axios.post(`${API_BASE_URL}/api/insight-hubs/${hubId}/questions`, { text: ask.trim() }, authHeader);
+    await axios.post(`${API_BASE_URL}/api/insight-hubs/${hubId}/questions`, { text: ask.trim(), skillId: selectedTopic }, authHeader);
     setAsk('');
   });
 
@@ -206,7 +215,8 @@ function InsightHub({ authToken, onLimitReached }) {
     return <div style={S.wrap}><div style={S.card}><div style={S.header}>💡 InsightHub</div><div style={S.body}><span style={S.muted}>Loading…</span></div></div></div>;
   }
 
-  // no hub yet: offer to start one (caller becomes the mentor)
+  // No hub configured yet (zero hubs). InsightHub is provisioned by an admin;
+  // a client sees a friendly notice rather than a create form.
   if (!hub) {
     return (
       <div style={S.wrap}>
@@ -214,13 +224,7 @@ function InsightHub({ authToken, onLimitReached }) {
           <div style={S.header}>💡 InsightHub</div>
           <div style={S.body}>
             {error && <div style={S.error}>{error}</div>}
-            <div style={S.h}>Start a hub</div>
-            <p style={S.muted}>Create a hub to mentor others. You’ll be the mentor; add learners by email, and their questions come to you for approval.</p>
-            <div style={S.row}>
-              <input style={S.input} placeholder="Hub name (e.g. Investing)"
-                value={newHub} onChange={(e) => setNewHub(e.target.value)} />
-              <button style={S.btn(busy || !newHub.trim())} disabled={busy || !newHub.trim()} onClick={createHub}>Create</button>
-            </div>
+            <p style={S.muted}>InsightHub isn’t available yet. Please check back soon.</p>
           </div>
         </div>
       </div>
@@ -241,21 +245,16 @@ function InsightHub({ authToken, onLimitReached }) {
           {error && <div style={S.error}>{error}</div>}
           {notice && <div style={S.notice}>{notice}</div>}
 
-          {/* Mentor setup: add members */}
-          {isMentor && (
-            <div style={S.section}>
-              <div style={S.h}>Add a learner</div>
-              <div style={S.row}>
-                <input style={S.input} placeholder="their email (they must have signed in once)"
-                  value={memberEmail} onChange={(e) => setMemberEmail(e.target.value)} />
-                <button style={S.btn(busy || !memberEmail.trim())} disabled={busy || !memberEmail.trim()} onClick={addMember}>Add</button>
-              </div>
-            </div>
-          )}
-
           {/* Member: ask a question (always shown) */}
           <div style={S.section}>
             <div style={S.h}>Ask a question</div>
+            {topics.length > 0 && (
+              <div style={S.row}>
+                <select style={S.input} value={selectedTopic} onChange={(e) => setSelectedTopic(e.target.value)}>
+                  {topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+            )}
             <div style={S.row}>
               <textarea rows={2} style={S.input} placeholder="e.g. What’s the difference between a covered call and a cash-secured put?"
                 value={ask} onChange={(e) => setAsk(e.target.value)} />

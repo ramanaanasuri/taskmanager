@@ -10,5 +10,6 @@ import java.util.Optional;
 @Repository
 public interface SkillRepository extends JpaRepository<Skill, Long> {
     List<Skill> findByActiveTrueOrderByName();
+    List<Skill> findByActiveTrueAndAskableTrueOrderByName();
     Optional<Skill> findBySlug(String slug);
 }

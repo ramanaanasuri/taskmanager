@@ -146,7 +146,7 @@ function App() {
     axios.get(`${API_BASE_URL}/api/insight-hubs`, { headers: { Authorization: `Bearer ${authToken}` } })
       .then((res) => {
         const hubs = res.data || [];
-        setHasInsightHub(hubs.length > 0);
+        setHasInsightHub(true); // InsightHub is open to all authed users (client asks; reviewer reviews)
         setHubRole(hubs[0]?.role || null);
       })
       .catch(() => { setHasInsightHub(false); setHubRole(null); });

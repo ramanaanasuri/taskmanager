@@ -32,6 +32,10 @@ public class Question {
     @Column(name = "asked_by_email", nullable = false)
     private String askedByEmail;
 
+    /** Topic this question is about (a skill). Null for legacy rows (backfilled to the default topic). */
+    @Column(name = "skill_id")
+    private Long skillId;
+
     @Column(nullable = false, length = 2000)
     private String text;
 
@@ -58,6 +62,9 @@ public class Question {
 
     public String getAskedByEmail() { return askedByEmail; }
     public void setAskedByEmail(String askedByEmail) { this.askedByEmail = askedByEmail; }
+
+    public Long getSkillId() { return skillId; }
+    public void setSkillId(Long skillId) { this.skillId = skillId; }
 
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }

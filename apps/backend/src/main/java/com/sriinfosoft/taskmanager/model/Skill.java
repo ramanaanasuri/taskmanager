@@ -23,6 +23,10 @@ public class Skill {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Askable as an InsightHub topic (has a knowledge base). Distinct from Live Sessions "active". */
+    @Column(nullable = false)
+    private boolean askable = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -37,6 +41,8 @@ public class Skill {
     public void setSlug(String slug) { this.slug = slug; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+    public boolean isAskable() { return askable; }
+    public void setAskable(boolean askable) { this.askable = askable; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
